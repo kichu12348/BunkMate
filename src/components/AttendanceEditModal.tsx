@@ -7,7 +7,6 @@ import {
   Alert,
   ScrollView,
   Dimensions,
-  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
@@ -445,7 +444,6 @@ export const AttendanceEditModal: React.FC<AttendanceEditModalProps> = ({
 
   return (
     <View style={styles.overlay}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       {/* Animated Backdrop */}
       <Animated.View style={[styles.backdrop, backdropStyle]}>
