@@ -1,0 +1,684 @@
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  ActivityIndicator,
+  Alert,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useThemedStyles, useTheme } from '../hooks/useTheme';
+import { ThemeColors } from '../types/theme';
+import { RootStackParamList } from '../navigation/RootNavigator';
+import { surveysService } from '../api/surveys';
+import { 
+  SurveyStartData, 
+  QuestionChoice, 
+  Choice, 
+  SurveyCourseTeacher,
+  SurveyResponse 
+} from '../types/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+type SurveyAttemptScreenRouteProp = RouteProp<RootStackParamList, 'SurveyAttempt'>;
+type SurveyAttemptScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'SurveyAttempt'>;
+
+interface QuestionResponse {
+  questionId: number;
+  choiceId: number | null;
+  comment: string;
+  courseTeacherId?: number;
+}
+
+export const SurveyAttemptScreen: React.FC = () => {
+  const route = useRoute<SurveyAttemptScreenRouteProp>();
+  const navigation = useNavigation<SurveyAttemptScreenNavigationProp>();
+  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  
+  const { surveyId, surveyName } = route.params;
+  
+  const [surveyData, setSurveyData] = useState<SurveyStartData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [responses, setResponses] = useState<Map<number, QuestionResponse>>(new Map());
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
+  useEffect(() => {
+    loadSurveyData();
+  }, [surveyId]);
+
+  const loadSurveyData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await surveysService.startSurvey(surveyId);
+      setSurveyData(data);
+      
+      // Initialize responses map
+      const initialResponses = new Map<number, QuestionResponse>();
+      data.questionsChoices.forEach(question => {
+        initialResponses.set(question.id, {
+          questionId: question.id,
+          choiceId: null,
+          comment: '',
+        });
+      });
+      setResponses(initialResponses);
+    } catch (error: any) {
+      setError(error.message || 'Failed to load survey');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChoiceSelect = (questionId: number, choiceId: number, courseTeacherId?: number) => {
+    const updatedResponses = new Map(responses);
+    const currentResponse = updatedResponses.get(questionId) || {
+      questionId,
+      choiceId: null,
+      comment: '',
+    };
+    
+    updatedResponses.set(questionId, {
+      ...currentResponse,
+      choiceId,
+      courseTeacherId,
+    });
+    
+    setResponses(updatedResponses);
+  };
+
+  const handleCommentChange = (questionId: number, comment: string) => {
+    const updatedResponses = new Map(responses);
+    const currentResponse = updatedResponses.get(questionId) || {
+      questionId,
+      choiceId: null,
+      comment: '',
+    };
+    
+    updatedResponses.set(questionId, {
+      ...currentResponse,
+      comment,
+    });
+    
+    setResponses(updatedResponses);
+  };
+
+  const validateResponses = (): boolean => {
+    if (!surveyData) return false;
+    
+    for (const question of surveyData.questionsChoices) {
+      const response = responses.get(question.id);
+      
+      if (question.answer_required && (!response || response.choiceId === null)) {
+        Alert.alert('Incomplete Survey', `Please answer question ${question.question_no}: ${question.name}`);
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateResponses()) return;
+    
+    try {
+      setIsSubmitting(true);
+      
+      const submissionData: SurveyResponse[] = Array.from(responses.values())
+        .filter(response => response.choiceId !== null)
+        .map(response => ({
+          question_id: response.questionId,
+          choice_id: response.choiceId!,
+          ...(response.comment && { comment: response.comment }),
+          ...(response.courseTeacherId && { course_teacher_id: response.courseTeacherId }),
+        }));
+
+      await surveysService.submitSurvey(surveyId, { responses: submissionData });
+      
+      Alert.alert(
+        'Survey Submitted',
+        'Thank you for your feedback!',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert('Submission Failed', error.message || 'Failed to submit survey');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderQuestion = (question: QuestionChoice, index: number) => {
+    const response = responses.get(question.id);
+    const isRequired = question.answer_required === 1;
+    const allowDescriptive = question.allow_descriptive === 1;
+
+    return (
+      <View key={question.id} style={styles.questionContainer}>
+        <View style={styles.questionHeader}>
+          <Text style={styles.questionNumber}>Q{question.question_no}</Text>
+          <View style={styles.questionTitleContainer}>
+            <Text style={styles.questionTitle}>{question.name}</Text>
+            {isRequired && <Text style={styles.requiredIndicator}>*</Text>}
+          </View>
+        </View>
+
+        <View style={styles.choicesContainer}>
+          {question.choices.map((choice) => {
+            const isSelected = response?.choiceId === choice.id;
+            
+            return (
+              <TouchableOpacity
+                key={choice.id}
+                style={[
+                  styles.choiceButton,
+                  isSelected && styles.selectedChoice,
+                ]}
+                onPress={() => handleChoiceSelect(question.id, choice.id)}
+              >
+                <View style={styles.choiceContent}>
+                  <View style={[
+                    styles.radioButton,
+                    isSelected && styles.selectedRadio,
+                  ]}>
+                    {isSelected && <View style={styles.radioInner} />}
+                  </View>
+                  <Text style={[
+                    styles.choiceText,
+                    isSelected && styles.selectedChoiceText,
+                  ]}>
+                    {choice.name}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {allowDescriptive && (
+          <View style={styles.commentContainer}>
+            <Text style={styles.commentLabel}>Additional Comments (Optional)</Text>
+            <TextInput
+              style={styles.commentInput}
+              multiline
+              numberOfLines={3}
+              placeholder="Enter your comments here..."
+              placeholderTextColor={colors.textSecondary}
+              value={response?.comment || ''}
+              onChangeText={(text) => handleCommentChange(question.id, text)}
+            />
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderCourseTeacherInfo = () => {
+    if (!surveyData?.surveyCourceTeachers || surveyData.surveyCourceTeachers.length === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.courseInfoContainer}>
+        <Text style={styles.sectionTitle}>Course & Teacher Information</Text>
+        {surveyData.surveyCourceTeachers.map((courseTeacher) => (
+          <View key={courseTeacher.id} style={styles.courseTeacherCard}>
+            <Text style={styles.courseName}>
+              {courseTeacher.course.name} ({courseTeacher.course.code})
+            </Text>
+            <Text style={styles.teacherName}>
+              {courseTeacher.teacher.first_name} {courseTeacher.teacher.last_name}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const getProgressPercentage = () => {
+    if (!surveyData) return 0;
+    
+    const answeredQuestions = Array.from(responses.values()).filter(
+      response => response.choiceId !== null
+    ).length;
+    
+    return (answeredQuestions / surveyData.questionsChoices.length) * 100;
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading survey...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color={colors.error} />
+          <Text style={styles.errorTitle}>Error Loading Survey</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadSurveyData}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!surveyData) {
+    return null;
+  }
+
+  return (
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+      <KeyboardAvoidingView 
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>{surveyData.studFBSurvey.name}</Text>
+            <Text style={styles.headerSubtitle}>
+              {surveyData.studFBSurvey.academic_year} • {surveyData.studFBSurvey.survey_type}
+            </Text>
+          </View>
+        </View>
+
+        {/* Progress Bar */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${getProgressPercentage()}%` }
+              ]} 
+            />
+          </View>
+          <Text style={styles.progressText}>
+            {Math.round(getProgressPercentage())}% Complete
+          </Text>
+        </View>
+
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* Survey Info */}
+          <View style={styles.surveyInfoContainer}>
+            <Text style={styles.surveyTitle}>{surveyData.studFBSurvey.name}</Text>
+            {surveyData.studFBSurvey.summary && (
+              <Text style={styles.surveySummary}>{surveyData.studFBSurvey.summary}</Text>
+            )}
+            
+            <View style={styles.surveyMeta}>
+              <View style={styles.metaItem}>
+                <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+                <Text style={styles.metaText}>
+                  {surveyData.studFBSurvey.time_required ? 
+                    `${surveyData.studFBSurvey.time_required} minutes` : 
+                    'No time limit'
+                  }
+                </Text>
+              </View>
+              <View style={styles.metaItem}>
+                <Ionicons name="shield-outline" size={16} color={colors.textSecondary} />
+                <Text style={styles.metaText}>
+                  {surveyData.studFBSurvey.is_anonymous ? 'Anonymous' : 'Not Anonymous'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {renderCourseTeacherInfo()}
+
+          {/* Questions */}
+          <View style={styles.questionsContainer}>
+            <Text style={styles.sectionTitle}>Survey Questions</Text>
+            {surveyData.questionsChoices.map((question, index) => 
+              renderQuestion(question, index)
+            )}
+          </View>
+
+          {/* Submit Button */}
+          <View style={styles.submitContainer}>
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                isSubmitting && styles.submitButtonDisabled,
+              ]}
+              onPress={handleSubmit}
+              //disabled={isSubmitting}
+              disabled={true}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle-outline" size={20} color="white" />
+                  <Text style={styles.submitButtonText}>Submit Survey</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  progressContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+  },
+  progressText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  surveyInfoContainer: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  surveyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  surveySummary: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    lineHeight: 24,
+    marginBottom: 16,
+  },
+  surveyMeta: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  metaText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  courseInfoContainer: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  courseTeacherCard: {
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  courseName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  teacherName: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  questionsContainer: {
+    padding: 20,
+  },
+  questionContainer: {
+    marginBottom: 32,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 20,
+  },
+  questionHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  questionNumber: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 12,
+    minWidth: 40,
+    textAlign: 'center',
+  },
+  questionTitleContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  questionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+    lineHeight: 24,
+    flex: 1,
+  },
+  requiredIndicator: {
+    color: colors.error,
+    fontSize: 16,
+    marginLeft: 4,
+  },
+  choicesContainer: {
+    marginBottom: 16,
+  },
+  choiceButton: {
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  selectedChoice: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '10',
+  },
+  choiceContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.border,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedRadio: {
+    borderColor: colors.primary,
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
+  },
+  choiceText: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+  },
+  selectedChoiceText: {
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  choiceScore: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  commentContainer: {
+    marginTop: 16,
+  },
+  commentLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: colors.text,
+    textAlignVertical: 'top',
+    minHeight: 80,
+  },
+  submitContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  submitButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});

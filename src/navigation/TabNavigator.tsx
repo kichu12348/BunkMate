@@ -6,12 +6,14 @@ import { useTheme } from "../hooks/useTheme";
 import { Dashboard } from "../screens/Dashboard";
 import { NotificationsScreen } from "../screens/Notifications";
 import { SettingsScreen } from "../screens/Settings";
+import { SurveysScreen } from "../screens/Surveys";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 
 export type TabParamList = {
   Dashboard: undefined;
   Notifications: undefined;
+  Surveys: undefined;
   Settings: undefined;
 };
 
@@ -60,6 +62,9 @@ export const TabNavigator: React.FC = () => {
             case "Notifications":
               iconName = focused ? "notifications" : "notifications-outline";
               break;
+            case "Surveys":
+              iconName = focused ? "document-text" : "document-text-outline";
+              break;
             case "Settings":
               iconName = focused ? "settings" : "settings-outline";
               break;
@@ -84,8 +89,7 @@ export const TabNavigator: React.FC = () => {
           left: 20,
           right: 20,
           height: 70,
-          backgroundColor:
-            Platform.OS === "ios" ? "transparent" : colors.surface,
+          backgroundColor:"transparent",
           borderTopWidth: 0,
           elevation: 20,
           shadowColor: colors.shadow,
@@ -99,25 +103,17 @@ export const TabNavigator: React.FC = () => {
           paddingTop: 10,
           paddingHorizontal: 20,
         },
-        tabBarBackground: () =>
-          Platform.OS === "ios" ? (
-            <View style={styles.tabBar}>
-              <BlurView
-                intensity={20}
-                experimentalBlurMethod="dimezisBlurView"
-                blurReductionFactor={12}
-                tint={isDark ? "dark" : "light"}
-                style={styles.blurContainer}
-              />
-            </View>
-          ) : (
-            <View
-              style={[
-                StyleSheet.absoluteFillObject,
-                { backgroundColor: colors.surface },
-              ]}
+        tabBarBackground: () => (
+          <View style={styles.tabBar}>
+            <BlurView
+              intensity={20}
+              experimentalBlurMethod="dimezisBlurView"
+              blurReductionFactor={12}
+              tint={isDark ? "dark" : "light"}
+              style={styles.blurContainer}
             />
-          ),
+          </View>
+        ),
         headerShown: false,
         tabBarLabelStyle: {
           fontSize: 11,
@@ -144,6 +140,13 @@ export const TabNavigator: React.FC = () => {
         component={NotificationsScreen}
         options={{
           tabBarLabel: "Notifications",
+        }}
+      />
+      <Tab.Screen
+        name="Surveys"
+        component={SurveysScreen}
+        options={{
+          tabBarLabel: "Surveys",
         }}
       />
       <Tab.Screen

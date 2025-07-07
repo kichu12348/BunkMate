@@ -204,3 +204,145 @@ export interface Semester {
   value: string;
   label: string;
 }
+
+// Survey Attempt interfaces
+export interface SurveyDetail {
+  id: number;
+  name: string;
+  summary: string;
+  academic_year: string;
+  start_at: string;
+  end_at: string;
+  time_required: number | null;
+  grouping_tag: string | null;
+  survey_type: "student_feedback";
+  survey_mode: "online";
+  comment_feedback: 0 | 1;
+  hidden: 0 | 1;
+  is_anonymous: 0 | 1;
+  course_id: number | null;
+  usersubgroup_id: number | null;
+  institution_id: number;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  course: any | null;
+  usersubgroup: any | null;
+}
+
+export interface Choice {
+  id: number;
+  name: string;
+  summary: null;
+  score: string;
+  offline_evaluation_count: null;
+  survey_question_id: number;
+  created_by: number;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface QuestionChoice {
+  id: number;
+  question_no: string;
+  name: string;
+  summary: null;
+  allow_descriptive: number;
+  answer_required: number;
+  survey_id: number;
+  grouping_tag: null;
+  institution_id: number;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  choices: Choice[];
+  course_outcomes: any[];
+  programme_outcomes: any[];
+  programme_specific_outcomes: any[];
+}
+
+export interface CourseDetail {
+  id: number;
+  si_no: number;
+  name: string;
+  code: string;
+  start_year: null;
+  end_year: null;
+  institution_id: number;
+  usersubgroup_id: number;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  academic_year: string;
+  academic_semester: string;
+  pre_requisites: null;
+  ltp_credits: null;
+  reference_docs: null;
+  text_books: null;
+  course_type_id: number;
+  course_category_id: null;
+  deleted_at: null;
+  enable_laboratory: null;
+}
+
+export interface Teacher {
+  id: number;
+  first_name: string;
+  last_name: string;
+  gender: null;
+  birth_date: null;
+  address_street: null;
+  address_city: null;
+  address_state: null;
+  address_postcode: null;
+  address_country: null;
+  email: string;
+  mobile: string;
+  guardian_email: null;
+  guardian_mobile: null;
+  settings: Record<string, any> | [];
+  institution_id: number;
+  user_id: number;
+  institutionrole_id: number;
+  institution_approved: number;
+  user_approved: number;
+  created_at: string;
+  updated_at: string;
+  admission_no: null;
+  register_no: null;
+  aadhaar_card_no: null;
+  code_of_institution_last_attended: null;
+  district_of_institution_last_attended: null;
+  last_institution: null;
+  contact_address: null;
+  enroll_status: string;
+  user_data_completed: number;
+}
+
+export interface SurveyCourseTeacher {
+  id: number;
+  stud_f_b_survey_id: number;
+  course_id: number;
+  teacher_id: number;
+  created_at: string | null;
+  updated_at: string | null;
+  course: CourseDetail;
+  teacher: Teacher;
+}
+
+export interface SurveyStartData {
+  studFBSurvey: SurveyDetail;
+  questionsChoices: QuestionChoice[];
+  surveyCourceTeachers: SurveyCourseTeacher[];
+}
+
+export interface SurveyResponse {
+  question_id: number;
+  choice_id: number;
+  comment?: string;
+  course_teacher_id?: number;
+}
+
+export interface SurveySubmissionRequest {
+  responses: SurveyResponse[];
+}

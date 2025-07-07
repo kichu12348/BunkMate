@@ -79,6 +79,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       await attendanceService.clearAttendanceCache();
       set({
         data: null,
+        courseSchedule: null,
         lastUpdated: null,
         error: null,
       });

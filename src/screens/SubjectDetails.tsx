@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -26,6 +26,13 @@ import {
   subMonths,
 } from "date-fns";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AttendanceDayView from "../components/AttendanceDayView";
+import {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from "react-native-reanimated";
 
 type SubjectDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -42,13 +49,97 @@ interface AttendanceDay {
   sessions: number;
 }
 
+interface AttendanceEntry {
+  attendance: string;
+  hour: number;
+}
+
 interface AttendanceWeek {
   weekStart: Date;
   days: AttendanceDay[];
 }
 
+interface AttendanceStats {
+  totalDays: number;
+  presentDays: number;
+  absentDays: number;
+  percentage: number;
+  streak: number;
+  longestStreak: number;
+}
+
 const { width } = Dimensions.get("window");
 const CELL_SIZE = (width - 80) / 7;
+
+// Memoized components
+const StatCard = React.memo(({ stat, colors }: { stat: any; colors: any }) => (
+  <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
+    <View style={[styles.statIcon, { backgroundColor: stat.color + "20" }]}>
+      <Ionicons name={stat.icon as any} size={20} color={stat.color} />
+    </View>
+    <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
+    <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
+      {stat.title}
+    </Text>
+  </View>
+));
+
+const AttendanceCell = React.memo(
+  ({
+    day,
+    dayIndex,
+    isCurrentMonth,
+    cellColor,
+    cellIntensity,
+    colors,
+    onPress,
+  }: {
+    day: AttendanceDay;
+    dayIndex: number;
+    isCurrentMonth: boolean;
+    cellColor: string;
+    cellIntensity: string;
+    colors: ThemeColors;
+    onPress: () => void;
+  }) => {
+    const dayDate = new Date(day.date);
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.cell,
+          {
+            backgroundColor: isCurrentMonth
+              ? cellColor + cellIntensity
+              : colors.border + "10",
+            borderColor: isCurrentMonth ? cellColor : colors.border + "30",
+            opacity: isCurrentMonth ? 1 : 0.3,
+          },
+        ]}
+        onPress={onPress}
+      >
+        <View style={styles.cellContent}>
+          {isCurrentMonth && (
+            <Text
+              style={[
+                styles.dayNumber,
+                {
+                  color:
+                    day.status === "present" ? colors.surface : colors.text,
+                },
+              ]}
+            >
+              {dayDate.getDate()}
+            </Text>
+          )}
+          {day.sessions > 0 && isCurrentMonth && (
+            <Text style={styles.sessionCount}>{day.sessions}</Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  }
+);
 
 export const SubjectDetailsScreen: React.FC = () => {
   const route = useRoute<SubjectDetailsScreenRouteProp>();
@@ -61,49 +152,100 @@ export const SubjectDetailsScreen: React.FC = () => {
     data: attendanceData,
     isLoading,
     courseSchedule,
+    refreshAttendance,
   } = useAttendanceStore();
 
-  const subjectSchedule = courseSchedule?.get(subjectId.toString()) || [];
-  const lastEntry = subjectSchedule[subjectSchedule.length - 1];
-  const [selectedMonth, setSelectedMonth] = useState<Date>(
+  const subjectSchedule = useMemo(
+    () => courseSchedule?.get(subjectId.toString()) || [],
+    [courseSchedule, subjectId]
+  );
+
+  const lastEntry = useMemo(
+    () => subjectSchedule[subjectSchedule.length - 1],
+    [subjectSchedule]
+  );
+
+  const [selectedMonth, setSelectedMonth] = useState<Date>(() =>
     lastEntry ? new Date(lastEntry.year, lastEntry.month - 1) : new Date()
   );
-  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceWeek[]>(
-    []
-  );
-  const [stats, setStats] = useState({
-    totalDays: 0,
-    presentDays: 0,
-    absentDays: 0,
-    percentage: 0,
-    streak: 0,
-    longestStreak: 0,
-  });
+
+  const [isDayViewVisible, setIsDayViewVisible] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<{
+    day: AttendanceDay;
+    entries: AttendanceEntry[];
+  } | null>(null);
+
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0);
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handleOpen = () => {
+    if (isModalVisible) return;
+    setIsModalVisible(true);
+    opacity.value = withTiming(1, {
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
+    });
+    scale.value = withTiming(1, {
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
+    });
+  };
+
+  const handleClose = () => {
+    if (!isModalVisible) return;
+    opacity.value = withTiming(0, {
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
+    });
+    scale.value = withTiming(0, {
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
+    });
+    setTimeout(() => {
+      setIsModalVisible(false);
+    }, 300);
+  };
 
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    if (attendanceData) {
-      processAttendanceData();
-    }
-  }, [attendanceData, subjectId, selectedMonth]);
-
-  const processAttendanceData = () => {
-    const subject = attendanceData?.subjects.find(
+  // Memoize subject data to prevent unnecessary recalculations
+  const subjectData = useMemo(() => {
+    return attendanceData?.subjects.find(
       (s) => s.subject.id.toString() === subjectId
     );
-    if (!subject) return;
+  }, [attendanceData, subjectId]);
 
-    // Generate weeks for the selected month
+  // Create a lookup map for better performance
+  const attendanceLookup = useMemo(() => {
+    if (!subjectSchedule.length) return new Map();
+
+    const lookup = new Map<string, any[]>();
+    subjectSchedule.forEach((entry) => {
+      const key = `${entry.year}-${entry.month
+        .toString()
+        .padStart(2, "0")}-${entry.day.toString().padStart(2, "0")}`;
+      const existingEntries = lookup.get(key) || [];
+      lookup.set(key, [...existingEntries, entry]);
+    });
+    return lookup;
+  }, [subjectSchedule]);
+
+  // Memoize attendance history calculation
+  const attendanceHistory = useMemo(() => {
+    if (!subjectData) return [];
+
     const weeks: AttendanceWeek[] = [];
     const monthStart = startOfMonth(selectedMonth);
     const monthEnd = endOfMonth(selectedMonth);
     const today = new Date();
 
-    // Get the first week that contains the first day of the month
     let currentWeekStart = startOfWeek(monthStart);
 
-    // Continue until we've covered all days in the month
     while (currentWeekStart <= monthEnd) {
       const weekEnd = endOfWeek(currentWeekStart);
       const days = eachDayOfInterval({ start: currentWeekStart, end: weekEnd });
@@ -123,45 +265,38 @@ export const SubjectDetailsScreen: React.FC = () => {
             };
           }
 
-          const isPresent = subjectSchedule.find(
-            (entry) =>
-              entry.year === date.getFullYear() &&
-              entry.month === date.getMonth() + 1 &&
-              entry.day === date.getDate()
-          );
+          const dateKey = format(date, "yyyy-MM-dd");
+          const attendanceEntries = attendanceLookup.get(dateKey); // This is now an array
 
-          const noOfSessions = isPresent
-            ? subjectSchedule.filter(
-                (entry) =>
-                  entry.year === date.getFullYear() &&
-                  entry.month === date.getMonth() + 1 &&
-                  entry.day === date.getDate()
-              )?.length
-            : 0;
+          const getStatus = (entries: any[] | undefined) => {
+            if (!entries || entries.length === 0) return "none";
+            if (entries.some((e) => e.attendance.toLowerCase() === "present"))
+              return "present";
+            return "absent";
+          };
 
           return {
-            date: format(date, "yyyy-MM-dd"),
-            status: (isPresent
-              ? isPresent.attendance.toLowerCase()
-              : "none") as "present" | "absent" | "none",
-            sessions: noOfSessions,
+            date: dateKey,
+            status: getStatus(attendanceEntries),
+            sessions: attendanceEntries ? attendanceEntries.length : 0,
           };
         }),
       };
 
       weeks.push(weekData);
-      // Move to the next week
       currentWeekStart = new Date(
         currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000
       );
     }
+    return weeks;
+  }, [subjectData, selectedMonth, attendanceLookup]);
 
-    setAttendanceHistory(weeks);
-
-    // Calculate stats for the selected month
-    const allDays = weeks
+  // Memoize stats calculation
+  const stats = useMemo((): AttendanceStats => {
+    const allDays = attendanceHistory
       .flatMap((week) => week.days)
       .filter((day) => day.status !== "none");
+
     const presentDays = allDays.filter(
       (day) => day.status === "present"
     ).length;
@@ -183,207 +318,70 @@ export const SubjectDetailsScreen: React.FC = () => {
     }
     longestStreak = Math.max(longestStreak, tempStreak);
 
-    setStats({
+    return {
       totalDays: allDays.length,
       presentDays,
       absentDays,
       percentage: allDays.length > 0 ? (presentDays / allDays.length) * 100 : 0,
       streak: currentStreak,
       longestStreak,
-    });
-  };
+    };
+  }, [attendanceHistory]);
 
-  const handlePreviousMonth = () => {
-    setSelectedMonth(subMonths(selectedMonth, 1));
-  };
+  // Memoize cell color calculation
+  const getCellColor = useCallback(
+    (date: string) => {
+      const attendanceEntries = attendanceLookup.get(date);
+      if (!attendanceEntries || attendanceEntries.length === 0) {
+        return colors.border;
+      }
+      if (
+        attendanceEntries.some((e) => e.attendance.toLowerCase() === "present")
+      ) {
+        return colors.success;
+      }
+      return colors.error;
+    },
+    [attendanceLookup, colors]
+  );
 
-  const handleNextMonth = () => {
+  const getCellIntensity = useCallback((sessions: number) => {
+    if (sessions === 0) return "20";
+    return sessions === 1 ? "60" : "90";
+  }, []);
+
+  // Memoize navigation handlers
+  const handlePreviousMonth = useCallback(() => {
+    setSelectedMonth((prev) => subMonths(prev, 1));
+  }, []);
+
+  const handleNextMonth = useCallback(() => {
     const nextMonth = addMonths(selectedMonth, 1);
     const today = new Date();
-    // Don't allow going beyond current month
     if (nextMonth <= today) {
       setSelectedMonth(nextMonth);
     }
-  };
+  }, [selectedMonth]);
 
-  const renderMonthSelector = () => {
-    const today = new Date();
-    const isCurrentMonth =
-      format(selectedMonth, "yyyy-MM") === format(today, "yyyy-MM");
+  const handleCellPress = useCallback(
+    (day: AttendanceDay, isCurrentMonth: boolean) => {
+      if (day.status !== "none" && isCurrentMonth) {
+        const entries = attendanceLookup.get(day.date) || [];
+        setSelectedDay({ day, entries });
+        handleOpen();
+      }
+    },
+    [attendanceLookup]
+  );
 
-    return (
-      <View style={styles.monthSelector}>
-        <TouchableOpacity
-          style={styles.monthNavButton}
-          onPress={handlePreviousMonth}
-        >
-          <Ionicons name="chevron-back" size={20} color={colors.text} />
-        </TouchableOpacity>
+  const handleCloseDayView = useCallback(() => {
+    setIsDayViewVisible(false);
+    setSelectedDay(null);
+  }, []);
 
-        <Text style={styles.monthTitle}>
-          {format(selectedMonth, "MMMM yyyy")}
-        </Text>
-
-        <TouchableOpacity
-          style={[
-            styles.monthNavButton,
-            isCurrentMonth && styles.monthNavButtonDisabled,
-          ]}
-          onPress={handleNextMonth}
-          disabled={isCurrentMonth}
-        >
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={isCurrentMonth ? colors.textSecondary : colors.text}
-          />
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  const getCellColor = (date) => {
-    const dayDate = date.split("-")[2]; // Extract day from date string
-    const year = date.split("-")[0];
-    const month = date.split("-")[1];
-    const day = subjectSchedule.find(
-      (entry) =>
-        entry.year === parseInt(year) &&
-        entry.month === parseInt(month) &&
-        entry.day === parseInt(dayDate)
-    );
-    switch (day?.attendance.toLowerCase()) {
-      case "present":
-        return colors.success;
-      case "absent":
-        return colors.error;
-      case "none":
-      default:
-        return colors.border;
-    }
-  };
-
-  const getCellIntensity = (sessions: number) => {
-    if (sessions === 0) return "20";
-    return sessions === 1 ? "60" : "90";
-  };
-
-  const renderAttendanceGrid = () => {
-    return (
-      <View style={styles.gridContainer}>
-        {renderMonthSelector()}
-
-        <View style={styles.grid}>
-          {/* Day labels header */}
-          <View style={styles.dayLabelsRow}>
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-              (day, index) => (
-                <View key={day} style={styles.dayLabelContainer}>
-                  <Text style={styles.dayLabel}>{day}</Text>
-                </View>
-              )
-            )}
-          </View>
-
-          {/* Calendar grid */}
-          {attendanceHistory.map((week, weekIndex) => (
-            <View key={weekIndex} style={styles.weekRow}>
-              {week.days.map((day, dayIndex) => {
-                const dayDate = new Date(day.date);
-                const isCurrentMonth =
-                  dayDate >= startOfMonth(selectedMonth) &&
-                  dayDate <= endOfMonth(selectedMonth);
-
-                return (
-                  <TouchableOpacity
-                    key={dayIndex}
-                    style={[
-                      styles.cell,
-                      {
-                        backgroundColor: isCurrentMonth
-                          ? getCellColor(day.date) +
-                            getCellIntensity(day.sessions)
-                          : colors.border + "10",
-                        borderColor: isCurrentMonth
-                          ? getCellColor(day.date)
-                          : colors.border + "30",
-                        opacity: isCurrentMonth ? 1 : 0.3,
-                      },
-                    ]}
-                    onPress={() => {
-                      if (day.status !== "none" && isCurrentMonth) {
-                        // Show day details
-                      }
-                    }}
-                  >
-                    <View style={styles.cellContent}>
-                      {/* Show day number for current month */}
-                      {isCurrentMonth && (
-                        <Text
-                          style={[
-                            styles.dayNumber,
-                            {
-                              color:
-                                day.status === "present"
-                                  ? colors.surface
-                                  : colors.text,
-                            },
-                          ]}
-                        >
-                          {dayDate.getDate()}
-                        </Text>
-                      )}
-                      {/* Show sessions count if present */}
-                      {day.sessions > 0 && isCurrentMonth && (
-                        <Text style={styles.sessionCount}>{day.sessions}</Text>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.legend}>
-          <Text style={styles.legendText}>Less</Text>
-          <View style={styles.legendCells}>
-            <View
-              style={[
-                styles.legendCell,
-                { backgroundColor: colors.border + "40" },
-              ]}
-            />
-            <View
-              style={[
-                styles.legendCell,
-                { backgroundColor: colors.success + "40" },
-              ]}
-            />
-            <View
-              style={[
-                styles.legendCell,
-                { backgroundColor: colors.success + "60" },
-              ]}
-            />
-            <View
-              style={[
-                styles.legendCell,
-                { backgroundColor: colors.success + "80" },
-              ]}
-            />
-            <View
-              style={[styles.legendCell, { backgroundColor: colors.success }]}
-            />
-          </View>
-          <Text style={styles.legendText}>More</Text>
-        </View>
-      </View>
-    );
-  };
-
-  const renderStats = () => {
-    const statCards = [
+  // Memoize stat cards data
+  const statCards = useMemo(
+    () => [
       {
         title: "Total Classes",
         value: stats.totalDays.toString(),
@@ -420,35 +418,138 @@ export const SubjectDetailsScreen: React.FC = () => {
         icon: "trophy-outline",
         color: colors.accent,
       },
-    ];
+    ],
+    [stats, colors]
+  );
+
+  // Memoized render functions
+  const renderMonthSelector = useCallback(() => {
+    const today = new Date();
+    const isCurrentMonth =
+      format(selectedMonth, "yyyy-MM") === format(today, "yyyy-MM");
 
     return (
-      <View style={styles.statsContainer}>
-        {statCards.map((stat, index) => (
-          <View key={index} style={styles.statCard}>
-            <View
-              style={[styles.statIcon, { backgroundColor: stat.color + "20" }]}
-            >
-              <Ionicons name={stat.icon as any} size={20} color={stat.color} />
-            </View>
-            <Text style={styles.statValue}>{stat.value}</Text>
-            <Text style={styles.statTitle}>{stat.title}</Text>
-          </View>
-        ))}
+      <View style={styles.monthSelector}>
+        <TouchableOpacity
+          style={styles.monthNavButton}
+          onPress={handlePreviousMonth}
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.text} />
+        </TouchableOpacity>
+
+        <Text style={[styles.monthTitle, { color: colors.text }]}>
+          {format(selectedMonth, "MMMM yyyy")}
+        </Text>
+
+        <TouchableOpacity
+          style={[
+            styles.monthNavButton,
+            isCurrentMonth && styles.monthNavButtonDisabled,
+          ]}
+          onPress={handleNextMonth}
+          disabled={isCurrentMonth}
+        >
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={isCurrentMonth ? colors.textSecondary : colors.text}
+          />
+        </TouchableOpacity>
       </View>
     );
-  };
+  }, [selectedMonth, colors, handlePreviousMonth, handleNextMonth]);
+
+  const renderStats = useCallback(
+    () => (
+      <View style={styles.statsContainer}>
+        {statCards.map((stat, index) => (
+          <StatCard key={index} stat={stat} colors={colors} />
+        ))}
+      </View>
+    ),
+    [statCards, colors]
+  );
+
+  const renderAttendanceGrid = useCallback(
+    () => (
+      <View style={[styles.gridContainer, { backgroundColor: colors.surface }]}>
+        {renderMonthSelector()}
+
+        <View style={styles.grid}>
+          {/* Day labels header */}
+          <View style={styles.dayLabelsRow}>
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+              <View key={day} style={styles.dayLabelContainer}>
+                <Text
+                  style={[styles.dayLabel, { color: colors.textSecondary }]}
+                >
+                  {day}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Calendar grid */}
+          {attendanceHistory.map((week, weekIndex) => (
+            <View key={weekIndex} style={styles.weekRow}>
+              {week.days.map((day, dayIndex) => {
+                const dayDate = new Date(day.date);
+                const isCurrentMonth =
+                  dayDate >= startOfMonth(selectedMonth) &&
+                  dayDate <= endOfMonth(selectedMonth);
+
+                return (
+                  <AttendanceCell
+                    key={dayIndex}
+                    day={day}
+                    dayIndex={dayIndex}
+                    isCurrentMonth={isCurrentMonth}
+                    cellColor={getCellColor(day.date)}
+                    cellIntensity={getCellIntensity(day.sessions)}
+                    colors={colors}
+                    onPress={() => handleCellPress(day, isCurrentMonth)}
+                  />
+                );
+              })}
+            </View>
+          ))}
+        </View>
+      </View>
+    ),
+    [
+      attendanceHistory,
+      selectedMonth,
+      colors,
+      getCellColor,
+      getCellIntensity,
+      handleCellPress,
+      renderMonthSelector,
+    ]
+  );
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading attendance data...</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+          Loading attendance data...
+        </Text>
       </View>
     );
   }
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, backgroundColor: colors.background },
+      ]}
+    >
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -457,10 +558,15 @@ export const SubjectDetailsScreen: React.FC = () => {
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.subjectName}>{subjectName}</Text>
-          <Text style={styles.subjectCode}>{subjectCode}</Text>
+          <Text style={[styles.subjectName, { color: colors.text }]}>
+            {subjectName}
+          </Text>
+          <Text style={[styles.subjectCode, { color: colors.textSecondary }]}>
+            {subjectCode}
+          </Text>
         </View>
       </View>
+
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -468,217 +574,210 @@ export const SubjectDetailsScreen: React.FC = () => {
       >
         <View style={styles.content}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Attendance Overview</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Attendance Overview
+            </Text>
             {renderStats()}
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Attendance History</Text>
-            <Text style={styles.sectionDescription}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Attendance History
+            </Text>
+            <Text
+              style={[
+                styles.sectionDescription,
+                { color: colors.textSecondary },
+              ]}
+            >
               Your attendance pattern for {format(selectedMonth, "MMMM yyyy")}
             </Text>
             {renderAttendanceGrid()}
           </View>
         </View>
       </ScrollView>
+
+      <AttendanceDayView
+        isVisible={isModalVisible}
+        onClose={handleClose}
+        data={selectedDay}
+        animatedStyle={animatedStyle}
+        subjectId={subjectId}
+        subjectName={subjectName}
+        onUpdate={() => {
+          // Refresh attendance data when user updates attendance
+          refreshAttendance();
+        }}
+      />
     </View>
   );
 };
 
-const createStyles = (colors: ThemeColors) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    scrollView: {
-      flex: 1,
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: colors.background,
-    },
-    loadingText: {
-      marginTop: 16,
-      fontSize: 16,
-      color: colors.textSecondary,
-    },
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-    },
-    backButton: {
-      padding: 8,
-      marginRight: 12,
-    },
-    headerContent: {
-      flex: 1,
-    },
-    subjectName: {
-      fontSize: 20,
-      fontWeight: "bold",
-      color: colors.text,
-    },
-    subjectCode: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginTop: 2,
-    },
-    content: {
-      paddingHorizontal: 20,
-    },
-    section: {
-      marginVertical: 20,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    sectionDescription: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginBottom: 16,
-    },
-    statsContainer: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      justifyContent: "space-between",
-    },
-    statCard: {
-      width: "48%",
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 12,
-      alignItems: "center",
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
-    },
-    statIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: 8,
-    },
-    statValue: {
-      fontSize: 24,
-      fontWeight: "bold",
-      color: colors.text,
-      marginBottom: 4,
-    },
-    statTitle: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      textAlign: "center",
-    },
-    monthSelector: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: 16,
-      paddingHorizontal: 8,
-    },
-    monthNavButton: {
-      padding: 8,
-      borderRadius: 20,
-      backgroundColor: colors.background,
-    },
-    monthNavButtonDisabled: {
-      opacity: 0.5,
-    },
-    monthTitle: {
-      fontSize: 16,
-      fontWeight: "600",
-      color: colors.text,
-    },
-    gridContainer: {
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      padding: 16,
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
-    },
-    grid: {
-      alignItems: "center",
-    },
-    dayLabelsRow: {
-      flexDirection: "row",
-      width: "100%",
-      marginBottom: 8,
-    },
-    dayLabelContainer: {
-      width: CELL_SIZE,
-      height: 20,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    dayLabel: {
-      fontSize: 10,
-      color: colors.textSecondary,
-      fontWeight: "500",
-    },
-    weekRow: {
-      flexDirection: "row",
-      width: "100%",
-      marginBottom: 2,
-    },
-    cell: {
-      width: CELL_SIZE - 2,
-      height: CELL_SIZE - 2,
-      borderRadius: 4,
-      margin: 1,
-      borderWidth: 1,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    cellContent: {
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    dayNumber: {
-      fontSize: 10,
-      fontWeight: "600",
-    },
-    sessionCount: {
-      fontSize: 6,
-      color: colors.surface,
-      fontWeight: "bold",
-      marginTop: 2,
-    },
-    legend: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      marginTop: 16,
-    },
-    legendText: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      marginHorizontal: 8,
-    },
-    legendCells: {
-      flexDirection: "row",
-    },
-    legendCell: {
-      width: 12,
-      height: 12,
-      borderRadius: 2,
-      marginHorizontal: 2,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-  });
+// Move styles outside component to prevent recreation
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerContent: {
+    flex: 1,
+  },
+  subjectName: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  subjectCode: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  content: {
+    paddingHorizontal: 20,
+  },
+  section: {
+    marginVertical: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  sectionDescription: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  statCard: {
+    width: "48%",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  statTitle: {
+    fontSize: 12,
+    textAlign: "center",
+  },
+  monthSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  monthNavButton: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  monthNavButtonDisabled: {
+    opacity: 0.5,
+  },
+  monthTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  gridContainer: {
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  grid: {
+    alignItems: "center",
+  },
+  dayLabelsRow: {
+    flexDirection: "row",
+    width: "100%",
+    marginBottom: 8,
+  },
+  dayLabelContainer: {
+    width: CELL_SIZE,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayLabel: {
+    fontSize: 10,
+    fontWeight: "500",
+  },
+  weekRow: {
+    flexDirection: "row",
+    width: "100%",
+    marginBottom: 2,
+  },
+  cell: {
+    width: CELL_SIZE - 2,
+    height: CELL_SIZE - 2,
+    borderRadius: 4,
+    margin: 1,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cellContent: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayNumber: {
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  sessionCount: {
+    fontSize: 6,
+    fontWeight: "bold",
+    marginTop: 2,
+  },
+});
+
+const createStyles = (colors: ThemeColors) => ({
+  ...styles,
+  container: {
+    ...styles.container,
+    backgroundColor: colors.background,
+  },
+});

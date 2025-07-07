@@ -17,7 +17,7 @@ export class Database {
   }
 
   private initTables() {
-    // Cache table for general caching
+
     this.db.execSync(`
       CREATE TABLE IF NOT EXISTS cache (
         key TEXT PRIMARY KEY,
@@ -54,6 +54,28 @@ export class Database {
         updated_at INTEGER NOT NULL
       )
     `);
+
+    // Course schedule table with user overrides and conflict tracking
+    this.db.execSync(`
+      CREATE TABLE IF NOT EXISTS course_schedule (
+        id INTEGER PRIMARY KEY,
+        subject_id TEXT NOT NULL,
+        year INTEGER NOT NULL,
+        month INTEGER NOT NULL,
+        day INTEGER NOT NULL,
+        hour INTEGER NOT NULL,
+        teacher_attendance TEXT,
+        user_attendance TEXT,
+        final_attendance TEXT,
+        is_conflict INTEGER DEFAULT 0,
+        is_user_override INTEGER DEFAULT 0,
+        last_teacher_update INTEGER,
+        last_user_update INTEGER,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        UNIQUE(subject_id, year, month, day, hour)
+      )
+    `);
   }
 
   public getDatabase(): SQLite.SQLiteDatabase {
@@ -64,6 +86,14 @@ export class Database {
     this.db.execSync('DELETE FROM cache');
     this.db.execSync('DELETE FROM attendance_subjects');
     this.db.execSync('DELETE FROM attendance_summary');
+    // Only clear teacher attendance but preserve user overrides
+    this.db.execSync(`UPDATE course_schedule 
+                      SET teacher_attendance = NULL, 
+                          final_attendance = user_attendance,
+                          is_conflict = 0,
+                          last_teacher_update = NULL
+                      WHERE is_user_override = 1`);
+    this.db.execSync('DELETE FROM course_schedule WHERE is_user_override = 0');
   }
 }
 

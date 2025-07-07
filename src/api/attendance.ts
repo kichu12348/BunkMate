@@ -71,14 +71,19 @@ class AttendanceService {
     setCourseSchedule?: (
       courseSchedule: Map<
         string,
-        { year: number; month: number; day: number; hour: number }[]
+        { year: number; month: number; day: number; hour: number; attendance?: string }[]
       >
     ) => void
   ): Promise<AttendanceDetailedResponse> {
     // Check cache first unless force refresh
     if (!forceRefresh) {
       const cachedData = await attendanceCache.getCachedAttendanceData();
-      if (cachedData) {
+      const cachedSchedule = await attendanceCache.getCachedCourseSchedule();
+      
+      if (cachedData && cachedSchedule && setCourseSchedule) {
+        setCourseSchedule(cachedSchedule);
+        return cachedData;
+      } else if (cachedData) {
         return cachedData;
       }
     }
@@ -86,24 +91,35 @@ class AttendanceService {
     try {
       const response: AxiosResponse<AttendanceApiResponse> =
         await this.api.post(API_CONFIG.ENDPOINTS.ATTENDANCE.DETAILED, {});
+        
+      const courseSchedule = daysAttended(response.data);
+      
+      // Cache the course schedule
+      await attendanceCache.cacheCourseSchedule(courseSchedule);
+      
       if (setCourseSchedule) {
-        const courseSchedule = daysAttended(response.data);
         setCourseSchedule(courseSchedule);
       }
+      
       const transformedData = this.transformAttendanceResponse(response.data);
 
-      // Cache the data
+      // Cache the attendance data
       await attendanceCache.cacheAttendanceData(transformedData);
 
       return transformedData;
     } catch (error) {
       // If API fails, try to return cached data as fallback
       const cachedData = await attendanceCache.getCachedAttendanceData();
-      if (cachedData) {
-        console.warn("API failed, returning cached data:", error);
+      const cachedSchedule = await attendanceCache.getCachedCourseSchedule();
+      
+      if (cachedData && cachedSchedule && setCourseSchedule) {
+        setCourseSchedule(cachedSchedule);
+        return cachedData;
+      } else if (cachedData) {
         return cachedData;
       }
-      throw error;
+
+      throw this.handleApiError(error);
     }
   }
 
@@ -260,7 +276,8 @@ class AttendanceService {
   }
 
   async clearAttendanceCache(): Promise<void> {
-    await attendanceCache.clearAttendanceCache();
+    await attendanceCache.clearCache();
+    await attendanceCache.clearCourseScheduleCache();
   }
 }
 

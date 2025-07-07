@@ -19,6 +19,9 @@ export const API_CONFIG = {
     SET:{
         DEFAULT_YEAR:"/user/setting/default_academic_year",
         DEFAULT_SEMESTER:"/user/setting/default_semester", 
+    },
+    SURVEY:{
+      GET:'/studfbsurveys'
     }
   },
   TIMEOUT: 10000,
