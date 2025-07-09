@@ -170,6 +170,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     margin: 20,
     maxHeight: '60%',
     width: '80%',
+    overflow: 'hidden',
     shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,

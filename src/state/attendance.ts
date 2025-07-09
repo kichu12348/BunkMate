@@ -1,28 +1,22 @@
 import { create } from "zustand";
-import { AttendanceDetailedResponse, SubjectAttendance } from "../types/api";
+import {
+  AttendanceDetailedResponse,
+  SubjectAttendance,
+  CourseSchedule,
+} from "../types/api";
 import { attendanceService } from "../api/attendance";
-import { authService } from "../api/auth";
-import { useSettingsStore } from "./settings";
 
 interface AttendanceState {
   data: AttendanceDetailedResponse | null;
   isLoading: boolean;
   error: string | null;
   lastUpdated: Date | null;
-  courseSchedule: Map<
-    string,
-    {
-      year: number;
-      month: number;
-      day: number;
-      hour: number;
-      attendance?: string;
-    }[]
-  > | null;
+  courseSchedule: Map<string, CourseSchedule[]> | null;
 
   // Actions
   fetchAttendance: (forceRefresh?: boolean) => Promise<void>;
   refreshAttendance: () => Promise<void>;
+  refreshCourseSchedule: () => Promise<void>;
   getSubjectAttendance: (subjectId: number) => SubjectAttendance | null;
   clearError: () => void;
   clearCache: () => Promise<void>;
@@ -61,6 +55,18 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
 
   refreshAttendance: async () => {
     await get().fetchAttendance(true);
+  },
+
+  refreshCourseSchedule: async () => {
+    try {
+      // Get updated course schedule from database without API call
+      const cachedSchedule = await attendanceService.getCachedCourseSchedule();
+      if (cachedSchedule) {
+        set({ courseSchedule: cachedSchedule });
+      }
+    } catch (error) {
+      console.error("Error refreshing course schedule:", error);
+    }
   },
 
   getSubjectAttendance: (subjectId: number) => {

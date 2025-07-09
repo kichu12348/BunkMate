@@ -52,6 +52,13 @@ interface AttendanceDay {
 interface AttendanceEntry {
   attendance: string;
   hour: number;
+  is_entered_by_professor?: number; // 0 or 1
+  is_entered_by_student?: number; // 0 or 1
+  is_conflict?: number; // 0 or 1
+  user_attendance?: string;
+  teacher_attendance?: string;
+  final_attendance?: string;
+  // Add any other fields from CourseSchedule that might be needed
 }
 
 interface AttendanceWeek {
@@ -220,20 +227,54 @@ export const SubjectDetailsScreen: React.FC = () => {
     );
   }, [attendanceData, subjectId]);
 
-  // Create a lookup map for better performance
+  // Create a lookup map for better performance - only process current month and adjacent months
   const attendanceLookup = useMemo(() => {
     if (!subjectSchedule.length) return new Map();
 
-    const lookup = new Map<string, any[]>();
-    subjectSchedule.forEach((entry) => {
+    // Get the date range for current month +/- 1 month for better performance
+    const currentMonth = selectedMonth;
+    const startMonth = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth() - 1,
+      1
+    );
+    const endMonth = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth() + 2,
+      0
+    ); // Last day of next month
+
+    const lookup = new Map<string, AttendanceEntry[]>();
+
+    // Filter entries to only those in the relevant date range
+    const relevantEntries = subjectSchedule.filter((entry) => {
+      const entryDate = new Date(entry.year, entry.month - 1, entry.day);
+      return entryDate >= startMonth && entryDate <= endMonth;
+    });
+
+    relevantEntries.forEach((entry) => {
       const key = `${entry.year}-${entry.month
         .toString()
         .padStart(2, "0")}-${entry.day.toString().padStart(2, "0")}`;
+
+      // Map CourseSchedule to AttendanceEntry with all the required fields
+      const attendanceEntry: AttendanceEntry = {
+        attendance: entry.final_attendance || entry.teacher_attendance || "A",
+        hour: entry.hour,
+        is_entered_by_professor: entry.is_entered_by_professor,
+        is_entered_by_student: entry.is_entered_by_student,
+        is_conflict: entry.is_conflict,
+        user_attendance: entry.user_attendance || undefined,
+        teacher_attendance: entry.teacher_attendance || undefined,
+        final_attendance: entry.final_attendance || undefined,
+      };
+
       const existingEntries = lookup.get(key) || [];
-      lookup.set(key, [...existingEntries, entry]);
+      lookup.set(key, [...existingEntries, attendanceEntry]);
     });
+
     return lookup;
-  }, [subjectSchedule]);
+  }, [subjectSchedule, selectedMonth]);
 
   // Memoize attendance history calculation
   const attendanceHistory = useMemo(() => {
@@ -269,8 +310,8 @@ export const SubjectDetailsScreen: React.FC = () => {
           const attendanceEntries = attendanceLookup.get(dateKey); // This is now an array
 
           const getStatus = (entries: any[] | undefined) => {
-            if (!entries || entries.length === 0) return "none";
-            if (entries.some((e) => e.attendance.toLowerCase() === "present"))
+            if (!entries || entries?.length === 0) return "none";
+            if (entries?.some((e) => e.attendance?.toLowerCase() === "present"))
               return "present";
             return "absent";
           };
@@ -336,7 +377,7 @@ export const SubjectDetailsScreen: React.FC = () => {
         return colors.border;
       }
       if (
-        attendanceEntries.some((e) => e.attendance.toLowerCase() === "present")
+        attendanceEntries.some((e) => e.attendance?.toLowerCase() === "present")
       ) {
         return colors.success;
       }
@@ -366,18 +407,14 @@ export const SubjectDetailsScreen: React.FC = () => {
   const handleCellPress = useCallback(
     (day: AttendanceDay, isCurrentMonth: boolean) => {
       if (day.status !== "none" && isCurrentMonth) {
-        const entries = attendanceLookup.get(day.date) || [];
+        const entries = attendanceLookup?.get(day.date) || [];
+        console.log("Selected Day:", day, "Entries:", entries);
         setSelectedDay({ day, entries });
         handleOpen();
       }
     },
     [attendanceLookup]
   );
-
-  const handleCloseDayView = useCallback(() => {
-    setIsDayViewVisible(false);
-    setSelectedDay(null);
-  }, []);
 
   // Memoize stat cards data
   const statCards = useMemo(
@@ -597,18 +634,19 @@ export const SubjectDetailsScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      <AttendanceDayView
-        isVisible={isModalVisible}
-        onClose={handleClose}
-        data={selectedDay}
-        animatedStyle={animatedStyle}
-        subjectId={subjectId}
-        subjectName={subjectName}
-        onUpdate={() => {
-          // Refresh attendance data when user updates attendance
-          refreshAttendance();
-        }}
-      />
+      {selectedDay && (
+        <AttendanceDayView
+          isVisible={isModalVisible}
+          onClose={handleClose}
+          data={selectedDay}
+          animatedStyle={animatedStyle}
+          subjectId={subjectId}
+          subjectName={subjectName}
+          onUpdate={() => {
+            refreshAttendance();
+          }}
+        />
+      )}
     </View>
   );
 };

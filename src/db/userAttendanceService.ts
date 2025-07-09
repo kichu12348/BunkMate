@@ -3,6 +3,7 @@ import { database } from './database';
 export interface AttendanceOverride {
   id?: number;
   subject_id: string;
+  attendance: string | null; // 'P' for present, 'A' for absent
   year: number;
   month: number;
   day: number;
@@ -10,8 +11,10 @@ export interface AttendanceOverride {
   teacher_attendance: string | null;
   user_attendance: string | null;
   final_attendance: string | null;
-  is_conflict: boolean;
-  is_user_override: boolean;
+  is_conflict: number; // 0 or 1
+  is_user_override: number; // 0 or 1
+  is_entered_by_professor: number; // 0 or 1
+  is_entered_by_student: number; // 0 or 1
   last_teacher_update?: number;
   last_user_update?: number;
 }
@@ -55,6 +58,7 @@ class UserAttendanceService {
            SET user_attendance = ?, 
                final_attendance = ?,
                is_user_override = 1,
+               is_entered_by_student = 1,
                is_conflict = ?,
                last_user_update = ?,
                updated_at = ?
@@ -77,8 +81,8 @@ class UserAttendanceService {
         this.db.runSync(
           `INSERT INTO course_schedule 
            (subject_id, year, month, day, hour, user_attendance, final_attendance, 
-            is_user_override, is_conflict, last_user_update, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, ?)`,
+            is_user_override, is_entered_by_student, is_conflict, last_user_update, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 0, ?, ?, ?)`,
           [subjectId, year, month, day, hour, attendance, attendance, now, now, now]
         );
       }
@@ -124,6 +128,7 @@ class UserAttendanceService {
           `UPDATE course_schedule 
            SET teacher_attendance = ?, 
                final_attendance = ?,
+               is_entered_by_professor = 1,
                is_conflict = ?,
                last_teacher_update = ?,
                updated_at = ?
@@ -146,8 +151,8 @@ class UserAttendanceService {
         this.db.runSync(
           `INSERT INTO course_schedule 
            (subject_id, year, month, day, hour, teacher_attendance, final_attendance, 
-            is_user_override, is_conflict, last_teacher_update, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)`,
+            is_user_override, is_entered_by_professor, is_conflict, last_teacher_update, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1, 0, ?, ?, ?)`,
           [subjectId, year, month, day, hour, attendance, attendance, now, now, now]
         );
       }
@@ -370,6 +375,32 @@ class UserAttendanceService {
     } catch (error) {
       console.error('Error deleting user override:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Check if there's a time conflict for a specific hour/day across all subjects
+   */
+  checkTimeConflict(
+    excludeSubjectId: string,
+    year: number,
+    month: number,
+    day: number,
+    hour: number
+  ): boolean {
+    try {
+      const conflictingRecord = this.db.getFirstSync(
+        `SELECT * FROM course_schedule 
+         WHERE year = ? AND month = ? AND day = ? AND hour = ? 
+         AND subject_id != ?
+         AND (teacher_attendance IS NOT NULL OR user_attendance IS NOT NULL)`,
+        [year, month, day, hour, excludeSubjectId]
+      ) as AttendanceOverride | null;
+      
+      return !!conflictingRecord;
+    } catch (error) {
+      console.error('Error checking time conflict:', error);
+      return false;
     }
   }
 }

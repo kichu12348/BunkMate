@@ -11,6 +11,7 @@ import {
   AttendanceType,
   DailyAttendance,
   ApiError,
+  CourseSchedule
 } from "../types/api";
 import { daysAttended } from "../utils/daysAttended";
 
@@ -71,22 +72,22 @@ class AttendanceService {
     setCourseSchedule?: (
       courseSchedule: Map<
         string,
-        { year: number; month: number; day: number; hour: number; attendance?: string }[]
+        CourseSchedule[]
       >
     ) => void
   ): Promise<AttendanceDetailedResponse> {
     // Check cache first unless force refresh
-    if (!forceRefresh) {
-      const cachedData = await attendanceCache.getCachedAttendanceData();
-      const cachedSchedule = await attendanceCache.getCachedCourseSchedule();
+    // if (!forceRefresh) {
+    //   const cachedData = await attendanceCache.getCachedAttendanceData();
+    //   const cachedSchedule = await attendanceCache.getCachedCourseSchedule();
       
-      if (cachedData && cachedSchedule && setCourseSchedule) {
-        setCourseSchedule(cachedSchedule);
-        return cachedData;
-      } else if (cachedData) {
-        return cachedData;
-      }
-    }
+    //   if (cachedData && cachedSchedule && setCourseSchedule) {
+    //     setCourseSchedule(cachedSchedule);
+    //     return cachedData;
+    //   } else if (cachedData) {
+    //     return cachedData;
+    //   }
+    // }
 
     try {
       const response: AxiosResponse<AttendanceApiResponse> =
@@ -95,7 +96,7 @@ class AttendanceService {
       const courseSchedule = daysAttended(response.data);
       
       // Cache the course schedule
-      await attendanceCache.cacheCourseSchedule(courseSchedule);
+      // await attendanceCache.cacheCourseSchedule(courseSchedule);
       
       if (setCourseSchedule) {
         setCourseSchedule(courseSchedule);
@@ -104,7 +105,7 @@ class AttendanceService {
       const transformedData = this.transformAttendanceResponse(response.data);
 
       // Cache the attendance data
-      await attendanceCache.cacheAttendanceData(transformedData);
+      // await attendanceCache.cacheAttendanceData(transformedData);
 
       return transformedData;
     } catch (error) {
@@ -278,6 +279,10 @@ class AttendanceService {
   async clearAttendanceCache(): Promise<void> {
     await attendanceCache.clearCache();
     await attendanceCache.clearCourseScheduleCache();
+  }
+
+  async getCachedCourseSchedule(): Promise<Map<string, CourseSchedule[]> | null> {
+    return await attendanceCache.getCachedCourseSchedule();
   }
 }
 

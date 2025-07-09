@@ -346,3 +346,28 @@ export interface SurveyResponse {
 export interface SurveySubmissionRequest {
   responses: SurveyResponse[];
 }
+
+ type AttendanceValue = "Present" | "Absent" | "Late" | "P" | "A" | "L" | string;
+
+export interface CourseSchedule{
+  id: number;
+  subject_id: string;
+  day: number;
+  hour: number;
+  month: number;
+  year: number;
+
+  final_attendance: AttendanceValue;
+  teacher_attendance: AttendanceValue | null;
+  user_attendance: AttendanceValue | null;
+
+  is_conflict: number; // 0 | 1
+  is_user_override: number; // 0 | 1  
+  is_entered_by_professor: number; // 0 | 1
+  is_entered_by_student: number; // 0 | 1
+
+  created_at: number;             // UNIX timestamp (ms)
+  updated_at: number;             // UNIX timestamp (ms)
+  last_teacher_update: number | null;
+  last_user_update: number | null;
+};

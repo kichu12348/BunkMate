@@ -48,14 +48,10 @@ function getHourAttendance(
     return null;
 }
 
-// --- New interface for the function's output structure ---
-interface CourseScheduleEntry {
-    year: number;
-    month: number;
-    day: number;
-    hour: number;
-    attendance?: string; // Optional attendance type name
-}
+import { CourseSchedule } from "../types/api";
+// --- New type for the function's output structure ---
+// Extend CourseSchedule to include 'attendance'
+type CourseScheduleEntry = CourseSchedule & { attendance?: string };
 
 export function daysAttended(
     data: AttendanceApiResponse
@@ -85,14 +81,27 @@ export function daysAttended(
                 if (hourAttendance) {
                     const courseIdStr = hourAttendance.id.toString();
                     const schedule = acc.get(courseIdStr);
-
-                    // Create the new entry including the attendance type name
+                    const now = Date.now();
+                    
                     const newEntry: CourseScheduleEntry = {
-                        year,
-                        month,
-                        day,
+                        id: 0, // Will be set by database
+                        subject_id: hourAttendance.id.toString(),
+                        day: day,
                         hour: sessionToHourMap[sessionId],
-                        attendance: hourAttendance.attendance, // Added this line
+                        month: month,
+                        year: year,
+                        final_attendance: hourAttendance.attendance || "Absent",
+                        teacher_attendance: hourAttendance.attendance || null,
+                        user_attendance: null,
+                        is_conflict: 0,
+                        is_user_override: 0,
+                        is_entered_by_professor: 1, // Since this comes from professor's data
+                        is_entered_by_student: 0,
+                        created_at: now,
+                        updated_at: now,
+                        last_teacher_update: now,
+                        last_user_update: null,
+                        attendance: hourAttendance.attendance, // Additional field from the extended type
                     };
 
                     if (schedule) {

@@ -15,7 +15,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f172a"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.kichu12348.BunkMate"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -31,7 +32,19 @@
           },
           "imageWidth": 200
         }
-      ]
-    ]
+      ],
+      "expo-sqlite"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "578c8adf-d6a4-4607-af55-4cac93314c20"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/578c8adf-d6a4-4607-af55-4cac93314c20"
+    }
   }
 }

@@ -114,6 +114,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         selectedYear: savedYear || getDefaultAcademicYear(),
         selectedSemester: savedSemester || getDefaultSemester(),
       });
+      await authService.setDefaultYear(savedYear || getDefaultAcademicYear());
+      await authService.setDefaultSemester(savedSemester || getDefaultSemester());
     } catch (error) {
       console.warn("Failed to initialize settings:", error);
       // Use defaults

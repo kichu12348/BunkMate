@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { useAuthStore } from "./src/state/auth";
 import { useSettingsStore } from "./src/state/settings";
@@ -10,14 +9,16 @@ import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { enableScreens } from "react-native-screens";
-import * as Updated from "expo-updates";
+import { StatusBar } from "react-native";
+import * as SystemUI from 'expo-system-ui';
+import * as Update from "expo-updates";
 enableScreens();
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
-  const { colors, isDark, initializeTheme } = useTheme();
+  const { initializeTheme, colors } = useTheme();
   const { isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
   const initializeSettings = useSettingsStore(
     (state) => state.initializeSettings
@@ -39,15 +40,27 @@ export default function App() {
     initialize();
   }, []);
 
+  // Start background sync when user is authenticated
+  // useEffect(() => {
+  //   if (isAuthenticated && !isLoading) {
+  //     console.log('🚀 User authenticated, starting background sync...');
+  //     backgroundSyncService.startAppSync();
+  //     backgroundSyncService.startPeriodicSync();
+  //   } else if (!isAuthenticated) {
+  //     // Stop periodic sync when user logs out
+  //     backgroundSyncService.stopPeriodicSync();
+  //   }
+  // }, [isAuthenticated, isLoading]);
+
   // Handle updates
   useEffect(() => {
     const checkForUpdates = async () => {
       try {
-        if(__DEV__) return; // Skip update check in development mode
-        const update = await Updated.checkForUpdateAsync();
+        if (__DEV__) return; // Skip update check in development mode
+        const update = await Update.checkForUpdateAsync();
         if (update.isAvailable) {
-          await Updated.fetchUpdateAsync();
-          await Updated.reloadAsync();
+          await Update.fetchUpdateAsync();
+          await Update.reloadAsync();
         }
       } catch (error) {
         console.error("Error checking for updates:", error);
@@ -56,12 +69,28 @@ export default function App() {
     checkForUpdates();
   }, []);
 
+
+  // Set navigation bar color
+  useEffect(() => {
+    const setNavigationBarColor = async () => {
+      try {
+        SystemUI.setBackgroundColorAsync(colors.background);
+      } catch (error) {
+        console.error("Error setting navigation bar color:", error);
+      }
+    };
+    setNavigationBarColor();
+  }, [colors.background]);
+
   return (
     <GestureHandlerRootView>
+      <StatusBar
+        barStyle="light-content"
+        translucent
+        backgroundColor="transparent"
+      />
       <SafeAreaProvider>
         <NavigationContainer>
-          <StatusBar style={isDark ? "light" : "dark"} translucent />
-
           {isAuthenticated ? <RootNavigator /> : <LoginScreen />}
         </NavigationContainer>
       </SafeAreaProvider>

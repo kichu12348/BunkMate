@@ -349,7 +349,7 @@ export const SurveysScreen: React.FC = () => {
       <Text style={styles.emptyMessage}>
         {filterType === "all"
           ? "There are no surveys available at the moment."
-          : `No surveys match the '${filterType}' filter.`}
+          : "No surveys"}
       </Text>
     </View>
   );
