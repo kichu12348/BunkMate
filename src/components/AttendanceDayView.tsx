@@ -776,15 +776,17 @@ const AttendanceDayView = ({
         </View>
       </View>
       <Animated.View style={[styles.editModalContainer, modalAnimStyle]}>
-        <AttendanceEditModal
-          close={handleCloseEditModal}
-          data={editData}
-          colors={colors}
-          isVisible={showEditModal}
-          subjectId={subjectId}
-          subjectName={subjectName}
-          onUpdate={onUpdate}
-        />
+        {editData && (
+          <AttendanceEditModal
+            close={handleCloseEditModal}
+            data={editData}
+            colors={colors}
+            isVisible={showEditModal}
+            subjectId={subjectId}
+            subjectName={subjectName}
+            onUpdate={onUpdate}
+          />
+        )}
       </Animated.View>
     </Animated.View>
   );
