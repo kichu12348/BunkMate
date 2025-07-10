@@ -1,10 +1,10 @@
 import axios, { AxiosInstance } from "axios";
 import { API_CONFIG } from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
-import { 
-  SurveyDetail, 
-  SurveyStartData, 
-  SurveySubmissionRequest 
+import {
+  SurveyDetail,
+  SurveyStartData,
+  SurveySubmissionRequest,
 } from "../types/api";
 
 export interface SurveyPivot {
@@ -115,14 +115,13 @@ export interface Survey {
   usersubgroup: UserSubgroup | null;
 }
 
-interface StudentFeedbackSurveyAnswer{
+interface StudentFeedbackSurveyAnswer {
   course_id: number | null;
   teacher_id: number | null;
   survey_question_id: number;
   survey_choice_id: number;
   answer: "" | string;
-};
-
+}
 
 export type SurveyApiResponse = Survey[];
 
@@ -172,7 +171,9 @@ class SurveysService {
 
   async getSurveyDetail(surveyId: number): Promise<any> {
     try {
-      const response = await this.api.get(`${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}`);
+      const response = await this.api.get(
+        `${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}`
+      );
       return response.data;
     } catch (error) {
       console.error("Error fetching survey detail:", error);
@@ -182,7 +183,9 @@ class SurveysService {
 
   async startSurvey(surveyId: number): Promise<any> {
     try {
-      const response = await this.api.get(`${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}/start`);
+      const response = await this.api.get(
+        `${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}/start`
+      );
       return response.data;
     } catch (error) {
       console.error("Error starting survey:", error);
@@ -190,9 +193,15 @@ class SurveysService {
     }
   }
 
-  async submitSurvey(surveyId: number, responses: StudentFeedbackSurveyAnswer[]): Promise<void> {
+  async submitSurvey(
+    surveyId: number,
+    responses: StudentFeedbackSurveyAnswer[]
+  ): Promise<void> {
     try {
-      await this.api.post(`${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}/studfbsurveyanswers`, responses);
+      await this.api.post(
+        `${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}/studfbsurveyanswer`,
+        { studfbsurveyanswers: responses }
+      );
     } catch (error) {
       console.error("Error submitting survey:", error);
       throw error;
