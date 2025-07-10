@@ -204,7 +204,9 @@ export const SubjectDetailsScreen: React.FC = () => {
   };
 
   const handleClose = () => {
+    console.log("Closing modal");
     if (!isModalVisible) return;
+    console.log("Modal is visible, proceeding to close");
     opacity.value = withTiming(0, {
       duration: 300,
       easing: Easing.inOut(Easing.ease),
