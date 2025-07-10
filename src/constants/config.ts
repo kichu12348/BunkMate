@@ -24,7 +24,7 @@ export const API_CONFIG = {
       GET:'/studfbsurveys'
     }
   },
-  TIMEOUT: 10000,
+  TIMEOUT: 60000, // 60 seconds
   RETRY_ATTEMPTS: 3,
 };
 

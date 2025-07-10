@@ -596,6 +596,7 @@ const AttendanceDayView = ({
         animatedStyle,
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}
+      pointerEvents="box-none"
     >
       <View
         style={[
@@ -674,7 +675,7 @@ const AttendanceDayView = ({
 
               const entry = data?.entries?.find((e) => e.hour === hour);
               return (
-                <TouchableOpacity
+                <View
                   style={[
                     styles.hourCell,
                     { borderColor: statusColor },
@@ -683,11 +684,11 @@ const AttendanceDayView = ({
                     },
                   ]}
                   key={hour}
-                  activeOpacity={0.8}
-                  disabled={true}
-                  onPress={() => {
-                    handleOpenEditModal(hour);
-                  }}
+                  // activeOpacity={0.8}
+                  // disabled={true}
+                  // onPress={() => {
+                  //   handleOpenEditModal(hour);
+                  // }}
                 >
                   <Text style={[styles.hourText, { color: statusColor }]}>
                     Hour {hour}
@@ -711,7 +712,7 @@ const AttendanceDayView = ({
                       )}
                     </View>
                   )}
-                </TouchableOpacity>
+                </View>
               );
             })}
           </View>
@@ -732,7 +733,7 @@ const AttendanceDayView = ({
               const entry = data?.entries?.find((e) => e.hour === hour);
 
               return (
-                <TouchableOpacity
+                <View
                   style={[
                     styles.hourCell,
                     { borderColor: statusColor },
@@ -741,11 +742,11 @@ const AttendanceDayView = ({
                     },
                   ]}
                   key={hour}
-                  disabled={true}
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    handleOpenEditModal(hour);
-                  }}
+                  // disabled={true}
+                  // activeOpacity={0.8}
+                  // onPress={() => {
+                  //   handleOpenEditModal(hour);
+                  // }}
                 >
                   <Text style={[styles.hourText, { color: statusColor }]}>
                     Hour {hour}
@@ -769,25 +770,27 @@ const AttendanceDayView = ({
                       )}
                     </View>
                   )}
-                </TouchableOpacity>
+                </View>
               );
             })}
           </View>
         </View>
       </View>
-      <Animated.View style={[styles.editModalContainer, modalAnimStyle]}>
-        {editData && (
-          <AttendanceEditModal
-            close={handleCloseEditModal}
-            data={editData}
-            colors={colors}
-            isVisible={showEditModal}
-            subjectId={subjectId}
-            subjectName={subjectName}
-            onUpdate={onUpdate}
-          />
-        )}
-      </Animated.View>
+      {showEditModal && (
+        <Animated.View style={[styles.editModalContainer, modalAnimStyle]}>
+          {editData && (
+            <AttendanceEditModal
+              close={handleCloseEditModal}
+              data={editData}
+              colors={colors}
+              isVisible={showEditModal}
+              subjectId={subjectId}
+              subjectName={subjectName}
+              onUpdate={onUpdate}
+            />
+          )}
+        </Animated.View>
+      )}
     </Animated.View>
   );
 };
@@ -804,6 +807,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 1000,
   },
   modalContent: {
     width: width * 0.92,
@@ -825,7 +829,7 @@ const styles = StyleSheet.create({
     right: 16,
     padding: 8,
     borderRadius: 12,
-    zIndex: 1,
+    zIndex: 10,
   },
   header: {
     alignItems: "center",

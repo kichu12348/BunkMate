@@ -115,6 +115,15 @@ export interface Survey {
   usersubgroup: UserSubgroup | null;
 }
 
+interface StudentFeedbackSurveyAnswer{
+  course_id: number | null;
+  teacher_id: number | null;
+  survey_question_id: number;
+  survey_choice_id: number;
+  answer: "" | string;
+};
+
+
 export type SurveyApiResponse = Survey[];
 
 class SurveysService {
@@ -181,9 +190,9 @@ class SurveysService {
     }
   }
 
-  async submitSurvey(surveyId: number, responses: Record<string, any>): Promise<void> {
+  async submitSurvey(surveyId: number, responses: StudentFeedbackSurveyAnswer[]): Promise<void> {
     try {
-      await this.api.post(`${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}/submit`, responses);
+      await this.api.post(`${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}/studfbsurveyanswers`, responses);
     } catch (error) {
       console.error("Error submitting survey:", error);
       throw error;

@@ -67,12 +67,12 @@ interface AttendanceWeek {
 }
 
 interface AttendanceStats {
-  totalDays: number;
-  presentDays: number;
-  absentDays: number;
   percentage: number;
   streak: number;
   longestStreak: number;
+  totalHours: number;
+  absentHours: number;
+  presentHours: number;
 }
 
 const { width } = Dimensions.get("window");
@@ -204,9 +204,7 @@ export const SubjectDetailsScreen: React.FC = () => {
   };
 
   const handleClose = () => {
-    console.log("Closing modal");
     if (!isModalVisible) return;
-    console.log("Modal is visible, proceeding to close");
     opacity.value = withTiming(0, {
       duration: 300,
       easing: Easing.inOut(Easing.ease),
@@ -339,6 +337,16 @@ export const SubjectDetailsScreen: React.FC = () => {
       .flatMap((week) => week.days)
       .filter((day) => day.status !== "none");
 
+    const totalHours = allDays.reduce(
+      (sum, day) => sum + day.sessions,
+      0
+    );
+
+    const absentHours = allDays.reduce(
+      (sum, day) => sum + (day.status === "absent" ? day.sessions : 0),
+      0
+    );
+
     const presentDays = allDays.filter(
       (day) => day.status === "present"
     ).length;
@@ -361,12 +369,12 @@ export const SubjectDetailsScreen: React.FC = () => {
     longestStreak = Math.max(longestStreak, tempStreak);
 
     return {
-      totalDays: allDays.length,
-      presentDays,
-      absentDays,
-      percentage: allDays.length > 0 ? (presentDays / allDays.length) * 100 : 0,
+      percentage: (totalHours - absentHours) / totalHours * 100 || 0,
       streak: currentStreak,
       longestStreak,
+      totalHours,
+      absentHours: absentHours,
+      presentHours: totalHours - absentHours,
     };
   }, [attendanceHistory]);
 
@@ -422,19 +430,19 @@ export const SubjectDetailsScreen: React.FC = () => {
     () => [
       {
         title: "Total Classes",
-        value: stats.totalDays.toString(),
+        value: stats.totalHours.toString(),
         icon: "calendar-outline",
         color: colors.primary,
       },
       {
         title: "Present",
-        value: stats.presentDays.toString(),
+        value: (stats.presentHours).toString(),
         icon: "checkmark-circle-outline",
         color: colors.success,
       },
       {
         title: "Absent",
-        value: stats.absentDays.toString(),
+        value: stats.absentHours.toString(),
         icon: "close-circle-outline",
         color: colors.error,
       },
@@ -442,20 +450,20 @@ export const SubjectDetailsScreen: React.FC = () => {
         title: "Percentage",
         value: `${stats.percentage.toFixed(1)}%`,
         icon: "stats-chart-outline",
-        color: stats.percentage >= 75 ? colors.success : colors.warning,
+        color: Math.floor(stats.percentage) > 75 ? colors.success : colors.warning,
       },
-      {
-        title: "Current Streak",
-        value: stats.streak.toString(),
-        icon: "flame-outline",
-        color: colors.warning,
-      },
-      {
-        title: "Best Streak",
-        value: stats.longestStreak.toString(),
-        icon: "trophy-outline",
-        color: colors.accent,
-      },
+      // {
+      //   title: "Current Streak",
+      //   value: stats.streak.toString(),
+      //   icon: "flame-outline",
+      //   color: colors.warning,
+      // },
+      // {
+      //   title: "Best Streak",
+      //   value: stats.longestStreak.toString(),
+      //   icon: "trophy-outline",
+      //   color: colors.accent,
+      // },
     ],
     [stats, colors]
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import {
   SurveyResponse,
 } from "../types/api";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Dropdown } from "../components/Dropdown";
 
 type SurveyAttemptScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -60,7 +61,9 @@ export const SurveyAttemptScreen: React.FC = () => {
   const [responses, setResponses] = useState<Map<number, QuestionResponse>>(
     new Map()
   );
+  const selectChoiceSet = useRef(new Set());
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedBulkChoice, setSelectedBulkChoice] = useState<string | null>(null);
 
   useEffect(() => {
     loadSurveyData();
@@ -154,20 +157,17 @@ export const SurveyAttemptScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      const submissionData: SurveyResponse[] = Array.from(responses.values())
+      const submissionData = Array.from(responses.values())
         .filter((response) => response.choiceId !== null)
         .map((response) => ({
-          question_id: response.questionId,
-          choice_id: response.choiceId!,
-          ...(response.comment && { comment: response.comment }),
-          ...(response.courseTeacherId && {
-            course_teacher_id: response.courseTeacherId,
-          }),
+          course_id: null,
+          teacher_id: null,
+          survey_question_id: response.questionId,
+          survey_choice_id: response.choiceId,
+          answer: response.comment || "",
         }));
 
-      await surveysService.submitSurvey(surveyId, {
-        responses: submissionData,
-      });
+      await surveysService.submitSurvey(surveyId, submissionData);
 
       Alert.alert("Survey Submitted", "Thank you for your feedback!", [
         {
@@ -185,11 +185,10 @@ export const SurveyAttemptScreen: React.FC = () => {
     }
   };
 
-  const renderQuestion = (question: QuestionChoice, index: number) => {
+  const renderQuestion = (question: QuestionChoice, index: number, selectChoiceSet: any) => {
     const response = responses.get(question.id);
     const isRequired = question.answer_required === 1;
     const allowDescriptive = question.allow_descriptive === 1;
-
     return (
       <View key={question.id} style={styles.questionContainer}>
         <View style={styles.questionHeader}>
@@ -290,6 +289,44 @@ export const SurveyAttemptScreen: React.FC = () => {
     ).length;
 
     return (answeredQuestions / surveyData.questionsChoices.length) * 100;
+  };
+
+  const getUniqueChoiceNames = (): string[] => {
+    if (!surveyData) return [];
+    
+    const choiceNames = new Set<string>();
+    surveyData.questionsChoices.forEach(question => {
+      question.choices.forEach(choice => {
+        choiceNames.add(choice.name);
+      });
+    });
+    
+    return Array.from(choiceNames).sort();
+  };
+
+  const handleBulkChoiceSelect = (choiceName: string) => {
+    if (!surveyData) return;
+    
+    setSelectedBulkChoice(choiceName);
+    const updatedResponses = new Map(responses);
+    
+    surveyData.questionsChoices.forEach(question => {
+      const matchingChoice = question.choices.find(choice => choice.name === choiceName);
+      if (matchingChoice) {
+        const currentResponse = updatedResponses.get(question.id) || {
+          questionId: question.id,
+          choiceId: null,
+          comment: "",
+        };
+        
+        updatedResponses.set(question.id, {
+          ...currentResponse,
+          choiceId: matchingChoice.id,
+        });
+      }
+    });
+    
+    setResponses(updatedResponses);
   };
 
   if (isLoading) {
@@ -415,8 +452,23 @@ export const SurveyAttemptScreen: React.FC = () => {
           {/* Questions */}
           <View style={styles.questionsContainer}>
             <Text style={styles.sectionTitle}>Survey Questions</Text>
+            
+            {/* Bulk Choice Selection */}
+            <View style={styles.bulkSelectionContainer}>
+              <Text style={styles.bulkSelectionTitle}>Quick Fill All Questions</Text>
+              <Text style={styles.bulkSelectionSubtitle}>
+                Select a response to apply to all questions at once
+              </Text>
+              <Dropdown
+                options={getUniqueChoiceNames().map(name => ({ label: name, value: name }))}
+                placeholder="Select a response for all questions"
+                selectedValue={selectedBulkChoice}
+                onSelect={(value) => handleBulkChoiceSelect(value)}
+              />
+            </View>
+
             {surveyData.questionsChoices.map((question, index) =>
-              renderQuestion(question, index)
+              renderQuestion(question, index, selectChoiceSet)
             )}
           </View>
 
@@ -428,8 +480,7 @@ export const SurveyAttemptScreen: React.FC = () => {
                 isSubmitting && styles.submitButtonDisabled,
               ]}
               onPress={handleSubmit}
-              //disabled={isSubmitting}
-              disabled={true}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <ActivityIndicator size="small" color="white" />
@@ -599,6 +650,29 @@ const createStyles = (colors: ThemeColors) =>
     teacherName: {
       fontSize: 14,
       color: colors.textSecondary,
+    },
+    bulkSelectionContainer: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 20,
+      marginBottom: 24,
+      borderWidth: 1,
+      borderColor: colors.primary + "30",
+    },
+    bulkSelectionTitle: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 4,
+    },
+    bulkSelectionSubtitle: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginBottom: 16,
+      lineHeight: 20,
+    },
+    bulkDropdown: {
+      borderColor: colors.primary,
     },
     questionsContainer: {
       padding: 20,
