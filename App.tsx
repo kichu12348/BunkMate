@@ -40,18 +40,6 @@ export default function App() {
     initialize();
   }, []);
 
-  // Start background sync when user is authenticated
-  // useEffect(() => {
-  //   if (isAuthenticated && !isLoading) {
-  //     console.log('🚀 User authenticated, starting background sync...');
-  //     backgroundSyncService.startAppSync();
-  //     backgroundSyncService.startPeriodicSync();
-  //   } else if (!isAuthenticated) {
-  //     // Stop periodic sync when user logs out
-  //     backgroundSyncService.stopPeriodicSync();
-  //   }
-  // }, [isAuthenticated, isLoading]);
-
   // Handle updates
   useEffect(() => {
     const checkForUpdates = async () => {

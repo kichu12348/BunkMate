@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Switch,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "../state/settings";
@@ -18,6 +17,7 @@ import { ThemeColors } from "../types/theme";
 import { useAuthStore } from "../state/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import Switch from "../components/Switch";
 
 interface SettingsScreenProps {
   onClose?: () => void;
@@ -33,7 +33,7 @@ function debounced(func: Function, delay: number) {
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const styles = useThemedStyles(createStyles);
-  const { isDark, toggleMode } = useTheme();
+  const { isDark, toggleMode, colors } = useTheme();
   const {
     selectedYear,
     selectedSemester,
@@ -46,6 +46,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     initializeSettings,
     clearError,
   } = useSettingsStore();
+
+  const [themeIcon, setThemeIcon] = useState<string>(isDark ? "moon" : "sunny");
 
   const { clearCache, fetchAttendance } = useAttendanceStore();
   const { logout, user } = useAuthStore();
@@ -107,6 +109,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     ]);
   };
 
+  const handleToggleTheme = () => {
+    toggleMode();
+    setThemeIcon(isDark ? "sunny" : "moon");
+  };
+
   const SettingItem = ({
     icon,
     title,
@@ -115,6 +122,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     rightElement,
     showArrow = true,
     isGreat = false,
+    iconColor = isGreat ? styles.logOutColor.color : styles.settingIcon.color,
   }: {
     icon: string;
     title: string;
@@ -123,6 +131,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     rightElement?: React.ReactNode;
     showArrow?: boolean;
     isGreat?: boolean;
+    iconColor?: string;
   }) => (
     <TouchableOpacity
       style={styles.settingItem}
@@ -131,13 +140,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     >
       <View style={styles.settingItemLeft}>
         <View style={styles.settingIconContainer}>
-          <Ionicons
-            name={icon as any}
-            size={20}
-            color={
-              isGreat ? styles.logOutColor.color : styles.settingIcon.color
-            }
-          />
+          <Ionicons name={icon as any} size={20} color={iconColor} />
         </View>
         <View style={styles.settingItemContent}>
           <Text style={styles.settingTitle}>{title}</Text>
@@ -248,21 +251,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
           <View style={styles.card}>
             <SettingItem
-              icon="moon"
+              icon={themeIcon}
               title="Dark Mode"
               subtitle={isDark ? "Enabled" : "Disabled"}
               rightElement={
                 <Switch
                   value={isDark}
-                  onValueChange={toggleMode}
-                  trackColor={{
-                    false: styles.switchTrackOff.color,
-                    true: styles.switchTrackOn.color,
-                  }}
+                  onValueChange={handleToggleTheme}
+                  size={30}
                   thumbColor={
                     isDark
                       ? styles.switchThumbOn.color
                       : styles.switchThumbOff.color
+                  }
+                  trackColor={
+                    isDark
+                      ? styles.switchTrackOn.color
+                      : styles.switchTrackOff.color
                   }
                 />
               }
@@ -408,11 +413,6 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.surface,
       marginHorizontal: 16,
       borderRadius: 16,
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
     },
     cardHeader: {
       padding: 16,

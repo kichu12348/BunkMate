@@ -43,11 +43,12 @@ export const Dropdown: React.FC<DropdownProps> = ({
     setIsVisible(false);
   };
 
-  const renderOption = ({ item }: { item: DropdownOption }) => (
+  const renderOption = ({ item, index }: { item: DropdownOption, index: number }) => (
     <TouchableOpacity
       style={[
         styles.option,
-        item.value === selectedValue && styles.selectedOption
+        item.value === selectedValue && styles.selectedOption,
+        index === options.length - 1 && { borderBottomWidth: 0 }
       ]}
       onPress={() => handleSelect(item.value)}
     >

@@ -116,28 +116,20 @@ function AttendanceEditModal({
   const day = data?.day || currentDate.getDate();
 
   // Get the latest attendance record from database to ensure fresh data
-  const attendanceRecord = userAttendanceService.getAttendance(
-    subjectId || "",
-    year,
-    month,
-    day,
-    data?.hour
-  );
+  const attendanceRecord = data;
 
   // Use database record if available, otherwise use passed data
-  const isEnteredByProfessor =
-    attendanceRecord?.is_entered_by_professor === 1 ||
-    data?.is_entered_by_professor === 1 ||
-    false;
-  const isEnteredByStudent =
-    attendanceRecord?.is_entered_by_student === 1 ||
-    data?.is_entered_by_student === 1 ||
-    false;
-  const isConflict =
-    attendanceRecord?.is_conflict === 1 || data?.is_conflict === 1 || false;
+  const isEnteredByProfessor = data?.is_entered_by_professor === 1;
+  const isEnteredByStudent = attendanceRecord?.is_entered_by_student === 1;
+  const isConflict = attendanceRecord?.is_conflict === 1 || false;
+  const attendanceStatus =
+    attendanceRecord?.final_attendance ||
+    attendanceRecord?.attendance ||
+    attendanceRecord?.teacher_attendance ||
+    attendanceRecord?.user_attendance;
   const hasRecord = !!attendanceRecord;
 
-  // Don't allow editing if only professor has entered data (unless there's a conflict to resolve
+  // Don't allow editing if only professor has entered data (unless there's a conflict to resolve)
 
   const handleAttendanceChange = async (attendance: "Present" | "Absent") => {
     if (!subjectId) return;
@@ -403,11 +395,8 @@ function AttendanceEditModal({
             it.
           </Text>
           <Text style={[styles.editAttendance, { color: colors.text }]}>
-            Hour {data.hour}:{" "}
-            {attendanceRecord?.teacher_attendance === "P" ||
-            attendanceRecord?.final_attendance === "P"
-              ? "Present"
-              : "Absent"}
+            Hour {data.hour}:{"  "}
+            {attendanceStatus}
           </Text>
         </View>
       </View>
@@ -464,8 +453,6 @@ const AttendanceDayView = ({
   const [hourlyStatus, setHourlyStatus] = React.useState<Map<number, string>>(
     new Map<number, string>()
   );
-
-  const entries = userAttendanceService.getSubjectAttendance(subjectId);
 
   React.useEffect(() => {
     const status = new Map<number, string>();
@@ -531,16 +518,10 @@ const AttendanceDayView = ({
     const day = currentDate.getDate();
 
     // Get the latest attendance record from database to ensure fresh data
-    const attendanceRecord = userAttendanceService.getAttendance(
-      subjectId || "",
-      year,
-      month,
-      day,
-      hour
-    );
+    const attendanceRecord = data.entries?.find((e) => e.hour === hour) || null;
 
     // Find entry from original data as fallback
-    const dataEntry = entries?.find((e) => e.hour === hour);
+    const dataEntry = data.entries?.find((e) => e.hour === hour);
 
     const editData: EditModalDataProps = {
       attendance:
@@ -703,6 +684,7 @@ const AttendanceDayView = ({
                   ]}
                   key={hour}
                   activeOpacity={0.8}
+                  disabled={true}
                   onPress={() => {
                     handleOpenEditModal(hour);
                   }}
@@ -759,6 +741,7 @@ const AttendanceDayView = ({
                     },
                   ]}
                   key={hour}
+                  disabled={true}
                   activeOpacity={0.8}
                   onPress={() => {
                     handleOpenEditModal(hour);

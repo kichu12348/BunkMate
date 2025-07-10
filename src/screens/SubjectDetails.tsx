@@ -227,7 +227,6 @@ export const SubjectDetailsScreen: React.FC = () => {
     );
   }, [attendanceData, subjectId]);
 
-  // Create a lookup map for better performance - only process current month and adjacent months
   const attendanceLookup = useMemo(() => {
     if (!subjectSchedule.length) return new Map();
 
