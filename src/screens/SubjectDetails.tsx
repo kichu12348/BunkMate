@@ -293,7 +293,7 @@ export const SubjectDetailsScreen: React.FC = () => {
       const weekData: AttendanceWeek = {
         weekStart: currentWeekStart,
         days: days.map((date) => {
-          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+          const isWeekend = date.getDay() === 0; // Sunday
           const isFuture = date > today;
           const isOutsideMonth = date < monthStart || date > monthEnd;
 
