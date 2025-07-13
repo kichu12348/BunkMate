@@ -399,7 +399,9 @@ export const SubjectDetailsScreen: React.FC = () => {
 
   const getCellIntensity = useCallback((sessions: number) => {
     if (sessions === 0) return "30";
-    return sessions === 1 ? "60" : "90";
+    return sessions === 1
+      ? "90"
+      : sessions.toString(16).slice(-1).padStart(2, "d");
   }, []);
 
   const getCellColor = useCallback(

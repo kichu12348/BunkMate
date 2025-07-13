@@ -699,6 +699,7 @@ const AttendanceDayView = ({
                   ]}
                   key={hour}
                   activeOpacity={0.8}
+                  disabled={true} // Disable touch for now
                   onPress={() => {
                     handleOpenEditModal(hour);
                   }}
@@ -756,6 +757,7 @@ const AttendanceDayView = ({
                   ]}
                   key={hour}
                   activeOpacity={0.8}
+                  disabled={true} // Disable touch for now
                   onPress={() => {
                     handleOpenEditModal(hour);
                   }}
