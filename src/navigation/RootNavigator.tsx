@@ -10,6 +10,8 @@ export type RootStackParamList = {
     subjectId: string;
     subjectName: string;
     subjectCode: string;
+    canMiss: number;
+    toAttend: number;
   };
   SurveyAttempt: {
     surveyId: number;

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
+  ColorValue,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -33,6 +34,8 @@ import {
   withTiming,
   Easing,
 } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
+import { ATTENDANCE_THRESHOLDS } from "../constants/config";
 
 type SubjectDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -47,6 +50,8 @@ interface AttendanceDay {
   date: string;
   status: "present" | "absent" | "none";
   sessions: number;
+  presentCount?: number; // Optional, used for stats
+  absentCount?: number; // Optional, used for stats
 }
 
 interface AttendanceEntry {
@@ -79,17 +84,22 @@ const { width } = Dimensions.get("window");
 const CELL_SIZE = (width - 80) / 7;
 
 // Memoized components
-const StatCard = React.memo(({ stat, colors }: { stat: any; colors: any }) => (
-  <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
-    <View style={[styles.statIcon, { backgroundColor: stat.color + "20" }]}>
-      <Ionicons name={stat.icon as any} size={20} color={stat.color} />
-    </View>
-    <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
-    <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
-      {stat.title}
-    </Text>
-  </View>
-));
+const StatCard = React.memo(
+  ({ stat, colors }: { stat: any; colors: any }) =>
+    stat.visible && (
+      <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
+        <View style={[styles.statIcon, { backgroundColor: stat.color + "20" }]}>
+          <Ionicons name={stat.icon as any} size={20} color={stat.color} />
+        </View>
+        <Text style={[styles.statValue, { color: colors.text }]}>
+          {stat.value}
+        </Text>
+        <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
+          {stat.title}
+        </Text>
+      </View>
+    )
+);
 
 const AttendanceCell = React.memo(
   ({
@@ -97,15 +107,13 @@ const AttendanceCell = React.memo(
     dayIndex,
     isCurrentMonth,
     cellColor,
-    cellIntensity,
     colors,
     onPress,
   }: {
     day: AttendanceDay;
     dayIndex: number;
     isCurrentMonth: boolean;
-    cellColor: string;
-    cellIntensity: string;
+    cellColor: ColorValue[];
     colors: ThemeColors;
     onPress: () => void;
   }) => {
@@ -116,15 +124,19 @@ const AttendanceCell = React.memo(
         style={[
           styles.cell,
           {
-            backgroundColor: isCurrentMonth
-              ? cellColor + cellIntensity
-              : colors.border + "10",
-            borderColor: isCurrentMonth ? cellColor : colors.border + "30",
-            opacity: isCurrentMonth ? 1 : 0.3,
+            opacity: isCurrentMonth ? 1 : 0,
           },
         ]}
         onPress={onPress}
+        disabled={!isCurrentMonth || day.status === "none"}
+        activeOpacity={0.7}
       >
+        <LinearGradient
+          colors={cellColor as [ColorValue, ColorValue, ...ColorValue[]]}
+          style={styles.cellGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        />
         <View style={styles.cellContent}>
           {isCurrentMonth && (
             <Text
@@ -154,7 +166,8 @@ export const SubjectDetailsScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
 
-  const { subjectId, subjectName, subjectCode } = route.params;
+  const { subjectId, subjectName, subjectCode, toAttend, canMiss } =
+    route.params;
   const {
     data: attendanceData,
     isLoading,
@@ -315,10 +328,20 @@ export const SubjectDetailsScreen: React.FC = () => {
             return "absent";
           };
 
+          const presentCount = attendanceEntries?.filter(
+            (e: any) => e.attendance?.toLowerCase() === "present"
+          ).length;
+
+          const absentCount = attendanceEntries?.filter(
+            (e: any) => e.attendance?.toLowerCase() === "absent"
+          ).length;
+
           return {
             date: dateKey,
             status: getStatus(attendanceEntries),
             sessions: attendanceEntries ? attendanceEntries.length : 0,
+            presentCount: presentCount || 0,
+            absentCount: absentCount || 0,
           };
         }),
       };
@@ -337,20 +360,14 @@ export const SubjectDetailsScreen: React.FC = () => {
       .flatMap((week) => week.days)
       .filter((day) => day.status !== "none");
 
-    const totalHours = allDays.reduce(
-      (sum, day) => sum + day.sessions,
-      0
-    );
-
-    const absentHours = allDays.reduce(
-      (sum, day) => sum + (day.status === "absent" ? day.sessions : 0),
-      0
-    );
-
-    const presentDays = allDays.filter(
-      (day) => day.status === "present"
-    ).length;
-    const absentDays = allDays.filter((day) => day.status === "absent").length;
+    let totalHours = 0;
+    let absentHours = 0;
+    let presentHours = 0;
+    allDays.forEach((day) => {
+      totalHours += day.sessions || 0;
+      absentHours += day.absentCount || 0;
+      presentHours += day.presentCount || 0;
+    });
 
     // Calculate streaks
     let currentStreak = 0;
@@ -369,36 +386,54 @@ export const SubjectDetailsScreen: React.FC = () => {
     longestStreak = Math.max(longestStreak, tempStreak);
 
     return {
-      percentage: (totalHours - absentHours) / totalHours * 100 || 0,
+      percentage: (presentHours / totalHours) * 100 || 0,
       streak: currentStreak,
       longestStreak,
       totalHours,
       absentHours: absentHours,
-      presentHours: totalHours - absentHours,
+      presentHours: presentHours,
     };
   }, [attendanceHistory]);
 
   // Memoize cell color calculation
+
+  const getCellIntensity = useCallback((sessions: number) => {
+    if (sessions === 0) return "30";
+    return sessions === 1 ? "60" : "90";
+  }, []);
+
   const getCellColor = useCallback(
-    (date: string) => {
+    (date: string, sessions: number): ColorValue[] => {
+      const colorsList: string[] = [];
       const attendanceEntries = attendanceLookup.get(date);
+      const cellOpacity = getCellIntensity(sessions);
       if (!attendanceEntries || attendanceEntries.length === 0) {
-        return colors.border;
+        return [
+          `${colors.border}${cellOpacity}`,
+          `${colors.border}${cellOpacity}`,
+        ];
       }
-      if (
-        attendanceEntries.some((e) => e.attendance?.toLowerCase() === "present")
-      ) {
-        return colors.success;
+
+      attendanceEntries.forEach((entry: any) => {
+        if (entry.attendance?.toLowerCase() === "present") {
+          colorsList.push(`${colors.success}${cellOpacity}`);
+        } else if (entry.attendance?.toLowerCase() === "absent") {
+          colorsList.push(`${colors.error}${cellOpacity}`);
+        } else {
+          colorsList.push(`${colors.warning}${cellOpacity}`);
+        }
+      });
+
+      if (colorsList.length === 1) {
+        return [colorsList[0], colorsList[0]];
       }
-      return colors.error;
+
+      return colorsList.length > 1
+        ? colorsList
+        : [colors.border, colors.border];
     },
     [attendanceLookup, colors]
   );
-
-  const getCellIntensity = useCallback((sessions: number) => {
-    if (sessions === 0) return "20";
-    return sessions === 1 ? "60" : "90";
-  }, []);
 
   // Memoize navigation handlers
   const handlePreviousMonth = useCallback(() => {
@@ -417,7 +452,6 @@ export const SubjectDetailsScreen: React.FC = () => {
     (day: AttendanceDay, isCurrentMonth: boolean) => {
       if (day.status !== "none" && isCurrentMonth) {
         const entries = attendanceLookup?.get(day.date) || [];
-        console.log("Selected Day:", day, "Entries:", entries);
         setSelectedDay({ day, entries });
         handleOpen();
       }
@@ -433,37 +467,44 @@ export const SubjectDetailsScreen: React.FC = () => {
         value: stats.totalHours.toString(),
         icon: "calendar-outline",
         color: colors.primary,
+        visible: true,
       },
       {
         title: "Present",
-        value: (stats.presentHours).toString(),
+        value: stats.presentHours.toString(),
         icon: "checkmark-circle-outline",
         color: colors.success,
+        visible: true,
       },
       {
         title: "Absent",
         value: stats.absentHours.toString(),
         icon: "close-circle-outline",
         color: colors.error,
+        visible: true,
       },
       {
         title: "Percentage",
         value: `${stats.percentage.toFixed(1)}%`,
         icon: "stats-chart-outline",
-        color: Math.floor(stats.percentage) > 75 ? colors.success : colors.warning,
+        color:
+          Math.floor(stats.percentage) > 75 ? colors.success : colors.warning,
+        visible: true,
       },
-      // {
-      //   title: "Current Streak",
-      //   value: stats.streak.toString(),
-      //   icon: "flame-outline",
-      //   color: colors.warning,
-      // },
-      // {
-      //   title: "Best Streak",
-      //   value: stats.longestStreak.toString(),
-      //   icon: "trophy-outline",
-      //   color: colors.accent,
-      // },
+      {
+        title: "Bunkable Classes",
+        value: canMiss.toString(),
+        icon: "bed-outline",
+        color: colors.primary,
+        visible: true,
+      },
+      {
+        title: "Classes to Attend",
+        value: toAttend.toString(),
+        icon: "alert-circle-outline",
+        color: colors.danger,
+        visible: toAttend > 0,
+      },
     ],
     [stats, colors]
   );
@@ -550,8 +591,7 @@ export const SubjectDetailsScreen: React.FC = () => {
                     day={day}
                     dayIndex={dayIndex}
                     isCurrentMonth={isCurrentMonth}
-                    cellColor={getCellColor(day.date)}
-                    cellIntensity={getCellIntensity(day.sessions)}
+                    cellColor={getCellColor(day.date, day.sessions)}
                     colors={colors}
                     onPress={() => handleCellPress(day, isCurrentMonth)}
                   />
@@ -716,13 +756,14 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
+    gap: 12,
     justifyContent: "space-between",
   },
   statCard: {
     width: "48%",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginHorizontal: "auto",
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -802,9 +843,17 @@ const styles = StyleSheet.create({
     height: CELL_SIZE - 2,
     borderRadius: 4,
     margin: 1,
-    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
+    overflow: "hidden",
+  },
+  cellGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    zIndex: -1,
+    ...StyleSheet.absoluteFillObject,
   },
   cellContent: {
     alignItems: "center",

@@ -27,6 +27,7 @@ export interface ConflictResolution {
 class UserAttendanceService {
   private db = database.getDatabase();
 
+
   /**
    * Set user attendance for a specific session
    */
@@ -232,6 +233,79 @@ class UserAttendanceService {
       console.error('Error getting conflicts:', error);
       return [];
     }
+  }
+
+
+  async insertAttendanceByUser({
+    subjectId,
+    year,
+    month,
+    day,
+    hour,
+    attendance,
+    is_entered_by_student = 1,
+  }: {
+    subjectId: string | number;
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    attendance: 'present' | 'absent' | 'none';
+    is_entered_by_student?: 0 | 1;
+  }): Promise<void> {
+    try {
+      const checkIfExists = await this.db.getFirstAsync<AttendanceOverride>(
+        `SELECT * FROM course_schedule
+          WHERE subject_id = ? AND year = ? AND month = ? AND day = ? AND hour = ?`,
+        [subjectId.toString(), year, month, day, hour]
+      ) as AttendanceOverride | null;
+
+      if (checkIfExists) {
+        // Update existing record
+        await this.db.runAsync(
+          `UPDATE course_schedule 
+           SET user_attendance = ?, 
+               final_attendance = ?,
+               is_user_override = 1,
+               is_entered_by_student = 1,
+               updated_at = ?
+           WHERE subject_id = ? AND year = ? AND month = ? AND day = ? AND hour = ?`,
+          [
+            attendance,
+            attendance, // User attendance takes precedence
+            Date.now(),
+            subjectId.toString(),
+            year,
+            month,
+            day,
+            hour
+          ]
+        );
+      } else {
+        // Insert new record
+        await this.db.runAsync(
+          `INSERT INTO course_schedule 
+           (subject_id, year, month, day, hour, user_attendance, final_attendance, 
+            is_user_override, is_entered_by_student, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?)`,
+          [
+            subjectId.toString(),
+            year,
+            month,
+            day,
+            hour,
+            attendance,
+            is_entered_by_student,
+            Date.now(),
+            Date.now()
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Error inserting attendance by user:', error);
+      throw error;
+    }
+
   }
 
   /**

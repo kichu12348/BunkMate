@@ -19,6 +19,7 @@ interface SurveysState {
   markSurveyCompleted: (surveyId: number) => void;
   setError: (error: string | null) => void;
   clearSurveys: () => void;
+  removeSurvey: (surveyId: number) => void;
 }
 
 export const useSurveysStore = create<SurveysState>()((set, get) => ({
@@ -116,6 +117,12 @@ export const useSurveysStore = create<SurveysState>()((set, get) => ({
 
   setError: (error: string | null) => {
     set({ error });
+  },
+
+  removeSurvey: (surveyId: number) => {
+    const { surveys } = get();
+    const updatedSurveys = surveys.filter((survey) => survey.id !== surveyId);
+    set({ surveys: updatedSurveys });
   },
 
   clearSurveys: () => {

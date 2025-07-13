@@ -21,12 +21,10 @@ import { surveysService } from "../api/surveys";
 import {
   SurveyStartData,
   QuestionChoice,
-  Choice,
-  SurveyCourseTeacher,
-  SurveyResponse,
 } from "../types/api";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Dropdown } from "../components/Dropdown";
+import { useSurveysStore } from "../state/surveys";
 
 type SurveyAttemptScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -51,7 +49,7 @@ export const SurveyAttemptScreen: React.FC = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const { surveyId, surveyName } = route.params;
+  const { surveyId } = route.params;
 
   const [surveyData, setSurveyData] = useState<SurveyStartData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,8 +59,9 @@ export const SurveyAttemptScreen: React.FC = () => {
     new Map()
   );
   const selectChoiceSet = useRef(new Set());
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedBulkChoice, setSelectedBulkChoice] = useState<string | null>(null);
+
+  const removeSurvey = useSurveysStore((state) => state.removeSurvey);
 
   useEffect(() => {
     loadSurveyData();
@@ -171,7 +170,10 @@ export const SurveyAttemptScreen: React.FC = () => {
       Alert.alert("Survey Submitted", "Thank you for your feedback!", [
         {
           text: "OK",
-          onPress: () => navigation.goBack(),
+          onPress: () => {
+            removeSurvey(surveyId);
+            navigation.goBack();
+          },
         },
       ]);
     } catch (error: any) {

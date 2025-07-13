@@ -366,8 +366,8 @@ export interface CourseSchedule{
   is_entered_by_professor: number; // 0 | 1
   is_entered_by_student: number; // 0 | 1
 
-  created_at: number;             // UNIX timestamp (ms)
-  updated_at: number;             // UNIX timestamp (ms)
-  last_teacher_update: number | null;
-  last_user_update: number | null;
+  created_at?: number | string;             // UNIX timestamp (ms)
+  updated_at?: number | string;             // UNIX timestamp (ms)
+  last_teacher_update?: number | null;
+  last_user_update?: number | null;
 };

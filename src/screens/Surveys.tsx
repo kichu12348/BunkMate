@@ -249,14 +249,12 @@ export const SurveysScreen: React.FC = () => {
 
   const {
     surveys,
-    isLoading,
     error,
     filterType,
     fetchSurveys,
     refreshSurveys,
     setFilter,
     getFilteredSurveys,
-    setError,
   } = useSurveysStore();
 
   const [refreshing, setRefreshing] = useState(false);

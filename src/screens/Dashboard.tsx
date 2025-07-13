@@ -29,7 +29,10 @@ import Animated, {
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
-type DashboardNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
+type DashboardNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "MainTabs"
+>;
 
 const { width } = Dimensions.get("window");
 
@@ -77,11 +80,17 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const handleSubjectPress = (subject: any) => {
-    navigation.navigate('SubjectDetails', {
+  const handleSubjectPress = (
+    subject: any,
+    canMiss: number,
+    classesToAttend: number
+  ) => {
+    navigation.navigate("SubjectDetails", {
       subjectId: subject.subject.id.toString(),
       subjectName: subject.subject.name,
       subjectCode: subject.subject.code,
+      canMiss,
+      toAttend: classesToAttend,
     });
   };
 
@@ -288,10 +297,12 @@ export const Dashboard: React.FC = () => {
                   </Text>
                 </View>
                 {dangerSubjects.map((subject, index) => (
-                  <AttendanceCard 
-                    key={`danger-${index}`} 
-                    subject={subject} 
-                    onPress={() => handleSubjectPress(subject)}
+                  <AttendanceCard
+                    key={`danger-${index}`}
+                    subject={subject}
+                    onPress={(canMiss, classesToAttend) =>
+                      handleSubjectPress(subject, canMiss, classesToAttend)
+                    }
                   />
                 ))}
               </View>
@@ -311,10 +322,12 @@ export const Dashboard: React.FC = () => {
                   </Text>
                 </View>
                 {warningSubjects.map((subject, index) => (
-                  <AttendanceCard 
-                    key={`warning-${index}`} 
-                    subject={subject} 
-                    onPress={() => handleSubjectPress(subject)}
+                  <AttendanceCard
+                    key={`warning-${index}`}
+                    subject={subject}
+                    onPress={(canMiss, classesToAttend) =>
+                      handleSubjectPress(subject, canMiss, classesToAttend)
+                    }
                   />
                 ))}
               </View>
@@ -334,10 +347,12 @@ export const Dashboard: React.FC = () => {
                   </Text>
                 </View>
                 {safeSubjects.map((subject, index) => (
-                  <AttendanceCard 
-                    key={`safe-${index}`} 
-                    subject={subject} 
-                    onPress={() => handleSubjectPress(subject)}
+                  <AttendanceCard
+                    key={`safe-${index}`}
+                    subject={subject}
+                    onPress={(canMiss, classesToAttend) =>
+                      handleSubjectPress(subject, canMiss, classesToAttend)
+                    }
                   />
                 ))}
               </View>

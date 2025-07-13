@@ -8,7 +8,10 @@ import { ThemeColors } from '../types/theme';
 
 interface AttendanceCardProps {
   subject: SubjectAttendance;
-  onPress?: () => void;
+  onPress?: (
+    classesCanMiss: number,
+    classesToAttend: number
+  ) => void;
 }
 
 export const AttendanceCard: React.FC<AttendanceCardProps> = ({ subject, onPress }) => {
@@ -44,8 +47,12 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({ subject, onPress
     }
   };
 
+  const handlePress = () => {
+    onPress?.(classesCanMiss, classesToAttend);
+  }
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.8}>
       <View style={styles.header}>
         <View style={styles.titleContainer}>
           <Text style={styles.subjectName} numberOfLines={1}>

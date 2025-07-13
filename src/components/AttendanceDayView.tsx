@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemeColors } from "../types/theme";
 import { userAttendanceService } from "../db/userAttendanceService";
 import { Alert } from "react-native";
+import { useAttendanceStore } from "../state/attendance";
 
 const { width, height } = Dimensions.get("screen");
 
@@ -97,6 +98,7 @@ function AttendanceEditModal({
   subjectId,
   subjectName,
   onUpdate,
+  checkForConflicts,
 }: {
   data: EditModalDataProps | null;
   close: () => void;
@@ -105,9 +107,19 @@ function AttendanceEditModal({
   subjectId?: string;
   subjectName?: string;
   onUpdate?: () => void;
+  checkForConflicts: (params: {
+    hour: number;
+    day: number;
+    month: number;
+    year: number;
+  }) => boolean | void;
 }) {
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(false);
+
+  const addSubjectAttendance = useAttendanceStore(
+    (state) => state.addSubjectAttendance
+  );
 
   // Get the current date for database lookup
   const currentDate = new Date();
@@ -129,47 +141,42 @@ function AttendanceEditModal({
     attendanceRecord?.user_attendance;
   const hasRecord = !!attendanceRecord;
 
+  console.log("Attendance Edit Modal Data:", {
+    data,
+    isEnteredByProfessor,
+    isEnteredByStudent,
+    isConflict,
+    attendanceStatus,
+  });
+
   // Don't allow editing if only professor has entered data (unless there's a conflict to resolve)
 
   const handleAttendanceChange = async (attendance: "Present" | "Absent") => {
     if (!subjectId) return;
 
     try {
-      setIsLoading(true);
-
-      // Check if any other subject has a record for this hour/day
-      // Use the service method to check for conflicts
-      const hasConflict = checkTimeConflict(
-        subjectId,
-        year,
-        month,
+      const isConflict = checkForConflicts({
+        hour: data.hour,
         day,
-        data.hour
-      );
-
-      if (hasConflict) {
+        month,
+        year,
+      });
+      if (isConflict) {
         Alert.alert(
-          "Time Conflict",
-          `You already have attendance recorded for Hour ${data.hour} on this day for another subject. You cannot be in two classes at the same time.`,
-          [{ text: "OK", style: "default" }]
+          "Conflict Detected",
+          "You cannot change attendance for this hour due to a conflict."
         );
-        setIsLoading(false);
         return;
       }
-
-      // Convert UI format to database format
-      const dbAttendance = attendance === "Present" ? "P" : "A";
-
-      await userAttendanceService.setUserAttendance(
+      setIsLoading(true);
+      await addSubjectAttendance(
         subjectId,
         year,
         month,
         day,
         data.hour,
-        dbAttendance
+        attendance.toLowerCase() as "present" | "absent"
       );
-
-      onUpdate?.();
       close();
     } catch (error) {
       Alert.alert("Error", "Failed to update attendance");
@@ -193,13 +200,6 @@ function AttendanceEditModal({
           onPress: async () => {
             try {
               setIsLoading(true);
-              await userAttendanceService.deleteUserOverride(
-                subjectId,
-                year,
-                month,
-                day,
-                data.hour
-              );
 
               // Update parent state and close modal
               onUpdate?.();
@@ -261,7 +261,8 @@ function AttendanceEditModal({
               style={[styles.conflictLabel, { color: colors.textSecondary }]}
             >
               Professor marked:{" "}
-              {attendanceRecord?.teacher_attendance === "P"
+              {attendanceRecord?.teacher_attendance === "P" ||
+              attendanceRecord?.teacher_attendance === "Present"
                 ? "Present"
                 : "Absent"}
             </Text>
@@ -269,7 +270,10 @@ function AttendanceEditModal({
               style={[styles.conflictLabel, { color: colors.textSecondary }]}
             >
               You marked:{" "}
-              {attendanceRecord?.user_attendance === "P" ? "Present" : "Absent"}
+              {attendanceRecord?.user_attendance === "P" ||
+              attendanceRecord?.user_attendance === "Present"
+                ? "Present"
+                : "Absent"}
             </Text>
           </View>
 
@@ -316,6 +320,13 @@ function AttendanceEditModal({
             ? "Update your attendance for"
             : "Mark your attendance for"}{" "}
           Hour {data.hour}
+        </Text>
+        <Text style={[styles.editAttendance, { color: colors.text }]}>
+          Current Status:{" "}
+          {attendanceStatus.toLowerCase() === "a" ||
+          attendanceStatus.toLowerCase() === "absent"
+            ? "Absent"
+            : "Present"}
         </Text>
 
         <View style={styles.buttonContainer}>
@@ -454,6 +465,10 @@ const AttendanceDayView = ({
     new Map<number, string>()
   );
 
+  const checkForConflicts = useAttendanceStore(
+    (state) => state.checkForConflicts
+  );
+
   React.useEffect(() => {
     const status = new Map<number, string>();
     data.entries?.forEach((entry) => {
@@ -489,7 +504,6 @@ const AttendanceDayView = ({
         // Default case
         return "none";
       })();
-      console.log(`Hour ${entry.hour}: ${displayStatus}`);
       status.set(entry.hour, displayStatus);
     });
     setHourlyStatus(status);
@@ -675,7 +689,7 @@ const AttendanceDayView = ({
 
               const entry = data?.entries?.find((e) => e.hour === hour);
               return (
-                <View
+                <TouchableOpacity
                   style={[
                     styles.hourCell,
                     { borderColor: statusColor },
@@ -684,11 +698,10 @@ const AttendanceDayView = ({
                     },
                   ]}
                   key={hour}
-                  // activeOpacity={0.8}
-                  // disabled={true}
-                  // onPress={() => {
-                  //   handleOpenEditModal(hour);
-                  // }}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    handleOpenEditModal(hour);
+                  }}
                 >
                   <Text style={[styles.hourText, { color: statusColor }]}>
                     Hour {hour}
@@ -712,7 +725,7 @@ const AttendanceDayView = ({
                       )}
                     </View>
                   )}
-                </View>
+                </TouchableOpacity>
               );
             })}
           </View>
@@ -733,7 +746,7 @@ const AttendanceDayView = ({
               const entry = data?.entries?.find((e) => e.hour === hour);
 
               return (
-                <View
+                <TouchableOpacity
                   style={[
                     styles.hourCell,
                     { borderColor: statusColor },
@@ -742,11 +755,10 @@ const AttendanceDayView = ({
                     },
                   ]}
                   key={hour}
-                  // disabled={true}
-                  // activeOpacity={0.8}
-                  // onPress={() => {
-                  //   handleOpenEditModal(hour);
-                  // }}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    handleOpenEditModal(hour);
+                  }}
                 >
                   <Text style={[styles.hourText, { color: statusColor }]}>
                     Hour {hour}
@@ -770,7 +782,7 @@ const AttendanceDayView = ({
                       )}
                     </View>
                   )}
-                </View>
+                </TouchableOpacity>
               );
             })}
           </View>
@@ -787,6 +799,7 @@ const AttendanceDayView = ({
               subjectId={subjectId}
               subjectName={subjectName}
               onUpdate={onUpdate}
+              checkForConflicts={checkForConflicts}
             />
           )}
         </Animated.View>
