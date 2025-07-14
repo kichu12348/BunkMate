@@ -431,7 +431,7 @@ export const SubjectDetailsScreen: React.FC = () => {
       }
 
       return colorsList.length > 1
-        ? colorsList
+        ? colorsList.sort()
         : [colors.border, colors.border];
     },
     [attendanceLookup, colors]
