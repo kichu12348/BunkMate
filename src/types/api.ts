@@ -360,6 +360,7 @@ export interface CourseSchedule{
   final_attendance: AttendanceValue;
   teacher_attendance: AttendanceValue | null;
   user_attendance: AttendanceValue | null;
+  attendance?: AttendanceValue | null;
 
   is_conflict: number; // 0 | 1
   is_user_override: number; // 0 | 1  

@@ -5,7 +5,9 @@ import {
   CourseSchedule,
 } from "../types/api";
 import { attendanceService } from "../api/attendance";
-import { userAttendanceService } from "../db/userAttendanceService";
+import { database } from "../db/database";
+import { AttendanceDatabase } from "../utils/attendanceDatabase";
+
 
 interface AttendanceState {
   data: AttendanceDetailedResponse | null;
@@ -31,7 +33,7 @@ interface AttendanceState {
     day: number;
     month: number;
     year: number;
-  }) => boolean | void;
+  }) => Promise<boolean>;
   addSubjectAttendance?: (
     subjectId: number | string,
     year: number,
@@ -100,22 +102,47 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
 
   clearError: () => set({ error: null }),
 
-  checkForConflicts: ({ hour, day, month, year }) => {
-    const courseSchedule = get().courseSchedule;
-    if (!courseSchedule) return false;
+  checkForConflicts: async ({
+    hour,
+    day,
+    month,
+    year,
+  }: {
+    hour: number;
+    day: number;
+    month: number;
+    year: number;
+  }) => {
+    try {
+      const courseSchedule = get().courseSchedule;
+      if (!courseSchedule) return false;
 
-    const subjects = Array.from(courseSchedule.values()).flat();
-    for (const subject of subjects) {
-      if (
-        subject.day === day &&
-        subject.hour === hour &&
-        subject.month === month &&
-        subject.year === year
-      ) {
-        return true; // Conflict found
+      // Get all subject IDs from the course schedule
+      const allSubjectIds = Array.from(courseSchedule.keys());
+
+      // Check in memory course schedule first for any existing entries at this time
+      const subjects = Array.from(courseSchedule.values()).flat();
+      for (const subject of subjects) {
+        if (
+          subject.day === day &&
+          subject.hour === hour &&
+          subject.month === month &&
+          subject.year === year
+        ) {
+          return true; // Conflict found in course schedule
+        }
       }
+
+      // Check database for manual attendance entries that might conflict
+      const { hasConflict } = await AttendanceDatabase.checkTimeSlotConflictWithSubjects(
+        year, month, day, hour, allSubjectIds
+      );
+
+      return hasConflict;
+    } catch (error) {
+      console.error("Error checking for conflicts:", error);
+      return false;
     }
-    return false; // No conflicts found
   },
 
   addSubjectAttendance: async (
@@ -127,44 +154,107 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
     attendance: "present" | "absent" | "none"
   ) => {
     try {
-      const dataFromMap = get().courseSchedule?.get(subjectId.toString())||[];
-      // await userAttendanceService.insertAttendanceByUser({
-      //   subjectId: subjectId.toString(),
-      //   year,
-      //   month,
-      //   day,
-      //   hour,
-      //   attendance,
-      // });
-        const newData: CourseSchedule = {
-          id: 0, // This will be set by the database
+      // Get all subject IDs for conflict checking
+      const courseSchedule = get().courseSchedule;
+      const allSubjectIds = courseSchedule ? Array.from(courseSchedule.keys()) : [];
+
+      // Check if record already exists
+      const existingRecord = await AttendanceDatabase.getAttendanceRecord(
+        subjectId.toString(),
+        year,
+        month,
+        day,
+        hour
+      );
+
+      let attendanceRecord: CourseSchedule;
+      
+      if (existingRecord) {
+        // Update existing record
+        attendanceRecord = {
+          ...existingRecord,
+          user_attendance: attendance === "present" ? "present" : attendance === "absent" ? "absent" : null,
+          final_attendance: attendance === "present" ? "present" : attendance === "absent" ? "absent" : null,
+          is_entered_by_student: 1,
+          is_user_override: 1,
+          updated_at: Date.now(),
+          last_user_update: Date.now(),
+        };
+        
+        // Check for conflicts if teacher attendance exists
+        if (attendanceRecord.teacher_attendance && 
+            attendanceRecord.teacher_attendance !== attendanceRecord.user_attendance) {
+          attendanceRecord.is_conflict = 1;
+          attendanceRecord.final_attendance = null; // Clear final until resolved
+        } else {
+          attendanceRecord.is_conflict = 0;
+        }
+      } else {
+        // Check for time slot conflicts before creating new record
+        const { hasConflict, conflictingSubject } = await AttendanceDatabase.checkTimeSlotConflictWithSubjects(
+          year, month, day, hour, allSubjectIds, subjectId.toString()
+        );
+        
+        if (hasConflict) {
+          throw new Error(`Time slot conflict: Subject ${conflictingSubject} already has attendance for this time slot`);
+        }
+
+        // Create new record
+        attendanceRecord = {
+          id: 0,
           subject_id: subjectId.toString(),
           year,
           month,
           day,
           hour,
-          user_attendance: attendance,
+          user_attendance: attendance === "present" ? "present" : attendance === "absent" ? "absent" : null,
           teacher_attendance: null,
-          final_attendance: null,
+          final_attendance: attendance === "present" ? "present" : attendance === "absent" ? "absent" : null,
           is_entered_by_student: 1,
           is_entered_by_professor: 0,
           is_conflict: 0,
-          is_user_override: 0,
+          is_user_override: 1,
+          created_at: Date.now(),
+          updated_at: Date.now(),
+          last_user_update: Date.now(),
         };
-        const updatedData = [...dataFromMap, newData];
-        await userAttendanceService.insertAttendanceByUser({
-          subjectId: subjectId.toString(),
-          year,
-          month,
-          day,
-          hour,
-          attendance,
-        });
-        const newMap = new Map(get().courseSchedule);
-        newMap.set(subjectId.toString(), updatedData);
-        set({ courseSchedule: newMap });
+      }
+
+      // Update in-memory course schedule first (for immediate UI update)
+      const dataFromMap = courseSchedule?.get(subjectId.toString()) || [];
+      const existingIndex = dataFromMap.findIndex(
+        item => item.year === year && item.month === month && 
+                item.day === day && item.hour === hour
+      );
+      
+      let updatedData: CourseSchedule[];
+      if (existingIndex >= 0) {
+        // Update existing entry
+        updatedData = [...dataFromMap];
+        updatedData[existingIndex] = attendanceRecord;
+      } else {
+        // Add new entry
+        updatedData = [...dataFromMap, attendanceRecord];
+      }
+      
+      const newMap = new Map(courseSchedule);
+      newMap.set(subjectId.toString(), updatedData);
+      set({ courseSchedule: newMap });
+
+      // Store in database in background (don't await for better performance)
+      AttendanceDatabase.saveAttendanceRecord(
+        subjectId.toString(),
+        year,
+        month,
+        day,
+        hour,
+        attendanceRecord
+      ).catch(error => {
+        console.error("Background database save failed:", error);
+      });
     } catch (error) {
       console.error("Error adding subject attendance:", error);
+      throw error;
     }
   },
 

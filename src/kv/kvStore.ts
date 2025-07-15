@@ -89,4 +89,17 @@ export const kvHelper = {
       return null;
     }
   },
+
+  // Subscription modal tracking
+  setSubscriptionModalShown(): void {
+    settingsStore.set("subscription_modal_shown", "true");
+  },
+
+  hasSubscriptionModalBeenShown(): boolean {
+    return settingsStore.get<string>("subscription_modal_shown") === "true";
+  },
+
+  resetSubscriptionModal(): void {
+    settingsStore.delete("subscription_modal_shown");
+  },
 };

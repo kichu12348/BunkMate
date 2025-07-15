@@ -1,27 +1,29 @@
+import React, { JSX, useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Alert,
 } from "react-native";
-import React, { JSX, useState } from "react";
 import Animated, {
   Easing,
   useSharedValue,
   withTiming,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { useTheme } from "../hooks/useTheme";
-import { Ionicons } from "@expo/vector-icons";
+import { AntDesign, Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ThemeColors } from "../types/theme";
-import { userAttendanceService } from "../db/userAttendanceService";
-import { Alert } from "react-native";
+import { useTheme } from "../hooks/useTheme";
 import { useAttendanceStore } from "../state/attendance";
+import { AttendanceDatabase } from "../utils/attendanceDatabase";
+import { CourseSchedule } from "../types/api";
+import { ThemeColors } from "../types/theme";
 
 const { width, height } = Dimensions.get("screen");
 
+// Type definitions
 interface AttendanceDay {
   date: string;
   status: "present" | "absent" | "none";
@@ -31,12 +33,12 @@ interface AttendanceDay {
 interface AttendanceEntry {
   attendance: string;
   hour: number;
-  is_entered_by_professor?: number; // 0 or 1
-  is_entered_by_student?: number; // 0 or 1
+  is_entered_by_professor?: number;
+  is_entered_by_student?: number;
   final_attendance?: string;
   teacher_attendance?: string;
   user_attendance?: string;
-  is_conflict?: number; // 0 or 1
+  is_conflict?: number;
 }
 
 interface Data {
@@ -47,7 +49,6 @@ interface Data {
 interface AttendanceDayViewProps {
   data?: Data | null;
   isVisible: boolean;
-  animatedStyle: any;
   onClose: () => void;
   subjectId?: string;
   subjectName?: string;
@@ -57,49 +58,19 @@ interface AttendanceDayViewProps {
 interface EditModalDataProps {
   attendance: string;
   hour: number;
-  is_entered_by_professor?: number; // 0 or 1
-  is_entered_by_student?: number; // 0 or 1
+  is_entered_by_professor?: number;
+  is_entered_by_student?: number;
   month?: number;
   day?: number;
   year?: number;
-  is_conflict?: number; // 0 or 1
+  is_conflict?: number;
   teacher_attendance?: string;
   user_attendance?: string;
   final_attendance?: string;
 }
 
-// Helper function to check for time conflicts
-const checkTimeConflict = (
-  subjectId: string,
-  year: number,
-  month: number,
-  day: number,
-  hour: number
-): boolean => {
-  try {
-    return userAttendanceService.checkTimeConflict(
-      subjectId,
-      year,
-      month,
-      day,
-      hour
-    );
-  } catch (error) {
-    console.error("Error checking time conflict:", error);
-    return false;
-  }
-};
-
-function AttendanceEditModal({
-  data,
-  close,
-  colors,
-  isVisible,
-  subjectId,
-  subjectName,
-  onUpdate,
-  checkForConflicts,
-}: {
+// Edit Modal Component
+const AttendanceEditModal: React.FC<{
   data: EditModalDataProps | null;
   close: () => void;
   colors: ThemeColors;
@@ -107,79 +78,126 @@ function AttendanceEditModal({
   subjectId?: string;
   subjectName?: string;
   onUpdate?: () => void;
+  onStatusUpdate?: () => void;
+  closeThis?: () => void;
   checkForConflicts: (params: {
     hour: number;
     day: number;
     month: number;
     year: number;
-  }) => boolean | void;
-}) {
+  }) => Promise<boolean>;
+}> = ({
+  data,
+  close,
+  colors,
+  isVisible,
+  subjectId,
+  onStatusUpdate,
+  checkForConflicts,
+  closeThis,
+}) => {
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(false);
 
-  const addSubjectAttendance = useAttendanceStore(
-    (state) => state.addSubjectAttendance
-  );
+  if (!isVisible || !data) return null;
 
-  // Get the current date for database lookup
+  // Date calculations
   const currentDate = new Date();
-  const year = data?.year || currentDate.getFullYear();
-  const month = data?.month || currentDate.getMonth() + 1;
-  const day = data?.day || currentDate.getDate();
+  const year = data.year || currentDate.getFullYear();
+  const month = data.month || currentDate.getMonth() + 1;
+  const day = data.day || currentDate.getDate();
 
-  // Get the latest attendance record from database to ensure fresh data
-  const attendanceRecord = data;
-
-  // Use database record if available, otherwise use passed data
-  const isEnteredByProfessor = data?.is_entered_by_professor === 1;
-  const isEnteredByStudent = attendanceRecord?.is_entered_by_student === 1;
-  const isConflict = attendanceRecord?.is_conflict === 1 || false;
+  // State calculations
+  const isEnteredByProfessor = data.is_entered_by_professor === 1;
+  const isEnteredByStudent = data.is_entered_by_student === 1;
+  const isConflict = data.is_conflict === 1;
   const attendanceStatus =
-    attendanceRecord?.final_attendance ||
-    attendanceRecord?.attendance ||
-    attendanceRecord?.teacher_attendance ||
-    attendanceRecord?.user_attendance;
-  const hasRecord = !!attendanceRecord;
-
-  console.log("Attendance Edit Modal Data:", {
-    data,
-    isEnteredByProfessor,
-    isEnteredByStudent,
-    isConflict,
-    attendanceStatus,
-  });
-
-  // Don't allow editing if only professor has entered data (unless there's a conflict to resolve)
+    data.final_attendance ||
+    data.attendance ||
+    data.teacher_attendance ||
+    data.user_attendance;
+  const hasRecord = !!data.attendance;
 
   const handleAttendanceChange = async (attendance: "Present" | "Absent") => {
     if (!subjectId) return;
 
     try {
-      const isConflict = checkForConflicts({
+      setIsLoading(true);
+
+      // Check for conflicts
+      const hasConflict = await checkForConflicts({
         hour: data.hour,
         day,
         month,
         year,
       });
-      if (isConflict) {
+
+      if (hasConflict) {
         Alert.alert(
           "Conflict Detected",
-          "You cannot change attendance for this hour due to a conflict."
+          "Another subject already has attendance marked for this time slot."
         );
         return;
       }
-      setIsLoading(true);
-      await addSubjectAttendance(
+
+      // Get existing record
+      const existingRecord = await AttendanceDatabase.getAttendanceRecord(
+        subjectId,
+        year,
+        month,
+        day,
+        data.hour
+      );
+
+      // Get all subject IDs for conflict checking
+      const courseSchedule = useAttendanceStore.getState().courseSchedule;
+      const allSubjectIds = courseSchedule
+        ? Array.from(courseSchedule.keys())
+        : undefined;
+
+      // Mark attendance
+      const updatedRecord = await AttendanceDatabase.markAttendance(
         subjectId,
         year,
         month,
         day,
         data.hour,
-        attendance.toLowerCase() as "present" | "absent"
+        attendance,
+        existingRecord || undefined,
+        allSubjectIds
       );
+
+      // Update store
+      if (courseSchedule) {
+        const subjectData = courseSchedule.get(subjectId) || [];
+        const existingIndex = subjectData.findIndex(
+          (item) =>
+            item.year === year &&
+            item.month === month &&
+            item.day === day &&
+            item.hour === data.hour
+        );
+
+        let updatedData: CourseSchedule[];
+        if (existingIndex >= 0) {
+          updatedData = [...subjectData];
+          updatedData[existingIndex] = updatedRecord;
+        } else {
+          updatedData = [...subjectData, updatedRecord];
+        }
+
+        const newMap = new Map(courseSchedule);
+        newMap.set(subjectId, updatedData);
+        useAttendanceStore.setState({ courseSchedule: newMap });
+      }
+
+      onStatusUpdate?.();
       close();
     } catch (error) {
-      Alert.alert("Error", "Failed to update attendance");
+      Alert.alert(
+        "Error",
+        (error as Error).message || "Failed to update attendance"
+      );
       console.error("Error updating attendance:", error);
     } finally {
       setIsLoading(false);
@@ -201,9 +219,41 @@ function AttendanceEditModal({
             try {
               setIsLoading(true);
 
-              // Update parent state and close modal
-              onUpdate?.();
+              await AttendanceDatabase.deleteAttendanceRecord(
+                subjectId,
+                year,
+                month,
+                day,
+                data.hour
+              );
+
+              // Update store
+              const courseSchedule =
+                useAttendanceStore.getState().courseSchedule;
+              if (courseSchedule) {
+                const subjectData = courseSchedule.get(subjectId) || [];
+                const updatedData = subjectData.filter(
+                  (item) =>
+                    !(
+                      item.year === year &&
+                      item.month === month &&
+                      item.day === day &&
+                      item.hour === data.hour
+                    )
+                );
+
+                const newMap = new Map(courseSchedule);
+                if (updatedData.length > 0) {
+                  newMap.set(subjectId, updatedData);
+                } else {
+                  newMap.set(subjectId, []);
+                }
+                useAttendanceStore.setState({ courseSchedule: newMap });
+              }
+
+              onStatusUpdate?.();
               close();
+              closeThis?.();
             } catch (error) {
               Alert.alert("Error", "Failed to delete attendance record");
               console.error("Error deleting record:", error);
@@ -223,7 +273,8 @@ function AttendanceEditModal({
 
     try {
       setIsLoading(true);
-      await userAttendanceService.resolveConflict(
+
+      const updatedRecord = await AttendanceDatabase.resolveConflict(
         subjectId,
         year,
         month,
@@ -232,7 +283,32 @@ function AttendanceEditModal({
         resolution
       );
 
-      onUpdate?.();
+      // Update store
+      const courseSchedule = useAttendanceStore.getState().courseSchedule;
+      if (courseSchedule) {
+        const subjectData = courseSchedule.get(subjectId) || [];
+        const existingIndex = subjectData.findIndex(
+          (item) =>
+            item.year === year &&
+            item.month === month &&
+            item.day === day &&
+            item.hour === data.hour
+        );
+
+        let updatedData: CourseSchedule[];
+        if (existingIndex >= 0) {
+          updatedData = [...subjectData];
+          updatedData[existingIndex] = updatedRecord;
+        } else {
+          updatedData = [...subjectData, updatedRecord];
+        }
+
+        const newMap = new Map(courseSchedule);
+        newMap.set(subjectId, updatedData);
+        useAttendanceStore.setState({ courseSchedule: newMap });
+      }
+
+      onStatusUpdate?.();
       close();
     } catch (error) {
       Alert.alert("Error", "Failed to resolve conflict");
@@ -242,186 +318,130 @@ function AttendanceEditModal({
     }
   };
 
+  const renderConflictResolution = () => (
+    <View style={styles.editContent}>
+      <Ionicons name="warning" size={48} color={colors.warning} />
+      <Text style={[styles.editTitle, { color: colors.text }]}>
+        Attendance Conflict
+      </Text>
+      <Text style={[styles.editMessage, { color: colors.textSecondary }]}>
+        Your record differs from your professor's record for Hour {data.hour}
+      </Text>
+
+      <View style={styles.conflictInfo}>
+        <Text style={[styles.conflictLabel, { color: colors.textSecondary }]}>
+          Professor marked:{" "}
+          {data.teacher_attendance?.toLowerCase() === "p" ||
+          data.teacher_attendance?.toLowerCase() === "present"
+            ? "Present"
+            : "Absent"}
+        </Text>
+        <Text style={[styles.conflictLabel, { color: colors.textSecondary }]}>
+          You marked:{" "}
+          {data.user_attendance?.toLowerCase() === "p" ||
+          data.user_attendance?.toLowerCase() === "present"
+            ? "Present"
+            : "Absent"}
+        </Text>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, { borderColor: colors.primary }]}
+          onPress={() => handleResolveConflict("accept_teacher")}
+          disabled={isLoading}
+        >
+          <Text style={[styles.buttonText, { color: colors.primary }]}>
+            Accept Professor's Record
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderProfessorOnlyView = () => (
+    <View style={styles.editContent}>
+      <Ionicons name="school" size={48} color={colors.primary} />
+      <Text style={[styles.editTitle, { color: colors.text }]}>
+        Professor Record
+      </Text>
+      <Text style={[styles.editMessage, { color: colors.textSecondary }]}>
+        This hour's attendance was marked by your professor. You cannot edit it.
+      </Text>
+      <Text style={[styles.editAttendance, { color: colors.text }]}>
+        Hour {data.hour}: {attendanceStatus}
+      </Text>
+    </View>
+  );
+
+  const renderEditForm = () => (
+    <View style={styles.editContent}>
+      <Ionicons name="create" size={48} color={colors.primary} />
+      <Text style={[styles.editTitle, { color: colors.text }]}>
+        {hasRecord ? "Edit" : "Mark"} Attendance
+      </Text>
+      <Text style={[styles.editMessage, { color: colors.textSecondary }]}>
+        {hasRecord ? "Update your attendance for" : "Mark your attendance for"}{" "}
+        Hour {data.hour}
+      </Text>
+      <Text style={[styles.editAttendance, { color: colors.text }]}>
+        Current Status: {attendanceStatus}
+      </Text>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, { borderColor: colors.success }]}
+          onPress={() => handleAttendanceChange("Present")}
+          disabled={isLoading}
+        >
+          <Feather name="user-check" size={20} color={colors.success} />
+          <Text style={[styles.buttonText, { color: colors.success }]}>
+            Present
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, { borderColor: colors.error }]}
+          onPress={() => handleAttendanceChange("Absent")}
+          disabled={isLoading}
+        >
+          <Feather name="user-minus" size={20} color={colors.error} />
+          <Text style={[styles.buttonText, { color: colors.error }]}>
+            Absent
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {isEnteredByStudent && !isConflict && (
+        <TouchableOpacity
+          style={[styles.deleteButton, { borderColor: colors.error }]}
+          onPress={handleDeleteRecord}
+          disabled={isLoading}
+        >
+          <Ionicons name="trash" size={16} color={colors.error} />
+          <Text style={[styles.deleteButtonText, { color: colors.error }]}>
+            Delete Record
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
   const renderContent = () => {
-    if (isConflict) {
-      // Show conflict resolution options
-      return (
-        <View style={styles.editContent}>
-          <Ionicons name="warning" size={48} color={colors.warning} />
-          <Text style={[styles.editTitle, { color: colors.text }]}>
-            Attendance Conflict
-          </Text>
-          <Text style={[styles.editMessage, { color: colors.textSecondary }]}>
-            Your record differs from your professor's record for Hour{" "}
-            {data.hour}
-          </Text>
-
-          <View style={styles.conflictInfo}>
-            <Text
-              style={[styles.conflictLabel, { color: colors.textSecondary }]}
-            >
-              Professor marked:{" "}
-              {attendanceRecord?.teacher_attendance === "P" ||
-              attendanceRecord?.teacher_attendance === "Present"
-                ? "Present"
-                : "Absent"}
-            </Text>
-            <Text
-              style={[styles.conflictLabel, { color: colors.textSecondary }]}
-            >
-              You marked:{" "}
-              {attendanceRecord?.user_attendance === "P" ||
-              attendanceRecord?.user_attendance === "Present"
-                ? "Present"
-                : "Absent"}
-            </Text>
-          </View>
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                styles.acceptButton,
-                { backgroundColor: colors.primary },
-              ]}
-              onPress={() => handleResolveConflict("accept_teacher")}
-              disabled={isLoading}
-            >
-              <Text style={[styles.buttonText, { color: colors.surface }]}>
-                Accept Professor's Record
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                styles.keepButton,
-                { backgroundColor: colors.secondary },
-              ]}
-              onPress={() => handleResolveConflict("keep_user")}
-              disabled={isLoading}
-            >
-              <Text style={[styles.buttonText, { color: colors.surface }]}>
-                Keep My Record
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
-    }
-    return (
-      <View style={styles.editContent}>
-        <Ionicons name="create" size={48} color={colors.primary} />
-        <Text style={[styles.editTitle, { color: colors.text }]}>
-          {hasRecord ? "Edit" : "Mark"} Attendance
-        </Text>
-        <Text style={[styles.editMessage, { color: colors.textSecondary }]}>
-          {hasRecord
-            ? "Update your attendance for"
-            : "Mark your attendance for"}{" "}
-          Hour {data.hour}
-        </Text>
-        <Text style={[styles.editAttendance, { color: colors.text }]}>
-          Current Status:{" "}
-          {attendanceStatus.toLowerCase() === "a" ||
-          attendanceStatus.toLowerCase() === "absent"
-            ? "Absent"
-            : "Present"}
-        </Text>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              styles.presentButton,
-              { backgroundColor: colors.success },
-            ]}
-            onPress={() => handleAttendanceChange("Present")}
-            disabled={isLoading}
-          >
-            <Ionicons name="checkmark" size={20} color={colors.surface} />
-            <Text style={[styles.buttonText, { color: colors.surface }]}>
-              Present
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              styles.absentButton,
-              { backgroundColor: colors.error },
-            ]}
-            onPress={() => handleAttendanceChange("Absent")}
-            disabled={isLoading}
-          >
-            <Ionicons name="close" size={20} color={colors.surface} />
-            <Text style={[styles.buttonText, { color: colors.surface }]}>
-              Absent
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Show delete option if user created the record and it's not in conflict */}
-        {isEnteredByStudent && !isConflict && (
-          <TouchableOpacity
-            style={[styles.deleteButton, { borderColor: colors.error }]}
-            onPress={handleDeleteRecord}
-            disabled={isLoading}
-          >
-            <Ionicons name="trash" size={16} color={colors.error} />
-            <Text style={[styles.deleteButtonText, { color: colors.error }]}>
-              Delete Record
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    );
+    //if (isConflict) return renderConflictResolution();
+    if (isEnteredByProfessor && !isEnteredByStudent)
+      return renderProfessorOnlyView();
+    return renderEditForm();
   };
-
-  if (!isVisible || !data) return null;
-  if (isEnteredByProfessor && !isEnteredByStudent && !isConflict) {
-    return (
-      <View
-        style={[
-          styles.editContainer,
-          {
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
-            backgroundColor: `${colors.background}dd`,
-          },
-        ]}
-      >
-        <View style={styles.editHeader}>
-          <TouchableOpacity onPress={close}>
-            <Ionicons name="close" size={34} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.editContent}>
-          <Ionicons name="school" size={48} color={colors.primary} />
-          <Text style={[styles.editTitle, { color: colors.text }]}>
-            Professor Record
-          </Text>
-          <Text style={[styles.editMessage, { color: colors.textSecondary }]}>
-            This hour's attendance was marked by your professor. You cannot edit
-            it.
-          </Text>
-          <Text style={[styles.editAttendance, { color: colors.text }]}>
-            Hour {data.hour}:{"  "}
-            {attendanceStatus}
-          </Text>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <View
       style={[
         styles.editContainer,
         {
-          paddingTop: insets.top,
+          paddingTop: insets.top + 20,
           paddingBottom: insets.bottom,
-          backgroundColor: `${colors.background}aa`,
+          backgroundColor: `${colors.background}dd`,
         },
       ]}
     >
@@ -447,99 +467,176 @@ function AttendanceEditModal({
       )}
     </View>
   );
-}
+};
 
-const AttendanceDayView = ({
+// Main Component
+const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
   isVisible,
   onClose,
-  animatedStyle,
   subjectId,
   subjectName,
   onUpdate,
   data,
-}: AttendanceDayViewProps): JSX.Element => {
+}) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState<EditModalDataProps | null>(null);
-  const [hourlyStatus, setHourlyStatus] = React.useState<Map<number, string>>(
-    new Map<number, string>()
+  const [hourlyStatus, setHourlyStatus] = useState<Map<number, string>>(
+    new Map()
   );
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const checkForConflicts = useAttendanceStore(
-    (state) => state.checkForConflicts
-  );
-
-  React.useEffect(() => {
-    const status = new Map<number, string>();
-    data.entries?.forEach((entry) => {
-      // Determine display status based on attendance
-      const displayStatus = (() => {
-        const finalAtt = entry.final_attendance?.[0]?.toUpperCase();
-        const teacherAtt = entry.teacher_attendance?.[0]?.toUpperCase();
-        const userAtt = entry.user_attendance?.[0]?.toUpperCase();
-
-        // Check for conflict first
-        if (entry.is_conflict === 1) {
-          return "conflict";
-        }
-
-        // Check for present status
-        if (
-          finalAtt === "P" ||
-          teacherAtt === "P" ||
-          (entry.is_entered_by_student === 1 && userAtt === "P")
-        ) {
-          return "present";
-        }
-
-        // Check for absent status
-        if (
-          finalAtt === "A" ||
-          teacherAtt === "A" ||
-          (entry.is_entered_by_student === 1 && userAtt === "A")
-        ) {
-          return "absent";
-        }
-
-        // Default case
-        return "none";
-      })();
-      status.set(entry.hour, displayStatus);
-    });
-    setHourlyStatus(status);
-  }, [data]);
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
+  // Animation values
   const translateY = useSharedValue(height);
   const scale = useSharedValue(0);
 
+  // Store subscriptions
+  const checkForConflicts = useAttendanceStore(
+    (state) => state.checkForConflicts
+  );
+  const courseSchedule = useAttendanceStore((state) => state.courseSchedule);
+
+  // Callbacks
+  const forceRefreshStatus = useCallback(() => {
+    setRefreshKey((prev) => prev + 1);
+  }, []);
+
+  // Effects
+  useEffect(() => {
+    if (isVisible) {
+      forceRefreshStatus();
+    }
+  }, [isVisible, forceRefreshStatus]);
+
+  useEffect(() => {
+    const calculateHourlyStatus = () => {
+      const status = new Map<number, string>();
+
+      // Initialize all hours
+      for (let hour = 1; hour <= 6; hour++) {
+        status.set(hour, "none");
+      }
+
+      if (!data?.day?.date || !subjectId) return status;
+
+      const currentDate = new Date(data.day.date);
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
+      const day = currentDate.getDate();
+
+      // Get manual records
+      const subjectData = courseSchedule?.get(subjectId) || [];
+      const manualRecords = new Map<number, CourseSchedule>();
+
+      subjectData.forEach((record) => {
+        if (
+          record.year === year &&
+          record.month === month &&
+          record.day === day
+        ) {
+          manualRecords.set(record.hour, record);
+        }
+      });
+
+      // Process each hour
+      for (let hour = 1; hour <= 6; hour++) {
+        const manualRecord = manualRecords.get(hour);
+        const originalEntry = data?.entries?.find((e) => e.hour === hour);
+        const recordToUse = manualRecord || originalEntry;
+
+        if (recordToUse) {
+          const displayStatus = (() => {
+            if (recordToUse.is_conflict === 1) return "conflict";
+
+            const finalAtt = recordToUse.final_attendance?.toLowerCase();
+            const userAtt = recordToUse.user_attendance?.toLowerCase();
+            const teacherAtt = recordToUse.teacher_attendance?.toLowerCase();
+
+            if (
+              finalAtt === "present" ||
+              finalAtt === "p" ||
+              userAtt === "present" ||
+              userAtt === "p" ||
+              teacherAtt === "present" ||
+              teacherAtt === "p"
+            ) {
+              return "present";
+            }
+
+            if (
+              finalAtt === "absent" ||
+              finalAtt === "a" ||
+              userAtt === "absent" ||
+              userAtt === "a" ||
+              teacherAtt === "absent" ||
+              teacherAtt === "a"
+            ) {
+              return "absent";
+            }
+
+            return "none";
+          })();
+
+          status.set(hour, displayStatus);
+        }
+      }
+
+      return status;
+    };
+
+    const newStatus = calculateHourlyStatus();
+    setHourlyStatus(newStatus);
+  }, [data, courseSchedule, subjectId, refreshKey]);
+
+  // Handlers
   const handleOpenEditModal = async (hour: number) => {
     if (showEditModal) return;
 
-    // Get current date for database lookup
     const currentDate = data?.day?.date ? new Date(data.day.date) : new Date();
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
     const day = currentDate.getDate();
 
-    // Get the latest attendance record from database to ensure fresh data
-    const attendanceRecord = data.entries?.find((e) => e.hour === hour) || null;
+    // Get manual record
+    let manualRecord: CourseSchedule | null = null;
+    if (subjectId && courseSchedule) {
+      const subjectData = courseSchedule.get(subjectId) || [];
+      manualRecord =
+        subjectData.find(
+          (record) =>
+            record.year === year &&
+            record.month === month &&
+            record.day === day &&
+            record.hour === hour
+        ) || null;
+    }
 
-    // Find entry from original data as fallback
-    const dataEntry = data.entries?.find((e) => e.hour === hour);
+    // Get database record
+    let databaseRecord: CourseSchedule | null = null;
+    if (subjectId && !manualRecord) {
+      databaseRecord = await AttendanceDatabase.getAttendanceRecord(
+        subjectId,
+        year,
+        month,
+        day,
+        hour
+      );
+    }
 
-    const editData: EditModalDataProps = {
+    const attendanceRecord =
+      manualRecord ||
+      databaseRecord ||
+      data?.entries?.find((e) => e.hour === hour) ||
+      null;
+    const dataEntry = data?.entries?.find((e) => e.hour === hour);
+
+    const editModalData: EditModalDataProps = {
       attendance:
-        attendanceRecord?.final_attendance || dataEntry?.attendance || "",
+        attendanceRecord?.final_attendance ||
+        attendanceRecord?.user_attendance ||
+        dataEntry?.attendance ||
+        "",
       hour: hour,
       is_entered_by_professor:
         attendanceRecord?.is_entered_by_professor ||
@@ -549,18 +646,28 @@ const AttendanceDayView = ({
         attendanceRecord?.is_entered_by_student ||
         dataEntry?.is_entered_by_student ||
         0,
-      is_conflict: attendanceRecord?.is_conflict || 0,
-      teacher_attendance: attendanceRecord?.teacher_attendance || undefined,
-      user_attendance: attendanceRecord?.user_attendance || undefined,
-      final_attendance: attendanceRecord?.final_attendance || undefined,
+      is_conflict: attendanceRecord?.is_conflict || dataEntry?.is_conflict || 0,
+      teacher_attendance:
+        attendanceRecord?.teacher_attendance ||
+        dataEntry?.teacher_attendance ||
+        undefined,
+      user_attendance:
+        attendanceRecord?.user_attendance ||
+        dataEntry?.user_attendance ||
+        undefined,
+      final_attendance:
+        attendanceRecord?.final_attendance ||
+        dataEntry?.final_attendance ||
+        undefined,
       year,
       month,
       day,
     };
 
-    setEditData(editData);
+    setEditData(editModalData);
     setShowEditModal(true);
 
+    // Animate modal
     translateY.value = withTiming(0, {
       duration: 300,
       easing: Easing.inOut(Easing.ease),
@@ -585,12 +692,94 @@ const AttendanceDayView = ({
 
     setTimeout(() => {
       setShowEditModal(false);
-      setEditData(null); // Clear edit data when closing
+      setEditData(null);
     }, 300);
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const renderHourCell = (hour: number) => {
+    const status = hourlyStatus.get(hour);
+    const isPresent = status === "present";
+    const isAbsent = status === "absent";
+    const isConflict = status === "conflict";
+    const statusColor = isPresent
+      ? colors.success
+      : isAbsent
+      ? colors.error
+      : isConflict
+      ? colors.warning
+      : colors.textSecondary;
+
+    const entry = data?.entries?.find((e) => e.hour === hour);
+
+    // Check manual entry
+    let manualEntry: CourseSchedule | null = null;
+    if (courseSchedule && subjectId) {
+      const currentDate = data?.day?.date
+        ? new Date(data.day.date)
+        : new Date();
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
+      const day = currentDate.getDate();
+      const subjectData = courseSchedule.get(subjectId) || [];
+      manualEntry =
+        subjectData.find(
+          (record) =>
+            record.year === year &&
+            record.month === month &&
+            record.day === day &&
+            record.hour === hour
+        ) || null;
+    }
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.hourCell,
+          { borderColor: statusColor },
+          (isPresent || isAbsent) && {
+            backgroundColor: statusColor + "15",
+          },
+        ]}
+        key={hour}
+        activeOpacity={0.8}
+        onPress={() => handleOpenEditModal(hour)}
+      >
+        <Text style={[styles.hourText, { color: statusColor }]}>
+          Hour {hour}
+        </Text>
+        {status && status !== "none" && (
+          <View style={styles.sourceIndicator}>
+            {isConflict ? (
+              <Ionicons name="warning" size={12} color={colors.warning} />
+            ) : (
+              <>
+                {(entry?.is_entered_by_professor === 1 ||
+                  manualEntry?.is_entered_by_professor === 1) && (
+                  <Ionicons name="school" size={12} color={colors.primary} />
+                )}
+                {(entry?.is_entered_by_student === 1 ||
+                  manualEntry?.is_entered_by_student === 1) && (
+                  <Ionicons name="person" size={12} color={colors.secondary} />
+                )}
+              </>
+            )}
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   const modalAnimStyle = useAnimatedStyle(() => {
-    "worklet";
     return {
       transform: [
         { translateY: translateY.value },
@@ -599,15 +788,12 @@ const AttendanceDayView = ({
     };
   });
 
-  const insets = useSafeAreaInsets();
-
   if (!isVisible) return null;
 
   return (
-    <Animated.View
+    <View
       style={[
         styles.container,
-        animatedStyle,
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}
       pointerEvents="box-none"
@@ -615,9 +801,7 @@ const AttendanceDayView = ({
       <View
         style={[
           styles.blurContainer,
-          {
-            backgroundColor: colors.background + "c0",
-          },
+          { backgroundColor: colors.background + "c0" },
         ]}
       />
       <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
@@ -673,140 +857,28 @@ const AttendanceDayView = ({
         </View>
 
         <View style={styles.sessionsContainer}>
-          <View style={styles.hoursRow}>
-            {[1, 2, 3].map((hour) => {
-              const status = hourlyStatus.get(hour);
-              const isPresent = status === "present";
-              const isAbsent = status === "absent";
-              const isConflict = status === "conflict";
-              const statusColor = isPresent
-                ? colors.success
-                : isAbsent
-                ? colors.error
-                : isConflict
-                ? colors.warning
-                : colors.textSecondary;
-
-              const entry = data?.entries?.find((e) => e.hour === hour);
-              return (
-                <TouchableOpacity
-                  style={[
-                    styles.hourCell,
-                    { borderColor: statusColor },
-                    (isPresent || isAbsent) && {
-                      backgroundColor: statusColor + "15",
-                    },
-                  ]}
-                  key={hour}
-                  activeOpacity={0.8}
-                  disabled={true} // Disable touch for now
-                  onPress={() => {
-                    handleOpenEditModal(hour);
-                  }}
-                >
-                  <Text style={[styles.hourText, { color: statusColor }]}>
-                    Hour {hour}
-                  </Text>
-                  {/* Show indicator for data source */}
-                  {status && (
-                    <View style={styles.sourceIndicator}>
-                      {entry?.is_entered_by_professor === 1 && (
-                        <Ionicons
-                          name="school"
-                          size={12}
-                          color={colors.primary}
-                        />
-                      )}
-                      {entry?.is_entered_by_student === 1 && (
-                        <Ionicons
-                          name="person"
-                          size={12}
-                          color={colors.secondary}
-                        />
-                      )}
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-          <View style={styles.hoursRow}>
-            {[4, 5, 6].map((hour) => {
-              const status = hourlyStatus.get(hour);
-              const isPresent = status === "present";
-              const isAbsent = status === "absent";
-              const isConflict = status === "conflict";
-              const statusColor = isPresent
-                ? colors.success
-                : isAbsent
-                ? colors.error
-                : isConflict
-                ? colors.warning
-                : colors.textSecondary;
-
-              const entry = data?.entries?.find((e) => e.hour === hour);
-
-              return (
-                <TouchableOpacity
-                  style={[
-                    styles.hourCell,
-                    { borderColor: statusColor },
-                    (isPresent || isAbsent) && {
-                      backgroundColor: statusColor + "15",
-                    },
-                  ]}
-                  key={hour}
-                  activeOpacity={0.8}
-                  disabled={true} // Disable touch for now
-                  onPress={() => {
-                    handleOpenEditModal(hour);
-                  }}
-                >
-                  <Text style={[styles.hourText, { color: statusColor }]}>
-                    Hour {hour}
-                  </Text>
-                  {/* Show indicator for data source */}
-                  {status && (
-                    <View style={styles.sourceIndicator}>
-                      {entry?.is_entered_by_professor === 1 && (
-                        <Ionicons
-                          name="school"
-                          size={12}
-                          color={colors.primary}
-                        />
-                      )}
-                      {entry?.is_entered_by_student === 1 && (
-                        <Ionicons
-                          name="person"
-                          size={12}
-                          color={colors.secondary}
-                        />
-                      )}
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <View style={styles.hoursRow}>{[1, 2, 3].map(renderHourCell)}</View>
+          <View style={styles.hoursRow}>{[4, 5, 6].map(renderHourCell)}</View>
         </View>
       </View>
+
       {showEditModal && (
         <Animated.View style={[styles.editModalContainer, modalAnimStyle]}>
-          {editData && (
-            <AttendanceEditModal
-              close={handleCloseEditModal}
-              data={editData}
-              colors={colors}
-              isVisible={showEditModal}
-              subjectId={subjectId}
-              subjectName={subjectName}
-              onUpdate={onUpdate}
-              checkForConflicts={checkForConflicts}
-            />
-          )}
+          <AttendanceEditModal
+            close={handleCloseEditModal}
+            data={editData}
+            colors={colors}
+            isVisible={showEditModal}
+            subjectId={subjectId}
+            subjectName={subjectName}
+            onUpdate={onUpdate}
+            onStatusUpdate={forceRefreshStatus}
+            checkForConflicts={checkForConflicts}
+            closeThis={onClose}
+          />
         </Animated.View>
       )}
-    </Animated.View>
+    </View>
   );
 };
 
@@ -814,15 +886,10 @@ export default AttendanceDayView;
 
 const styles = StyleSheet.create({
   container: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: width,
-    height: height,
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 1000,
   },
   modalContent: {
     width: width * 0.92,
@@ -966,7 +1033,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     textAlign: "center",
-    marginTop: 16,
+    marginVertical: 16,
   },
   conflictInfo: {
     backgroundColor: "rgba(255, 193, 7, 0.1)",
@@ -987,23 +1054,21 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-evenly",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 16,
+    gap: 6,
+    minWidth: 200,
+  },
+  conflictButton: {
     justifyContent: "center",
+    borderWidth: 0,
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 12,
-    gap: 8,
-  },
-  acceptButton: {
-    // Additional styles for accept button
-  },
-  keepButton: {
-    // Additional styles for keep button
-  },
-  presentButton: {
-    // Additional styles for present button
-  },
-  absentButton: {
-    // Additional styles for absent button
+    marginTop: 0,
   },
   buttonText: {
     fontSize: 16,

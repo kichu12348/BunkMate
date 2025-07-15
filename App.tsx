@@ -9,7 +9,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { enableScreens } from "react-native-screens";
-import { StatusBar } from "react-native";
+import { StatusBar,Appearance } from "react-native";
 import * as SystemUI from 'expo-system-ui';
 import * as Update from "expo-updates";
 enableScreens();
@@ -27,7 +27,8 @@ export default function App() {
   useEffect(() => {
     const initialize = async () => {
       try {
-        await initializeTheme();
+        const appearance = Appearance.getColorScheme() || "light";
+        await initializeTheme(appearance);
         await initializeSettings();
         await checkAuthStatus();
       } catch (error) {

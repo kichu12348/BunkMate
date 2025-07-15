@@ -406,12 +406,6 @@ export const SurveysScreen: React.FC = () => {
           count={filterCounts.pending}
         />
         <FilterChip
-          label="Completed"
-          isActive={filterType === "completed"}
-          onPress={() => setFilter("completed")}
-          count={filterCounts.completed}
-        />
-        <FilterChip
           label="Expired"
           isActive={filterType === "expired"}
           onPress={() => setFilter("expired")}
@@ -433,6 +427,7 @@ export const SurveysScreen: React.FC = () => {
             onRefresh={handleRefresh}
             colors={[colors.primary]}
             tintColor={colors.primary}
+            progressBackgroundColor={colors.background}
           />
         }
         ListEmptyComponent={renderEmpty}

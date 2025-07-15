@@ -22,5 +22,5 @@ export interface ThemeState {
   colors: ThemeColors;
   setMode: (mode: ThemeMode) => void;
   toggleMode: () => void;
-  initializeTheme: () => Promise<void>;
+  initializeTheme: (appearance: "light" | "dark") => Promise<void>;
 }

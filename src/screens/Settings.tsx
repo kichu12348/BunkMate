@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "../state/settings";
@@ -137,6 +138,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       style={styles.settingItem}
       onPress={onPress}
       disabled={!onPress}
+      activeOpacity={0.7}
     >
       <View style={styles.settingItemLeft}>
         <View style={styles.settingIconContainer}>
@@ -289,6 +291,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               onPress={null}
             />
           </View>
+
+          <View style={styles.card}>
+            <SettingItem
+              icon="logo-github"
+              title="Contribute"
+              subtitle="Support the development of BunkMate"
+              showArrow={false}
+              onPress={()=>{
+                Linking.openURL("https://github.com/kichu12348/BunkMate");
+              }}
+            />
+          </View>
         </View>
 
         {/* Logout Section */}
@@ -401,6 +415,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     section: {
       marginBottom: 24,
+      gap: 16,
     },
     sectionTitle: {
       fontSize: 16,

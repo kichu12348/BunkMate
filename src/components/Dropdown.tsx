@@ -91,6 +91,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
         transparent
         animationType="fade"
         onRequestClose={() => setIsVisible(false)}
+        hardwareAccelerated
       >
         <TouchableOpacity
           style={styles.overlay}

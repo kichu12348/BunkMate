@@ -164,3 +164,113 @@ export const getDefaultSemester = (): string => {
     return 'even';
   }
 };
+
+/**
+ * Calculate enhanced attendance statistics using user-marked data when available and no conflicts exist
+ */
+export const calculateEnhancedAttendanceStats = (
+  apiSubject: any,
+  courseScheduleRecords: any[] = []
+): {
+  totalClasses: number;
+  attendedClasses: number;
+  percentage: number;
+  userMarkedCount: number;
+  conflictCount: number;
+} => {
+  let totalClasses = apiSubject.total_classes || 0;
+  let attendedClasses = apiSubject.attended_classes || 0;
+  let userMarkedCount = 0;
+  let conflictCount = 0;
+
+  // Process user-marked attendance records
+  if (courseScheduleRecords && courseScheduleRecords.length > 0) {
+    for (const record of courseScheduleRecords) {
+      // Count conflicts
+      if (record.is_conflict === 1) {
+        conflictCount++;
+      }
+
+      // Count user-marked records
+      if (record.is_entered_by_student === 1) {
+        userMarkedCount++;
+      }
+
+      // For attendance calculation, use final_attendance if available (resolved conflicts)
+      // or user_attendance if no conflict exists and user marked it
+      let attendanceToUse = null;
+      
+      if (record.final_attendance) {
+        // Use resolved final attendance
+        attendanceToUse = record.final_attendance;
+      } else if (record.is_conflict === 0 && record.user_attendance && record.is_entered_by_student === 1) {
+        // Use user attendance when no conflict and user marked it
+        attendanceToUse = record.user_attendance;
+      } else if (record.teacher_attendance && record.is_entered_by_professor === 1) {
+        // Fall back to teacher attendance
+        attendanceToUse = record.teacher_attendance;
+      }
+
+      if (attendanceToUse) {
+        const normalizedAttendance = attendanceToUse.toLowerCase();
+        
+        // Check if this is a new class (not already counted in API data)
+        const isNewClass = !record.is_entered_by_professor;
+        
+        if (isNewClass) {
+          totalClasses++;
+          
+          if (normalizedAttendance === 'present' || normalizedAttendance === 'p') {
+            attendedClasses++;
+          }
+        } else {
+          // This class was already counted in API data, but we might need to adjust
+          // if user data conflicts with what was originally counted
+          
+          // For now, we trust the API calculation for professor-entered data
+          // and only add user-only entries
+        }
+      }
+    }
+  }
+
+  const percentage = totalClasses > 0 ? (attendedClasses / totalClasses) * 100 : 0;
+
+  return {
+    totalClasses,
+    attendedClasses,
+    percentage: Math.round(percentage * 100) / 100,
+    userMarkedCount,
+    conflictCount,
+  };
+};
+
+/**
+ * Enhanced calculation for classes to attend, considering user-marked data
+ */
+export const calculateEnhancedClassesToAttend = (
+  currentStats: { totalClasses: number; attendedClasses: number; percentage: number },
+  targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER
+): number => {
+  if (currentStats.percentage >= targetPercentage) return 0;
+  
+  const { totalClasses, attendedClasses } = currentStats;
+  const requiredAttendedClasses = Math.ceil((targetPercentage / 100) * totalClasses);
+  
+  return Math.max(0, requiredAttendedClasses - attendedClasses);
+};
+
+/**
+ * Enhanced calculation for classes that can be missed, considering user-marked data
+ */
+export const calculateEnhancedClassesCanMiss = (
+  currentStats: { totalClasses: number; attendedClasses: number; percentage: number },
+  targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER
+): number => {
+  if (currentStats.percentage <= targetPercentage) return 0;
+  
+  const { totalClasses, attendedClasses } = currentStats;
+  const minRequiredClasses = Math.ceil((targetPercentage / 100) * totalClasses);
+  
+  return Math.max(0, attendedClasses - minRequiredClasses);
+};

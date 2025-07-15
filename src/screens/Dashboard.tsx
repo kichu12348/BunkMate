@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -18,7 +18,13 @@ import { useSettingsStore } from "../state/settings";
 import { useThemedStyles } from "../hooks/useTheme";
 import { AttendanceCard } from "../components/AttendanceCard";
 import { ThemeColors } from "../types/theme";
-import { formatPercentage, getTimeAgo } from "../utils/helpers";
+import { 
+  formatPercentage, 
+  getTimeAgo, 
+  calculateEnhancedAttendanceStats,
+  getAttendanceStatus,
+  getStatusColor
+} from "../utils/helpers";
 import { ATTENDANCE_THRESHOLDS } from "../constants/config";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -47,6 +53,7 @@ export const Dashboard: React.FC = () => {
     lastUpdated,
     fetchAttendance,
     refreshAttendance,
+    courseSchedule,
   } = useAttendanceStore();
 
   const { selectedYear, selectedSemester, availableYears, availableSemesters } =
@@ -56,6 +63,51 @@ export const Dashboard: React.FC = () => {
   const bottomBarHeight = useBottomTabBarHeight();
   const [refreshing, setRefreshing] = useState(false);
   const scaleAnim = useSharedValue(0.8);
+
+  // Calculate enhanced statistics using user-marked data
+  const enhancedSubjects = useMemo(() => {
+    if (!attendanceData || !courseSchedule) return [];
+
+    return attendanceData.subjects.map(subject => {
+      const userRecords = courseSchedule.get(subject.subject.id.toString()) || [];
+      const enhancedStats = calculateEnhancedAttendanceStats(subject, userRecords);
+      
+      return {
+        ...subject,
+        enhanced: {
+          totalClasses: enhancedStats.totalClasses,
+          attendedClasses: enhancedStats.attendedClasses,
+          percentage: enhancedStats.percentage,
+          status: getAttendanceStatus(enhancedStats.percentage),
+          userMarkedCount: enhancedStats.userMarkedCount,
+          conflictCount: enhancedStats.conflictCount,
+        }
+      };
+    });
+  }, [attendanceData, courseSchedule]);
+
+  // Calculate enhanced overall statistics
+  const enhancedOverallStats = useMemo(() => {
+    if (enhancedSubjects.length === 0) {
+      return {
+        totalClasses: 0,
+        attendedClasses: 0,
+        percentage: 0,
+        totalSubjects: 0,
+      };
+    }
+
+    const totalClasses = enhancedSubjects.reduce((sum, subject) => sum + subject.enhanced.totalClasses, 0);
+    const attendedClasses = enhancedSubjects.reduce((sum, subject) => sum + subject.enhanced.attendedClasses, 0);
+    const percentage = totalClasses > 0 ? (attendedClasses / totalClasses) * 100 : 0;
+
+    return {
+      totalClasses,
+      attendedClasses,
+      percentage: Math.round(percentage * 100) / 100,
+      totalSubjects: enhancedSubjects.length,
+    };
+  }, [enhancedSubjects]);
 
   useEffect(() => {
     // Fetch attendance data on mount
@@ -95,9 +147,9 @@ export const Dashboard: React.FC = () => {
   };
 
   const getOverallStatus = () => {
-    if (!attendanceData) return "unknown";
+    if (!enhancedOverallStats) return "unknown";
 
-    const percentage = attendanceData.overall_percentage;
+    const percentage = enhancedOverallStats.percentage;
     if (percentage < ATTENDANCE_THRESHOLDS.DANGER) return "danger";
     if (percentage < ATTENDANCE_THRESHOLDS.WARNING) return "warning";
     return "safe";
@@ -131,12 +183,10 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const dangerSubjects =
-    attendanceData?.subjects.filter((s) => s.status === "danger") || [];
-  const warningSubjects =
-    attendanceData?.subjects.filter((s) => s.status === "warning") || [];
-  const safeSubjects =
-    attendanceData?.subjects.filter((s) => s.status === "safe") || [];
+  // Categorize subjects based on enhanced status
+  const dangerSubjects = enhancedSubjects.filter((s) => s.enhanced.status === "danger");
+  const warningSubjects = enhancedSubjects.filter((s) => s.enhanced.status === "warning");
+  const safeSubjects = enhancedSubjects.filter((s) => s.enhanced.status === "safe");
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleAnim.value }],
@@ -196,11 +246,12 @@ export const Dashboard: React.FC = () => {
             refreshing={refreshing}
             onRefresh={handleRefresh}
             colors={[styles.primary.color]}
+            progressBackgroundColor={styles.container.backgroundColor}
           />
         }
       >
         {/* Overall Stats */}
-        {attendanceData && (
+        {enhancedOverallStats && (
           <Animated.View style={[styles.statsCardContainer, animatedStyle]}>
             <View style={styles.statsGradientBanner}>
               <Text style={styles.statsTitle}>Overall Attendance</Text>
@@ -216,10 +267,10 @@ export const Dashboard: React.FC = () => {
                 <Text
                   style={[styles.overallPercentage, getOverallStatusColor()]}
                 >
-                  {formatPercentage(attendanceData.overall_percentage)}
+                  {formatPercentage(enhancedOverallStats.percentage)}
                 </Text>
                 <Text style={styles.totalSubjects}>
-                  {attendanceData.total_subjects} subjects
+                  {enhancedOverallStats.totalSubjects} subjects
                 </Text>
 
                 {lastUpdated && (
@@ -274,14 +325,14 @@ export const Dashboard: React.FC = () => {
         )}
 
         {/* Loading State */}
-        {isLoading && !attendanceData && (
+        {isLoading && enhancedSubjects.length === 0 && (
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading attendance data...</Text>
           </View>
         )}
 
         {/* Subjects List */}
-        {attendanceData && (
+        {enhancedSubjects.length > 0 && (
           <View style={styles.subjectsContainer}>
             {/* Critical Subjects */}
             {dangerSubjects.length > 0 && (

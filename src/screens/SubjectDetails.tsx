@@ -8,6 +8,7 @@ import {
   Dimensions,
   ActivityIndicator,
   ColorValue,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -28,14 +29,7 @@ import {
 } from "date-fns";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttendanceDayView from "../components/AttendanceDayView";
-import {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import { ATTENDANCE_THRESHOLDS } from "../constants/config";
 
 type SubjectDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -128,7 +122,7 @@ const AttendanceCell = React.memo(
           },
         ]}
         onPress={onPress}
-        disabled={!isCurrentMonth || day.status === "none"}
+        disabled={!isCurrentMonth}
         activeOpacity={0.7}
       >
         <LinearGradient
@@ -189,46 +183,20 @@ export const SubjectDetailsScreen: React.FC = () => {
     lastEntry ? new Date(lastEntry.year, lastEntry.month - 1) : new Date()
   );
 
-  const [isDayViewVisible, setIsDayViewVisible] = useState(false);
   const [selectedDay, setSelectedDay] = useState<{
     day: AttendanceDay;
     entries: AttendanceEntry[];
   } | null>(null);
 
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0);
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
-  }));
+
 
   const handleOpen = () => {
-    if (isModalVisible) return;
     setIsModalVisible(true);
-    opacity.value = withTiming(1, {
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
-    });
-    scale.value = withTiming(1, {
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
-    });
   };
 
   const handleClose = () => {
-    if (!isModalVisible) return;
-    opacity.value = withTiming(0, {
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
-    });
-    scale.value = withTiming(0, {
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
-    });
-    setTimeout(() => {
-      setIsModalVisible(false);
-    }, 300);
+    setIsModalVisible(false);
   };
 
   const insets = useSafeAreaInsets();
@@ -452,7 +420,7 @@ export const SubjectDetailsScreen: React.FC = () => {
 
   const handleCellPress = useCallback(
     (day: AttendanceDay, isCurrentMonth: boolean) => {
-      if (day.status !== "none" && isCurrentMonth) {
+      if (isCurrentMonth) {
         const entries = attendanceLookup?.get(day.date) || [];
         setSelectedDay({ day, entries });
         handleOpen();
@@ -684,20 +652,25 @@ export const SubjectDetailsScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
-
-      {selectedDay && (
-        <AttendanceDayView
-          isVisible={isModalVisible}
-          onClose={handleClose}
-          data={selectedDay}
-          animatedStyle={animatedStyle}
-          subjectId={subjectId}
-          subjectName={subjectName}
-          onUpdate={() => {
-            refreshAttendance();
-          }}
-        />
-      )}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleClose}
+      >
+        {selectedDay && (
+          <AttendanceDayView
+            isVisible={true}
+            onClose={handleClose}
+            data={selectedDay}
+            subjectId={subjectId}
+            subjectName={subjectName}
+            onUpdate={() => {
+              refreshAttendance();
+            }}
+          />
+        )}
+      </Modal>
     </View>
   );
 };

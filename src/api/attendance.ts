@@ -14,6 +14,7 @@ import {
   CourseSchedule
 } from "../types/api";
 import { daysAttended } from "../utils/daysAttended";
+import { AttendanceDatabase } from "../utils/attendanceDatabase";
 
 class AttendanceService {
   private api: AxiosInstance;
@@ -95,11 +96,17 @@ class AttendanceService {
         
       const courseSchedule = daysAttended(response.data);
       
+      // Get manual attendance records from database
+      const manualRecords = await AttendanceDatabase.getAllManualAttendanceRecords();
+      
+      // Merge manual records with API data
+      const mergedCourseSchedule = this.mergeCourseScheduleWithManualRecords(courseSchedule, manualRecords);
+      
       // Cache the course schedule
-      // await attendanceCache.cacheCourseSchedule(courseSchedule);
+      // await attendanceCache.cacheCourseSchedule(mergedCourseSchedule);
       
       if (setCourseSchedule) {
-        setCourseSchedule(courseSchedule);
+        setCourseSchedule(mergedCourseSchedule);
       }
       
       const transformedData = this.transformAttendanceResponse(response.data);
@@ -281,8 +288,140 @@ class AttendanceService {
     await attendanceCache.clearCourseScheduleCache();
   }
 
+  /**
+   * Merge course schedule from API with manual attendance records from database
+   */
+  private mergeCourseScheduleWithManualRecords(
+    apiSchedule: Map<string, CourseSchedule[]>,
+    manualRecords: Map<string, CourseSchedule[]>
+  ): Map<string, CourseSchedule[]> {
+    const mergedSchedule = new Map(apiSchedule);
+    
+    // Iterate through manual records
+    for (const [subjectId, records] of manualRecords.entries()) {
+      const existingRecords = mergedSchedule.get(subjectId) || [];
+      
+      for (const manualRecord of records) {
+        // Check if there's an existing record for the same time slot
+        const existingIndex = existingRecords.findIndex(
+          existing => 
+            existing.year === manualRecord.year &&
+            existing.month === manualRecord.month &&
+            existing.day === manualRecord.day &&
+            existing.hour === manualRecord.hour
+        );
+        
+        if (existingIndex >= 0) {
+          // Merge with existing record (manual data takes precedence for user fields)
+          const existing = existingRecords[existingIndex];
+          
+          // Helper function to get timestamp as number
+          const getTimestamp = (value: string | number | undefined): number => {
+            if (typeof value === 'string') return parseInt(value, 10) || 0;
+            return value || 0;
+          };
+          
+          // Detect conflicts by comparing teacher vs user attendance
+          const detectConflict = (record: CourseSchedule): number => {
+            // If the record was manually resolved (is_conflict was explicitly set to 0), respect that
+            if (manualRecord.is_conflict === 0 && manualRecord.final_attendance) {
+              return 0; // Don't override resolved conflicts
+            }
+            
+            const teacherAtt = record.teacher_attendance;
+            const userAtt = record.user_attendance;
+            
+            if (!teacherAtt || !userAtt) return 0;
+            
+            // Normalize attendance values for comparison
+            const normalizeAttendance = (att: string) => {
+              const normalized = att.toLowerCase();
+              if (normalized === "present" || normalized === "p") return "present";
+              if (normalized === "absent" || normalized === "a") return "absent";
+              return normalized;
+            };
+            
+            const teacherNormalized = normalizeAttendance(teacherAtt);
+            const userNormalized = normalizeAttendance(userAtt);
+            
+            return teacherNormalized !== userNormalized ? 1 : 0;
+          };
+          
+          const mergedRecord = {
+            ...existing,
+            user_attendance: manualRecord.user_attendance || existing.user_attendance,
+            final_attendance: manualRecord.final_attendance || existing.final_attendance,
+            is_entered_by_student: Math.max(manualRecord.is_entered_by_student || 0, existing.is_entered_by_student || 0),
+            is_user_override: manualRecord.is_user_override || existing.is_user_override,
+            last_user_update: Math.max(
+              getTimestamp(manualRecord.last_user_update), 
+              getTimestamp(existing.last_user_update)
+            ),
+            updated_at: Math.max(
+              getTimestamp(manualRecord.updated_at), 
+              getTimestamp(existing.updated_at)
+            ),
+          };
+          
+          // Set conflict flag based on actual data comparison
+          mergedRecord.is_conflict = detectConflict(mergedRecord);
+          
+          existingRecords[existingIndex] = mergedRecord;
+        } else {
+          // Add new manual record, but first check for conflicts
+          const detectConflict = (record: CourseSchedule): number => {
+            // If the record was manually resolved (is_conflict was explicitly set to 0), respect that
+            if (record.is_conflict === 0 && record.final_attendance) {
+              return 0; // Don't override resolved conflicts
+            }
+            
+            const teacherAtt = record.teacher_attendance;
+            const userAtt = record.user_attendance;
+            
+            if (!teacherAtt || !userAtt) return 0;
+            
+            // Normalize attendance values for comparison
+            const normalizeAttendance = (att: string) => {
+              const normalized = att.toLowerCase();
+              if (normalized === "present" || normalized === "p") return "present";
+              if (normalized === "absent" || normalized === "a") return "absent";
+              return normalized;
+            };
+            
+            const teacherNormalized = normalizeAttendance(teacherAtt);
+            const userNormalized = normalizeAttendance(userAtt);
+            
+            return teacherNormalized !== userNormalized ? 1 : 0;
+          };
+          
+          // Set conflict flag for the manual record
+          const recordWithConflict = {
+            ...manualRecord,
+            is_conflict: detectConflict(manualRecord)
+          };
+          
+          existingRecords.push(recordWithConflict);
+        }
+      }
+      
+      mergedSchedule.set(subjectId, existingRecords);
+    }
+    
+    return mergedSchedule;
+  }
+
   async getCachedCourseSchedule(): Promise<Map<string, CourseSchedule[]> | null> {
-    return await attendanceCache.getCachedCourseSchedule();
+    const cachedSchedule = await attendanceCache.getCachedCourseSchedule();
+    
+    if (cachedSchedule) {
+      // Get manual attendance records and merge them
+      const manualRecords = await AttendanceDatabase.getAllManualAttendanceRecords();
+      return this.mergeCourseScheduleWithManualRecords(cachedSchedule, manualRecords);
+    }
+    
+    // If no cached schedule, return manual records only
+    const manualRecords = await AttendanceDatabase.getAllManualAttendanceRecords();
+    return manualRecords.size > 0 ? manualRecords : null;
   }
 }
 

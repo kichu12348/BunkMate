@@ -3,8 +3,16 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SubjectAttendance } from '../types/api';
 import { useThemedStyles } from '../hooks/useTheme';
-import { formatPercentage, getStatusColor, calculateClassesToAttend, calculateClassesCanMiss } from '../utils/helpers';
+import { 
+  formatPercentage, 
+  getStatusColor, 
+  calculateEnhancedAttendanceStats,
+  calculateEnhancedClassesToAttend,
+  calculateEnhancedClassesCanMiss,
+  getAttendanceStatus
+} from '../utils/helpers';
 import { ThemeColors } from '../types/theme';
+import { useAttendanceStore } from '../state/attendance';
 
 interface AttendanceCardProps {
   subject: SubjectAttendance;
@@ -16,13 +24,30 @@ interface AttendanceCardProps {
 
 export const AttendanceCard: React.FC<AttendanceCardProps> = ({ subject, onPress }) => {
   const styles = useThemedStyles(createStyles);
+  const courseSchedule = useAttendanceStore((state) => state.courseSchedule);
   
-  const statusColor = getStatusColor(subject.status);
-  const classesToAttend = calculateClassesToAttend(subject.percentage, subject.total_classes);
-  const classesCanMiss = calculateClassesCanMiss(subject.percentage, subject.total_classes);
+  // Get user-marked records for this subject
+  const userRecords = courseSchedule?.get(subject.subject.id.toString()) || [];
+  
+  // Calculate enhanced stats using user-marked data
+  const enhancedStats = calculateEnhancedAttendanceStats(subject, userRecords);
+  
+  // Use enhanced stats for calculations
+  const actualStats = {
+    totalClasses: enhancedStats.totalClasses,
+    attendedClasses: enhancedStats.attendedClasses,
+    percentage: enhancedStats.percentage,
+  };
+  
+  // Recalculate status based on enhanced percentage
+  const actualStatus = getAttendanceStatus(actualStats.percentage);
+  const statusColor = getStatusColor(actualStatus);
+  
+  const classesToAttend = calculateEnhancedClassesToAttend(actualStats);
+  const classesCanMiss = calculateEnhancedClassesCanMiss(actualStats);
 
   const getStatusIcon = () => {
-    switch (subject.status) {
+    switch (actualStatus) {
       case 'safe':
         return 'checkmark-circle';
       case 'warning':
@@ -35,16 +60,32 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({ subject, onPress
   };
 
   const getStatusMessage = () => {
-    switch (subject.status) {
+    const userMarkedCount = enhancedStats.userMarkedCount;
+    const conflictCount = enhancedStats.conflictCount;
+    
+    let baseMessage = '';
+    switch (actualStatus) {
       case 'safe':
-        return classesCanMiss > 0 ? `Can miss ${classesCanMiss} more classes` : 'Perfect attendance!';
+        baseMessage = classesCanMiss > 0 ? `Can miss ${classesCanMiss} more classes` : 'Perfect attendance!';
+        break;
       case 'warning':
-        return classesToAttend > 0 ? `Attend ${classesToAttend} more classes to be safe` : 'Close to minimum requirement';
+        baseMessage = classesToAttend > 0 ? `Attend ${classesToAttend} more classes to be safe` : 'Close to minimum requirement';
+        break;
       case 'danger':
-        return classesToAttend > 0 ? `Must attend ${classesToAttend} classes to reach 75%` : 'Below minimum requirement!';
+        baseMessage = classesToAttend > 0 ? `Must attend ${classesToAttend} classes to reach 75%` : 'Below minimum requirement!';
+        break;
       default:
-        return 'Status unknown';
+        baseMessage = 'Status unknown';
     }
+    
+    // Add indicators for user data
+    if (conflictCount > 0) {
+      baseMessage += ` • ${conflictCount} conflict${conflictCount > 1 ? 's' : ''}`;
+    } else if (userMarkedCount > 0) {
+      baseMessage += ` • ${userMarkedCount} self-marked`;
+    }
+    
+    return baseMessage;
   };
 
   const handlePress = () => {
@@ -69,14 +110,14 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({ subject, onPress
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Attendance</Text>
           <Text style={[styles.statValue, { color: statusColor }]}>
-            {formatPercentage(subject.percentage)}
+            {formatPercentage(actualStats.percentage)}
           </Text>
         </View>
 
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Classes</Text>
           <Text style={styles.statValue}>
-            {subject.attended_classes}/{subject.total_classes}
+            {actualStats.attendedClasses}/{actualStats.totalClasses}
           </Text>
         </View>
       </View>
@@ -87,14 +128,14 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({ subject, onPress
             style={[
               styles.progressFill,
               {
-                width: `${Math.min(subject.percentage, 100)}%`,
+                width: `${Math.min(actualStats.percentage, 100)}%`,
                 backgroundColor: statusColor,
               },
             ]}
           />
         </View>
         <Text style={styles.progressText}>
-          {formatPercentage(subject.percentage)}
+          {formatPercentage(actualStats.percentage)}
         </Text>
       </View>
 
