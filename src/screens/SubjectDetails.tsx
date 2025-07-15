@@ -420,7 +420,8 @@ export const SubjectDetailsScreen: React.FC = () => {
 
   const handleCellPress = useCallback(
     (day: AttendanceDay, isCurrentMonth: boolean) => {
-      if (isCurrentMonth) {
+      const isItSunday = new Date(day.date).getDay() === 0; // Sunday
+      if (isCurrentMonth && !isItSunday) {
         const entries = attendanceLookup?.get(day.date) || [];
         setSelectedDay({ day, entries });
         handleOpen();
