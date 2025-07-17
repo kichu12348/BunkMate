@@ -17,6 +17,7 @@ import { Notification } from "../api/notifications";
 import { formatDistanceToNow } from "date-fns";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useThemeStore } from "../state/themeStore";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -26,7 +27,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
 }) => {
   const styles = useThemedStyles(createStyles);
-  const { colors } = useTheme();
+  const colors = useThemeStore((state) => state.colors);
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -81,22 +82,18 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
 export const NotificationsScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const { colors } = useTheme();
+  const colors = useThemeStore((state) => state.colors);
   const insets = useSafeAreaInsets();
   const bottomBarHeight = useBottomTabBarHeight();
 
   const {
     notifications,
     unreadCount,
-    isLoading,
     error,
     hasMore,
     fetchNotifications,
-    markAsRead,
     markAllAsRead,
-    deleteNotification,
     loadMore,
-    setError,
   } = useNotificationsStore();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -220,8 +217,9 @@ export const NotificationsScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
+            colors={[colors.textSecondary, colors.primary, colors.secondary]}
+            tintColor={colors.textSecondary}
+            progressBackgroundColor={colors.background}
           />
         }
         onEndReached={loadMore}

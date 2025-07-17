@@ -18,12 +18,12 @@ import { useSettingsStore } from "../state/settings";
 import { useThemedStyles } from "../hooks/useTheme";
 import { AttendanceCard } from "../components/AttendanceCard";
 import { ThemeColors } from "../types/theme";
-import { 
-  formatPercentage, 
-  getTimeAgo, 
+import {
+  formatPercentage,
+  getTimeAgo,
   calculateEnhancedAttendanceStats,
   getAttendanceStatus,
-  getStatusColor
+  getStatusColor,
 } from "../utils/helpers";
 import { ATTENDANCE_THRESHOLDS } from "../constants/config";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -34,6 +34,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { RootStackParamList } from "../navigation/RootNavigator";
+import { useThemeStore } from "../state/themeStore";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -44,6 +45,7 @@ const { width } = Dimensions.get("window");
 
 export const Dashboard: React.FC = () => {
   const styles = useThemedStyles(createStyles);
+  const colors = useThemeStore((state) => state.colors);
   const navigation = useNavigation<DashboardNavigationProp>();
   const name = useAuthStore((state) => state.name);
   const {
@@ -68,10 +70,14 @@ export const Dashboard: React.FC = () => {
   const enhancedSubjects = useMemo(() => {
     if (!attendanceData || !courseSchedule) return [];
 
-    return attendanceData.subjects.map(subject => {
-      const userRecords = courseSchedule.get(subject.subject.id.toString()) || [];
-      const enhancedStats = calculateEnhancedAttendanceStats(subject, userRecords);
-      
+    return attendanceData.subjects.map((subject) => {
+      const userRecords =
+        courseSchedule.get(subject.subject.id.toString()) || [];
+      const enhancedStats = calculateEnhancedAttendanceStats(
+        subject,
+        userRecords
+      );
+
       return {
         ...subject,
         enhanced: {
@@ -81,7 +87,7 @@ export const Dashboard: React.FC = () => {
           status: getAttendanceStatus(enhancedStats.percentage),
           userMarkedCount: enhancedStats.userMarkedCount,
           conflictCount: enhancedStats.conflictCount,
-        }
+        },
       };
     });
   }, [attendanceData, courseSchedule]);
@@ -97,9 +103,16 @@ export const Dashboard: React.FC = () => {
       };
     }
 
-    const totalClasses = enhancedSubjects.reduce((sum, subject) => sum + subject.enhanced.totalClasses, 0);
-    const attendedClasses = enhancedSubjects.reduce((sum, subject) => sum + subject.enhanced.attendedClasses, 0);
-    const percentage = totalClasses > 0 ? (attendedClasses / totalClasses) * 100 : 0;
+    const totalClasses = enhancedSubjects.reduce(
+      (sum, subject) => sum + subject.enhanced.totalClasses,
+      0
+    );
+    const attendedClasses = enhancedSubjects.reduce(
+      (sum, subject) => sum + subject.enhanced.attendedClasses,
+      0
+    );
+    const percentage =
+      totalClasses > 0 ? (attendedClasses / totalClasses) * 100 : 0;
 
     return {
       totalClasses,
@@ -184,9 +197,15 @@ export const Dashboard: React.FC = () => {
   };
 
   // Categorize subjects based on enhanced status
-  const dangerSubjects = enhancedSubjects.filter((s) => s.enhanced.status === "danger");
-  const warningSubjects = enhancedSubjects.filter((s) => s.enhanced.status === "warning");
-  const safeSubjects = enhancedSubjects.filter((s) => s.enhanced.status === "safe");
+  const dangerSubjects = enhancedSubjects.filter(
+    (s) => s.enhanced.status === "danger"
+  );
+  const warningSubjects = enhancedSubjects.filter(
+    (s) => s.enhanced.status === "warning"
+  );
+  const safeSubjects = enhancedSubjects.filter(
+    (s) => s.enhanced.status === "safe"
+  );
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleAnim.value }],
@@ -245,8 +264,9 @@ export const Dashboard: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[styles.primary.color]}
-            progressBackgroundColor={styles.container.backgroundColor}
+            colors={[colors.textSecondary, colors.primary, colors.secondary]}
+            tintColor={colors.textSecondary}
+            progressBackgroundColor={colors.background}
           />
         }
       >

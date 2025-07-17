@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Alert,
   ScrollView,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -21,7 +22,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
-type SurveysScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+const { width } = Dimensions.get("window");
+
+type SurveysScreenNavigationProp =
+  NativeStackNavigationProp<RootStackParamList>;
 
 interface SurveyCardProps {
   survey: Survey;
@@ -295,7 +299,9 @@ export const SurveysScreen: React.FC = () => {
     if (isPending) {
       Alert.alert(
         "Survey Not Available",
-        `This survey will be available ${formatDistanceToNow(startDate, { addSuffix: true })}.`
+        `This survey will be available ${formatDistanceToNow(startDate, {
+          addSuffix: true,
+        })}.`
       );
       return;
     }
@@ -391,26 +397,27 @@ export const SurveysScreen: React.FC = () => {
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.filtersContainer}
-        contentContainerStyle={styles.filtersContent}
       >
-        <FilterChip
-          label="All"
-          isActive={filterType === "all"}
-          onPress={() => setFilter("all")}
-          count={filterCounts.all}
-        />
-        <FilterChip
-          label="Pending"
-          isActive={filterType === "pending"}
-          onPress={() => setFilter("pending")}
-          count={filterCounts.pending}
-        />
-        <FilterChip
-          label="Expired"
-          isActive={filterType === "expired"}
-          onPress={() => setFilter("expired")}
-          count={filterCounts.expired}
-        />
+        <View style={styles.filtersContent}>
+          <FilterChip
+            label="All"
+            isActive={filterType === "all"}
+            onPress={() => setFilter("all")}
+            count={filterCounts.all}
+          />
+          <FilterChip
+            label="Pending"
+            isActive={filterType === "pending"}
+            onPress={() => setFilter("pending")}
+            count={filterCounts.pending}
+          />
+          <FilterChip
+            label="Expired"
+            isActive={filterType === "expired"}
+            onPress={() => setFilter("expired")}
+            count={filterCounts.expired}
+          />
+        </View>
       </ScrollView>
 
       <FlatList
@@ -425,8 +432,8 @@ export const SurveysScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
+            colors={[colors.textSecondary, colors.primary, colors.secondary]}
+            tintColor={colors.textSecondary}
             progressBackgroundColor={colors.background}
           />
         }
@@ -461,12 +468,15 @@ const createStyles = (colors: ThemeColors) =>
       height: 80,
       maxHeight: 80,
       minHeight: 80,
-      paddingHorizontal: 0,
       paddingVertical: 20,
     },
     filtersContent: {
       paddingHorizontal: 20,
-      gap: 8,
+      gap: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-evenly",
+      width: width,
     },
     filterChip: {
       flexDirection: "row",
