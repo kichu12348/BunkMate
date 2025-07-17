@@ -217,7 +217,7 @@ export const NotificationsScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[colors.textSecondary, colors.primary, colors.secondary]}
+            colors={[colors.primary]}
             tintColor={colors.textSecondary}
             progressBackgroundColor={colors.background}
           />

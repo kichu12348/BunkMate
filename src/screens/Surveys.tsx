@@ -397,27 +397,26 @@ export const SurveysScreen: React.FC = () => {
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.filtersContainer}
+        contentContainerStyle={styles.filtersContent}
       >
-        <View style={styles.filtersContent}>
-          <FilterChip
-            label="All"
-            isActive={filterType === "all"}
-            onPress={() => setFilter("all")}
-            count={filterCounts.all}
-          />
-          <FilterChip
-            label="Pending"
-            isActive={filterType === "pending"}
-            onPress={() => setFilter("pending")}
-            count={filterCounts.pending}
-          />
-          <FilterChip
-            label="Expired"
-            isActive={filterType === "expired"}
-            onPress={() => setFilter("expired")}
-            count={filterCounts.expired}
-          />
-        </View>
+        <FilterChip
+          label="All"
+          isActive={filterType === "all"}
+          onPress={() => setFilter("all")}
+          count={filterCounts.all}
+        />
+        <FilterChip
+          label="Pending"
+          isActive={filterType === "pending"}
+          onPress={() => setFilter("pending")}
+          count={filterCounts.pending}
+        />
+        <FilterChip
+          label="Expired"
+          isActive={filterType === "expired"}
+          onPress={() => setFilter("expired")}
+          count={filterCounts.expired}
+        />
       </ScrollView>
 
       <FlatList
@@ -432,7 +431,7 @@ export const SurveysScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[colors.textSecondary, colors.primary, colors.secondary]}
+            colors={[colors.primary]}
             tintColor={colors.textSecondary}
             progressBackgroundColor={colors.background}
           />
@@ -472,11 +471,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     filtersContent: {
       paddingHorizontal: 20,
-      gap: 12,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-evenly",
-      width: width,
+      gap: 8,
     },
     filterChip: {
       flexDirection: "row",
