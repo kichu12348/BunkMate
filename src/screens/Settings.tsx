@@ -284,7 +284,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
         {/* Support Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
+          <Text style={styles.sectionTitle}>Hehe</Text>
 
           <View style={styles.card}>
             <SettingItem
