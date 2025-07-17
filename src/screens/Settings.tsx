@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Linking,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "../state/settings";
 import { useAttendanceStore } from "../state/attendance";
 import { useThemedStyles, useTheme } from "../hooks/useTheme";
@@ -19,6 +19,9 @@ import { useAuthStore } from "../state/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import Switch from "../components/Switch";
+import UPIModal from "../components/upiModal";
+
+const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 
 interface SettingsScreenProps {
   onClose?: () => void;
@@ -49,6 +52,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   } = useSettingsStore();
 
   const [themeIcon, setThemeIcon] = useState<string>(isDark ? "moon" : "sunny");
+  const [showUPIModal, setShowUPIModal] = useState<boolean>(false);
 
   const { clearCache, fetchAttendance } = useAttendanceStore();
   const { logout, user } = useAuthStore();
@@ -280,7 +284,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
         {/* Support Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>hehe</Text>
+          <Text style={styles.sectionTitle}>Support</Text>
 
           <View style={styles.card}>
             <SettingItem
@@ -297,10 +301,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               icon="logo-github"
               title="Contribute"
               subtitle="Support the development of BunkMate"
-              showArrow={false}
-              onPress={()=>{
-                Linking.openURL("https://github.com/kichu12348/BunkMate");
-              }}
+              showArrow={true}
+              onPress={() => Linking.openURL(GITHUB_URL)}
+            />
+          </View>
+
+          <View style={styles.card}>
+            <SettingItem
+              icon="diamond-outline"
+              title={"Go Premium! "}
+              subtitle="Unlock ultimate bunking powers"
+              onPress={() => setShowUPIModal(true)}
             />
           </View>
         </View>
@@ -339,6 +350,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </Text>
         </View>
       </ScrollView>
+
+      {/* UPI Modal */}
+      <UPIModal visible={showUPIModal} onClose={() => setShowUPIModal(false)} />
     </View>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,10 @@ import {
   Modal,
   FlatList,
   StyleSheet,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useThemedStyles } from '../hooks/useTheme';
-import { ThemeColors } from '../types/theme';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useThemedStyles } from "../hooks/useTheme";
+import { ThemeColors } from "../types/theme";
 
 interface DropdownOption {
   value: string;
@@ -29,37 +29,51 @@ export const Dropdown: React.FC<DropdownProps> = ({
   options,
   selectedValue,
   onSelect,
-  placeholder = 'Select an option',
+  placeholder = "Select an option",
   label,
   disabled = false,
 }) => {
   const styles = useThemedStyles(createStyles);
   const [isVisible, setIsVisible] = useState(false);
 
-  const selectedOption = options.find(option => option.value === selectedValue);
+  const selectedOption = options.find(
+    (option) => option.value === selectedValue
+  );
 
   const handleSelect = (value: string) => {
     onSelect(value);
     setIsVisible(false);
   };
 
-  const renderOption = ({ item, index }: { item: DropdownOption, index: number }) => (
+  const renderOption = ({
+    item,
+    index,
+  }: {
+    item: DropdownOption;
+    index: number;
+  }) => (
     <TouchableOpacity
       style={[
         styles.option,
         item.value === selectedValue && styles.selectedOption,
-        index === options.length - 1 && { borderBottomWidth: 0 }
+        index === options.length - 1 && { borderBottomWidth: 0 },
       ]}
       onPress={() => handleSelect(item.value)}
     >
-      <Text style={[
-        styles.optionText,
-        item.value === selectedValue && styles.selectedOptionText
-      ]}>
+      <Text
+        style={[
+          styles.optionText,
+          item.value === selectedValue && styles.selectedOptionText,
+        ]}
+      >
         {item.label}
       </Text>
       {item.value === selectedValue && (
-        <Ionicons name="checkmark" size={20} color={styles.selectedOptionText.color} />
+        <Ionicons
+          name="checkmark"
+          size={20}
+          color={styles.selectedOptionText.color}
+        />
       )}
     </TouchableOpacity>
   );
@@ -67,20 +81,22 @@ export const Dropdown: React.FC<DropdownProps> = ({
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      
+
       <TouchableOpacity
         style={[styles.dropdown, disabled && styles.dropdownDisabled]}
         onPress={() => !disabled && setIsVisible(true)}
         disabled={disabled}
       >
-        <Text style={[
-          styles.dropdownText,
-          !selectedOption && styles.placeholderText
-        ]}>
+        <Text
+          style={[
+            styles.dropdownText,
+            !selectedOption && styles.placeholderText,
+          ]}
+        >
           {selectedOption ? selectedOption.label : placeholder}
         </Text>
         <Ionicons
-          name={isVisible ? 'chevron-up' : 'chevron-down'}
+          name={isVisible ? "chevron-up" : "chevron-down"}
           size={20}
           color={styles.chevronIcon.color}
         />
@@ -92,6 +108,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
         animationType="fade"
         onRequestClose={() => setIsVisible(false)}
         hardwareAccelerated
+        statusBarTranslucent
+        navigationBarTranslucent
       >
         <TouchableOpacity
           style={styles.overlay}
@@ -100,17 +118,19 @@ export const Dropdown: React.FC<DropdownProps> = ({
         >
           <View style={styles.modal}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {label || 'Select Option'}
-              </Text>
+              <Text style={styles.modalTitle}>{label || "Select Option"}</Text>
               <TouchableOpacity
                 onPress={() => setIsVisible(false)}
                 style={styles.closeButton}
               >
-                <Ionicons name="close" size={24} color={styles.closeIcon.color} />
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color={styles.closeIcon.color}
+                />
               </TouchableOpacity>
             </View>
-            
+
             <FlatList
               data={options}
               renderItem={renderOption}
@@ -125,104 +145,105 @@ export const Dropdown: React.FC<DropdownProps> = ({
   );
 };
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    marginVertical: 8,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  dropdown: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  dropdownDisabled: {
-    opacity: 0.5,
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: colors.text,
-    flex: 1,
-  },
-  placeholderText: {
-    color: colors.textSecondary,
-  },
-  chevronIcon: {
-    color: colors.textSecondary,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modal: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    margin: 20,
-    maxHeight: '60%',
-    width: '80%',
-    overflow: 'hidden',
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      marginVertical: 8,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  closeButton: {
-    padding: 4,
-  },
-  closeIcon: {
-    color: colors.textSecondary,
-  },
-  optionsList: {
-    maxHeight: 300,
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  selectedOption: {
-    backgroundColor: colors.primary + '10',
-  },
-  optionText: {
-    fontSize: 16,
-    color: colors.text,
-    flex: 1,
-  },
-  selectedOptionText: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
-});
+    label: {
+      fontSize: 14,
+      fontWeight: "500",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    dropdown: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    dropdownDisabled: {
+      opacity: 0.5,
+    },
+    dropdownText: {
+      fontSize: 16,
+      color: colors.text,
+      flex: 1,
+    },
+    placeholderText: {
+      color: colors.textSecondary,
+    },
+    chevronIcon: {
+      color: colors.textSecondary,
+    },
+    overlay: {
+      flex: 1,
+      backgroundColor: colors.background + "80",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modal: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      margin: 20,
+      maxHeight: "60%",
+      width: "80%",
+      overflow: "hidden",
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    modalHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    closeButton: {
+      padding: 4,
+    },
+    closeIcon: {
+      color: colors.textSecondary,
+    },
+    optionsList: {
+      maxHeight: 300,
+    },
+    option: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    selectedOption: {
+      backgroundColor: colors.primary + "10",
+    },
+    optionText: {
+      fontSize: 16,
+      color: colors.text,
+      flex: 1,
+    },
+    selectedOptionText: {
+      color: colors.primary,
+      fontWeight: "600",
+    },
+  });

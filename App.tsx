@@ -25,8 +25,22 @@ export default function App() {
   );
 
   useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        if (__DEV__) return; // Skip update check in development mode
+        const update = await Update.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Update.fetchUpdateAsync();
+          await Update.reloadAsync();
+        }
+      } catch (error) {
+        console.error("Error checking for updates:", error);
+      }
+    };
+
     const initialize = async () => {
       try {
+        await checkForUpdates();
         const appearance = Appearance.getColorScheme() || "light";
         await initializeTheme(appearance);
         await initializeSettings();
@@ -40,24 +54,6 @@ export default function App() {
 
     initialize();
   }, []);
-
-  // Handle updates
-  useEffect(() => {
-    const checkForUpdates = async () => {
-      try {
-        if (__DEV__) return; // Skip update check in development mode
-        const update = await Update.checkForUpdateAsync();
-        if (update.isAvailable) {
-          await Update.fetchUpdateAsync();
-          await Update.reloadAsync();
-        }
-      } catch (error) {
-        console.error("Error checking for updates:", error);
-      }
-    };
-    checkForUpdates();
-  }, []);
-
 
   // Set navigation bar color
   useEffect(() => {

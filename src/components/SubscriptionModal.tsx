@@ -16,7 +16,9 @@ interface SubscriptionModalProps {
   onClose: () => void;
 }
 
-const { width, height } = Dimensions.get("window");
+const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
+
+const { width } = Dimensions.get("window");
 
 export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   visible,
@@ -30,12 +32,8 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   };
 
   const handleContribute = async () => {
-    const githubUrl = "https://github.com/kichu12348/BunkMate";
     try {
-      const canOpen = await Linking.canOpenURL(githubUrl);
-      if (canOpen) {
-        await Linking.openURL(githubUrl);
-      }
+      await Linking.openURL(GITHUB_URL);
     } catch (error) {
       console.error("Error opening GitHub URL:", error);
     }
