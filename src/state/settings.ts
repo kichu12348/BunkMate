@@ -14,7 +14,6 @@ interface SettingsState {
   availableYears: Array<{ value: string; label: string }>;
   availableSemesters: Array<{ value: string; label: string }>;
   isLoading: boolean;
-  hasShownSubscriptionModal?: boolean;
   error: string | null;
 
   // Actions
@@ -31,7 +30,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   availableSemesters: generateSemesters(),
   isLoading: false,
   error: null,
-  hasShownSubscriptionModal: false,
 
   setAcademicYear: async (year: string) => {
     set({ isLoading: true, error: null });
@@ -111,12 +109,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       // Try to load from local storage first
       const savedYear = kvHelper.getSetting<string>("selectedYear");
       const savedSemester = kvHelper.getSetting<string>("selectedSemester");
-      const hasShownSubscriptionModal = kvHelper.hasSubscriptionModalBeenShown();
 
       set({
         selectedYear: savedYear || getDefaultAcademicYear(),
         selectedSemester: savedSemester || getDefaultSemester(),
-        hasShownSubscriptionModal,
       });
       await authService.setDefaultYear(savedYear || getDefaultAcademicYear());
       await authService.setDefaultSemester(savedSemester || getDefaultSemester());

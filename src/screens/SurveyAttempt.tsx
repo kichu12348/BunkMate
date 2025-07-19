@@ -336,6 +336,27 @@ export const SurveyAttemptScreen: React.FC = () => {
     });
 
     setResponses(updatedResponses);
+    const hasAllQuestionsAnswered = Array.from(updatedResponses.values()).every(
+      (response) => response.choiceId !== null
+    );
+    if (hasAllQuestionsAnswered) {
+      showToast({
+        title: "Submit",
+        message: `All questions will be filled with "${choiceName}"`,
+        buttons: [
+          {
+            text: "Submit",
+            style: "default",
+            onPress: handleSubmit,
+          },
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+        ],
+        delay: 10000,
+      });
+    }
   };
 
   if (isLoading) {
@@ -477,26 +498,7 @@ export const SurveyAttemptScreen: React.FC = () => {
                 }))}
                 placeholder="Select a response for all questions"
                 selectedValue={selectedBulkChoice}
-                onSelect={(value) => {
-                  handleBulkChoiceSelect(value);
-                  if (getProgressPercentage() < 100) return;
-                  showToast({
-                    title: "Submit",
-                    message: `All questions will be filled with "${value}"`,
-                    buttons: [
-                      {
-                        text: "Submit",
-                        style: "default",
-                        onPress: handleSubmit,
-                      },
-                      {
-                        text: "Cancel",
-                        style: "cancel",
-                      },
-                    ],
-                    delay: 10000,
-                  });
-                }}
+                onSelect={(value) => handleBulkChoiceSelect(value)}
               />
             </View>
 

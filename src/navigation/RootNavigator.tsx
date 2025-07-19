@@ -7,6 +7,7 @@ import { SubscriptionModal } from "../components/SubscriptionModal";
 import { kvHelper } from "../kv/kvStore";
 import { useState, useEffect } from "react";
 import { useSettingsStore } from "../state/settings";
+import { useAuthStore } from "../state/auth";
 
 export type RootStackParamList = {
   MainTabs: undefined;
@@ -27,8 +28,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const hasShownSubscriptionModal = useSettingsStore(
-    (state) => state.hasShownSubscriptionModal
+  const hasShownSubscriptionModal = useAuthStore(
+    (s) => s.hasShownSubscriptionModal
   );
 
   useEffect(() => {
@@ -40,8 +41,6 @@ export const RootNavigator: React.FC = () => {
       //   setShowSubscriptionModal(true);
       // }, 2000);
       setShowSubscriptionModal(true);
-      
-      
     }
   }, []);
 

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { User, LoginRequest } from "../types/api";
 import { authService } from "../api/auth";
+import { kvHelper } from "../kv/kvStore";
 
 interface AuthState {
   user: User | null;
@@ -8,6 +9,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  hasShownSubscriptionModal: boolean;
 
   // Login flow state
   isUsernameVerified: boolean;
@@ -31,6 +33,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   error: null,
   isUsernameVerified: false,
   verifiedUsername: null,
+  hasShownSubscriptionModal: false,
 
   lookupUsername: async (username: string) => {
     set({ isLoading: true, error: null });
@@ -114,8 +117,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   checkAuthStatus: async (cb) => {
-    set({ isLoading: true });
-
+    set({
+      isLoading: true,
+      hasShownSubscriptionModal: kvHelper.hasSubscriptionModalBeenShown(),
+    });
     try {
       const isAuthenticated = await authService.isAuthenticated();
 
@@ -137,7 +142,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
         });
       }
-      
     } catch (error) {
       set({
         user: null,

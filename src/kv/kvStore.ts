@@ -102,4 +102,11 @@ export const kvHelper = {
   resetSubscriptionModal(): void {
     settingsStore.delete("subscription_modal_shown");
   },
+
+  clearEverything(): void {
+    tokenStore.clear();
+    themeStore.clear();
+    userStore.clear();
+    settingsStore.clear();
+  }
 };
