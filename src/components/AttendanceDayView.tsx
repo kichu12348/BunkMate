@@ -6,6 +6,7 @@ import {
   Dimensions,
   TouchableOpacity,
   Alert,
+  Modal,
 } from "react-native";
 import Animated, {
   Easing,
@@ -21,6 +22,7 @@ import { AttendanceDatabase } from "../utils/attendanceDatabase";
 import { CourseSchedule } from "../types/api";
 import { ThemeColors } from "../types/theme";
 import { normalizeAttendance } from "../utils/helpers";
+import { useToastStore } from "../state/toast";
 
 const { width, height } = Dimensions.get("screen");
 
@@ -105,6 +107,8 @@ const AttendanceEditModal: React.FC<{
     courseSchedule,
   } = useAttendanceStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [isConflictModalVisible, setIsConflictModalVisible] = useState(false);
+  const timeOutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   if (!isVisible || !data) return null;
   // State calculations
@@ -123,6 +127,23 @@ const AttendanceEditModal: React.FC<{
 
     setIsLoading(true);
     try {
+      const conflictExists = await checkForConflicts({
+        hour: data.hour,
+        day: data.day,
+        month: data.month,
+        year: data.year,
+      });
+      if (conflictExists) {
+        setIsLoading(false);
+        if (timeOutRef.current) {
+          clearTimeout(timeOutRef.current);
+        }
+        setIsConflictModalVisible(true);
+        timeOutRef.current = setTimeout(() => {
+          setIsConflictModalVisible(false);
+        }, 5000);
+        return;
+      }
       // The component just calls the store action. That's it.
       await markManualAttendance({
         subjectId,
@@ -144,37 +165,23 @@ const AttendanceEditModal: React.FC<{
 
   const handleDeleteRecord = async () => {
     if (!subjectId || !data) return;
-
-    Alert.alert(
-      "Delete Record",
-      "Are you sure you want to delete this entry?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            setIsLoading(true);
-            try {
-              await deleteManualAttendance({
-                subjectId,
-                year: data.year,
-                month: data.month,
-                day: data.day,
-                hour: data.hour,
-              });
-              onStatusUpdate?.();
-              close();
-              closeThis?.();
-            } catch (error: any) {
-              Alert.alert("Error", error.message);
-            } finally {
-              setIsLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    setIsLoading(true);
+    try {
+      await deleteManualAttendance({
+        subjectId,
+        year: data.year,
+        month: data.month,
+        day: data.day,
+        hour: data.hour,
+      });
+      onStatusUpdate?.();
+      close();
+      closeThis?.();
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleResolveConflict = async (
@@ -189,9 +196,19 @@ const AttendanceEditModal: React.FC<{
         .get(subjectId)
         ?.find((rec) => rec.hour === data.hour);
       if (conflictRecord) {
-        await resolveConflict(conflictRecord, resolution);
+        await resolveConflict(
+          {
+            subject_id: subjectId,
+            year: data.year,
+            month: data.month,
+            day: data.day,
+            hour: data.hour,
+          },
+          resolution
+        );
         onStatusUpdate?.();
         close();
+        closeThis?.();
       } else {
         throw new Error("Could not find the conflict record to resolve.");
       }
@@ -349,6 +366,79 @@ const AttendanceEditModal: React.FC<{
           </View>
         </View>
       )}
+      <Modal
+        transparent
+        visible={isConflictModalVisible}
+        statusBarTranslucent
+        onRequestClose={() => {
+          setIsConflictModalVisible(false);
+          if (timeOutRef.current) clearTimeout(timeOutRef.current);
+        }}
+        animationType="fade"
+        hardwareAccelerated
+      >
+        <View
+          style={[
+            styles.conflictModalContainer,
+            {
+              paddingTop: insets.top,
+              paddingBottom: insets.bottom,
+              backgroundColor: colors.background + "dd",
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.conflictModalContent,
+              {
+                backgroundColor: colors.surface,
+              },
+            ]}
+          >
+            <View style={styles.conflictModalHeader}>
+              <Ionicons name="warning" size={32} color={colors.warning} />
+              <Text style={[styles.conflictModalTitle, { color: colors.text }]}>
+                Conflict Detected
+              </Text>
+              <Text
+                style={[
+                  styles.conflictModalSubtitle,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                Another record exists for this time slot
+              </Text>
+            </View>
+
+            <View style={styles.conflictModalBody}>
+              <View style={styles.conflictModalActions}>
+                <TouchableOpacity
+                  style={[
+                    styles.conflictModalButton,
+                    { borderColor: colors.warning },
+                  ]}
+                  onPress={() => {
+                    setIsConflictModalVisible(false);
+                    if (timeOutRef.current) clearTimeout(timeOutRef.current);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.conflictModalButtonText,
+                      {
+                        color: colors.warning,
+                      },
+                    ]}
+                  >
+                    Got it
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -386,27 +476,6 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
     setRefreshKey((prev) => prev + 1);
   }, []);
 
-  // useEffect(() => {
-  //   AttendanceDatabase.saveAttendanceRecord("64188", 2025, 7, 10, 1, {
-  //     created_at: 1752864646035,
-  //     day: 10,
-  //     final_attendance: "present",
-  //     hour: 1,
-  //     id: 0,
-  //     is_conflict: 0,
-  //     is_entered_by_professor: 0,
-  //     is_entered_by_student: 1,
-  //     is_user_override: 1,
-  //     last_user_update: 1752864646035,
-  //     month: 7,
-  //     subject_id: "64188",
-  //     teacher_attendance: null,
-  //     updated_at: 1752864646035,
-  //     user_attendance: "present",
-  //     year: 2025,
-  //   });
-  // }, []);
-
   // Effects
   useEffect(() => {
     if (isVisible) {
@@ -430,7 +499,7 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
       const day = currentDate.getDate();
 
       const subjectData = courseSchedule?.get(subjectId) || [];
-      console.log("[UI] Calculating hourly status for subject:", subjectData.filter(r=>r.day===10 && r.hour===1));
+      //console.log("[UI] Calculating hourly status for subject:", subjectData.filter(r=>r.day===10 && r.hour===1));
       const manualRecords = new Map<number, CourseSchedule>();
 
       subjectData.forEach((record) => {
@@ -632,7 +701,6 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
             record.hour === hour
         ) || null;
     }
-
     return (
       <TouchableOpacity
         style={[
@@ -1004,5 +1072,59 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     fontWeight: "500",
+  },
+  conflictModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  conflictModalContent: {
+    width: "100%",
+    maxWidth: 350,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  conflictModalHeader: {
+    alignItems: "center",
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  conflictModalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginTop: 12,
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  conflictModalSubtitle: {
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+    opacity: 0.8,
+  },
+  conflictModalBody: {
+    padding: 20,
+    paddingTop: 16,
+  },
+  conflictModalActions: {
+    alignItems: "center",
+  },
+  conflictModalButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    gap: 8,
+    minWidth: 120,
+    borderWidth: 1,
+  },
+  conflictModalButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

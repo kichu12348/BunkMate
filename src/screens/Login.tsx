@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,6 +15,7 @@ import { useAuthStore } from '../state/auth';
 import { useThemedStyles } from '../hooks/useTheme';
 import { ThemeColors } from '../types/theme';
 import { APP_CONFIG } from '../constants/config';
+import { useToastStore } from '../state/toast';
 
 export const LoginScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -29,6 +29,7 @@ export const LoginScreen: React.FC = () => {
     resetLoginFlow, 
     clearError 
   } = useAuthStore();
+  const showToast = useToastStore((state) => state.showToast);
   
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -36,20 +37,32 @@ export const LoginScreen: React.FC = () => {
 
   const handleUsernameSubmit = async () => {
     if (!username.trim()) {
-      Alert.alert('Error', 'Please enter your username');
+      showToast({
+        title: 'Error',
+        message: 'Please enter your username',
+        buttons: [{ text: 'OK', style: "destructive" }],
+      });
       return;
     }
 
     try {
       await lookupUsername(username.trim());
     } catch (error: any) {
-      Alert.alert('Username Not Found', error.message || 'Invalid username');
+      showToast({
+        title: 'Username Not Found',
+        message: error.message || 'Invalid username',
+        buttons: [{ text: 'OK', style: "destructive" }],
+      });
     }
   };
 
   const handleLogin = async () => {
     if (!password.trim()) {
-      Alert.alert('Error', 'Please enter your password');
+      showToast({
+        title: 'Error',
+        message: 'Please enter your password',
+        buttons: [{ text: 'OK', style: "destructive" }],
+      });
       return;
     }
 
@@ -60,7 +73,11 @@ export const LoginScreen: React.FC = () => {
         stay_logged_in: true 
       });
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid credentials');
+      showToast({
+        title: 'Login Failed',
+        message: error.message || 'Invalid credentials',
+        buttons: [{ text: 'OK', style: "destructive" }],
+      });
     }
   };
 
@@ -230,6 +247,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: colors.text,
+    paddingHorizontal: 8,
   },
   inputPlaceholder: {
     color: colors.textSecondary,

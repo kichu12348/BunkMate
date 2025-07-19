@@ -5,7 +5,6 @@ import {
   CourseSchedule,
 } from "../types/api";
 import { attendanceService } from "../api/attendance";
-import { database } from "../db/database";
 import { AttendanceDatabase } from "../utils/attendanceDatabase";
 
 interface AttendanceState {
@@ -14,11 +13,12 @@ interface AttendanceState {
   error: string | null;
   lastUpdated: Date | null;
   courseSchedule: Map<string, CourseSchedule[]> | null;
+  hasInitFetched: boolean;
 
   // Actions
   fetchAttendance: (forceRefresh?: boolean) => Promise<void>;
+  initFetchAttendance: () => Promise<void>;
   refreshAttendance: () => Promise<void>;
-  refreshCourseSchedule: () => Promise<void>;
   getSubjectAttendance: (subjectId: number) => SubjectAttendance | null;
   clearError: () => void;
   checkForConflicts: ({
@@ -58,7 +58,13 @@ interface AttendanceState {
   }) => Promise<void>;
 
   resolveConflict: (
-    conflict: CourseSchedule,
+    conflict: {
+      subject_id: string;
+      year: number;
+      month: number;
+      day: number;
+      hour: number;
+    },
     resolution: "accept_teacher" | "keep_user"
   ) => Promise<void>;
 }
@@ -69,6 +75,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
   error: null,
   lastUpdated: null,
   courseSchedule: null,
+  hasInitFetched: false,
 
   fetchAttendance: async () => {
     set({ isLoading: true, error: null });
@@ -82,22 +89,70 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       const manualRecords =
         await AttendanceDatabase.getAllManualAttendanceRecords();
 
-      // 3. Merge the API schedule with your manual records.
-      const mergedSchedule = new Map(apiSchedule);
-      for (const [subjectId, records] of manualRecords.entries()) {
-        const existingRecords = mergedSchedule.get(subjectId) || [];
-        // This is a simplified placeholder for your detailed merge logic.
-        // Your existing merge logic can be pasted here.
-        const updatedRecords = [...existingRecords, ...records].sort(
-          (a, b) => a.day - b.day
-        );
-        mergedSchedule.set(subjectId, updatedRecords);
+      // 3. Perform a deep merge of the fresh API schedule and the stored manual records.
+      const mergedSchedule = new Map(apiSchedule); // Start with the fresh API data as the base.
+
+      // Iterate over each subject that has manual records.
+      for (const [subjectId, manualSubjectRecords] of manualRecords.entries()) {
+        const apiSubjectRecords = mergedSchedule.get(subjectId) || [];
+
+        // For each manual record, find its counterpart in the API data.
+        for (const manualRecord of manualSubjectRecords) {
+          const apiRecordIndex = apiSubjectRecords.findIndex(
+            (apiRecord) =>
+              apiRecord.year === manualRecord.year &&
+              apiRecord.month === manualRecord.month &&
+              apiRecord.day === manualRecord.day &&
+              apiRecord.hour === manualRecord.hour
+          );
+
+          if (apiRecordIndex > -1) {
+            // A record from the teacher exists for this exact time slot. MERGE them.
+            const teacherRecord = apiSubjectRecords[apiRecordIndex];
+            const teacherAtt = teacherRecord.teacher_attendance;
+            const userAtt = manualRecord.user_attendance;
+
+            // Combine data, prioritizing the structure from the API record but overriding with user data.
+            const mergedRecord = {
+              ...teacherRecord,
+              ...manualRecord,
+            };
+
+            // Explicitly detect the conflict.
+            if (teacherAtt && userAtt && teacherAtt !== userAtt) {
+              mergedRecord.is_conflict = 1;
+              mergedRecord.final_attendance = null; // Nullify final attendance to force a resolution.
+            } else {
+              mergedRecord.is_conflict = 0;
+              // If no conflict, final attendance is the user's entry, or falls back to the teacher's.
+              mergedRecord.final_attendance = userAtt || teacherAtt;
+            }
+            // Replace the original API record with our new, correctly merged record.
+            apiSubjectRecords[apiRecordIndex] = mergedRecord;
+          } else {
+            // This manual record has no corresponding API record, so it's a new entry.
+            apiSubjectRecords.push(manualRecord);
+          }
+        }
+        // Update the schedule map with the fully merged records for the subject.
+        mergedSchedule.set(subjectId, apiSubjectRecords);
       }
 
+      // // 3. Merge the API schedule with your manual records.
+      // const mergedSchedule = new Map(apiSchedule);
+      // for (const [subjectId, records] of manualRecords.entries()) {
+      //   const existingRecords = mergedSchedule.get(subjectId) || [];
+      //   // This is a simplified placeholder for your detailed merge logic.
+      //   // Your existing merge logic can be pasted here.
+      //   const updatedRecords = [...existingRecords, ...records].sort(
+      //     (a, b) => a.day - b.day
+      //   );
+      //   mergedSchedule.set(subjectId, updatedRecords);
+      // }
+
       // 4. Set the state correctly.
-      // This fixes the TypeScript error.
       set({
-        data: transformedData, // Set `data` to the AttendanceDetailedResponse
+        data: transformedData, 
         courseSchedule: mergedSchedule,
         isLoading: false,
         error: null,
@@ -117,6 +172,16 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
     await get().fetchAttendance();
   },
 
+  initFetchAttendance: async () => {
+    if (get().hasInitFetched) return;
+    try {
+      await get().fetchAttendance();
+      set({ hasInitFetched: true });
+    } catch (error) {
+      console.error("Error during initial attendance fetch:", error);
+    }
+  },
+
   // This function will now work correctly.
   getSubjectAttendance: (subjectId: number) => {
     const data = get().data;
@@ -124,18 +189,6 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
     return (
       data.subjects.find((subject) => subject.subject.id === subjectId) || null
     );
-  },
-
-  refreshCourseSchedule: async () => {
-    try {
-      // Get updated course schedule from database without API call
-      const cachedSchedule = await attendanceService.getCachedCourseSchedule();
-      if (cachedSchedule) {
-        set({ courseSchedule: cachedSchedule });
-      }
-    } catch (error) {
-      console.error("Error refreshing course schedule:", error);
-    }
   },
 
   // getSubjectAttendance: (subjectId: number) => {
@@ -356,7 +409,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
     try {
       // Conflict checking logic remains the same
       const allSubjectIds = Array.from(get().courseSchedule?.keys() || []);
-      const { hasConflict, conflictingSubject } =
+      const { hasConflict } =
         await AttendanceDatabase.checkTimeSlotConflictWithSubjects(
           year,
           month,
@@ -442,7 +495,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
           subjectRecords.push(savedRecord);
         }
 
-        newSchedule.set(subjectId, [...subjectRecords]); 
+        newSchedule.set(subjectId, [...subjectRecords]);
         return { courseSchedule: newSchedule };
       });
     } catch (error: any) {
@@ -453,6 +506,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
 
   deleteManualAttendance: async ({ subjectId, year, month, day, hour }) => {
     try {
+      // This part is correct: delete the record from the persistent key-value store.
       await AttendanceDatabase.deleteAttendanceRecord(
         subjectId,
         year,
@@ -460,27 +514,58 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
         day,
         hour
       );
+
+      // This section is the fix: perform an immutable update on the in-memory state.
       set((state) => {
         if (!state.courseSchedule) return {};
-        
-        const newSchedule = new Map(state.courseSchedule);
-        const subjectRecords = newSchedule.get(subjectId) || [];
 
-        const updatedSubjectRecords = subjectRecords.filter(
-          (record) =>
-            !(
+        const newSchedule = new Map(state.courseSchedule);
+        const subjectRecords = newSchedule.get(subjectId);
+        if (!subjectRecords)
+          return {
+            courseSchedule: newSchedule,
+          };
+
+        // Create a new array using .map() and .filter() to ensure immutability.
+        const updatedSubjectRecords = subjectRecords
+          .map((record) => {
+            // Find the record we need to "delete" or "revert".
+            if (
               record.year === year &&
               record.month === month &&
               record.day === day &&
               record.hour === hour
-            )
-        );
+            ) {
+              // If the record has teacher data, it was a merged conflict.
+              if (record.is_entered_by_professor) {
+                // Return a NEW object with the user's data removed, reverting it to the teacher's version.
+                return {
+                  ...record,
+                  user_attendance: null,
+                  is_conflict: 0,
+                  is_user_override: 0,
+                  is_entered_by_student: 0,
+                  final_attendance: record.teacher_attendance,
+                  last_user_update: null,
+                };
+              } else {
+                // This was a student-only record. Return null to remove it.
+                return null;
+              }
+            }
+            // For all other records, return them unchanged.
+            return record;
+          })
+          .filter((record) => record !== null); // Filter out any records that were marked for deletion.
 
         if (updatedSubjectRecords.length > 0) {
           newSchedule.set(subjectId, updatedSubjectRecords);
         } else {
+          // If no records are left for the subject, remove the subject from the map.
           newSchedule.delete(subjectId);
         }
+
+        // Return the new map, triggering a UI update.
         return { courseSchedule: newSchedule };
       });
     } catch (error: any) {
@@ -490,20 +575,96 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
   },
 
   resolveConflict: async (conflict, resolution) => {
+    // --- STEP 1: Update the in-memory state for an instant UI change ---
+    set((state) => {
+      // Create a new Map to guarantee the state change is detected.
+      const newSchedule = new Map(state.courseSchedule);
+      const subjectRecords = newSchedule.get(conflict.subject_id);
+
+      // Safety check: If for some reason the records aren't in memory, do nothing.
+      if (!subjectRecords)
+        return {
+          courseSchedule: newSchedule,
+        };
+
+      // Create a new array of records using .map() to ensure immutability.
+      const updatedRecords = subjectRecords.map((record) => {
+        // Find the specific record that matches the conflict.
+        if (
+          record.year === conflict.year &&
+          record.month === conflict.month &&
+          record.day === conflict.day &&
+          record.hour === conflict.hour
+        ) {
+          if (resolution === "accept_teacher") {
+            // Revert the record to its "teacher-only" state.
+            const newRecord = {
+              ...record,
+              is_conflict: 0,
+              is_user_override: 0,
+              is_entered_by_student: 0,
+              is_entered_by_professor: 1,
+              user_attendance: null,
+              final_attendance: record.attendance,
+              teacher_attendance: record.attendance,
+              last_user_update: null,
+            };
+
+            return newRecord;
+          }
+          // else { // 'keep_user'
+          //   // Resolve the conflict by keeping the user's data.
+          //   return {
+          //     ...record,
+          //     is_conflict: 0,
+          //     final_attendance: record.user_attendance, // Use user's attendance
+          //     updated_at: Date.now(),
+          //   };
+          // }
+        }
+        // Return all other records unchanged.
+        return record;
+      });
+
+      // Update the new map with the new array of records.
+      newSchedule.set(conflict.subject_id, updatedRecords);
+
+      // Return the new state object. This WILL trigger the UI update.
+      return { courseSchedule: newSchedule };
+    });
+    // get().refreshCourseSchedule(); // Refresh the course schedule to ensure it's up-to-date in memory.
+
+    // --- STEP 2: Perform the permanent database operation AFTER the UI updates ---
     try {
-      await AttendanceDatabase.resolveConflict(
-        conflict.subject_id,
-        conflict.year,
-        conflict.month,
-        conflict.day,
-        conflict.hour,
-        resolution
-      );
-      await get().refreshCourseSchedule();
-      get().refreshAttendance();
+      if (resolution === "accept_teacher") {
+        // As you requested: REMOVE the student's record from the database.
+        await AttendanceDatabase.deleteAttendanceRecord(
+          conflict.subject_id,
+          conflict.year,
+          conflict.month,
+          conflict.day,
+          conflict.hour
+        );
+      }
+      // else { // 'keep_user'
+      //   // If keeping the user's record, we must SAVE the resolved state back to the database.
+      //   const resolvedRecord = {
+      //       ...conflict,
+      //       is_conflict: 0,
+      //       final_attendance: conflict.user_attendance
+      //   };
+      //   await AttendanceDatabase.saveAttendanceRecord(
+      //     resolvedRecord.subject_id,
+      //     resolvedRecord.year,
+      //     resolvedRecord.month,
+      //     resolvedRecord.day,
+      //     resolvedRecord.hour,
+      //     resolvedRecord
+      //   );
+      // }
     } catch (error) {
-      console.error("Error resolving conflict:", error);
-      throw new Error("Failed to resolve attendance conflict.");
+      console.error("Error persisting conflict resolution:", error);
+      throw new Error("Failed to resolve conflict in the database.");
     }
   },
 }));

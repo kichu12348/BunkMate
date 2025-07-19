@@ -1,7 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { API_CONFIG, ATTENDANCE_THRESHOLDS } from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
-import { attendanceCache } from "../db/attendanceCache";
 import {
   AttendanceDetailedResponse,
   SubjectAttendance,
@@ -14,7 +13,6 @@ import {
   CourseSchedule
 } from "../types/api";
 import { daysAttended } from "../utils/daysAttended";
-import { AttendanceDatabase } from "../utils/attendanceDatabase";
 
 class AttendanceService {
   private api: AxiosInstance;
@@ -340,20 +338,6 @@ class AttendanceService {
     }
     
     return mergedSchedule;
-  }
-
-  async getCachedCourseSchedule(): Promise<Map<string, CourseSchedule[]> | null> {
-    const cachedSchedule = await attendanceCache.getCachedCourseSchedule();
-    
-    if (cachedSchedule) {
-      // Get manual attendance records and merge them
-      const manualRecords = await AttendanceDatabase.getAllManualAttendanceRecords();
-      return this.mergeCourseScheduleWithManualRecords(cachedSchedule, manualRecords);
-    }
-    
-    // If no cached schedule, return manual records only
-    const manualRecords = await AttendanceDatabase.getAllManualAttendanceRecords();
-    return manualRecords.size > 0 ? manualRecords : null;
   }
 }
 

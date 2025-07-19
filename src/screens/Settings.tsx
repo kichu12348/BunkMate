@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Linking,
 } from "react-native";
@@ -20,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import Switch from "../components/UI/Switch";
 import UPIModal from "../components/upiModal";
+import { useToastStore } from "../state/toast";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 
@@ -55,6 +55,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const [showUPIModal, setShowUPIModal] = useState<boolean>(false);
   const fetchAttendance = useAttendanceStore((s) => s.fetchAttendance);
   const { logout, user } = useAuthStore();
+  const showToast = useToastStore((state) => state.showToast);
   const insets = useSafeAreaInsets();
   const bottomBarHeight = useBottomTabBarHeight();
 
@@ -68,7 +69,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       await setSemester(selectedSemester);
       await fetchAttendance(true);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to update academic year");
+      showToast({
+        title: "Error",
+        message: error.message || "Failed to update academic year",
+        buttons: [{ text: "OK", style: "destructive" }],
+      });
     }
   };
 
@@ -83,7 +88,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       await setSemester(semester);
       await fetchAttendance(true);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to update semester");
+      showToast({
+        title: "Error",
+        message: error.message || "Failed to update semester",
+        buttons: [{ text: "OK", style: "destructive" }],
+      });
     }
   };
 
@@ -91,25 +100,44 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     try {
       fetchAttendanceDebounced();
     } catch (error) {
-      Alert.alert("Error", "Failed to refresh attendance data");
+      showToast({
+        title: "Error",
+        message: "Failed to refresh attendance data",
+        buttons: [{ text: "OK", style: "destructive" }],
+      });
     }
   };
 
   const handleLogout = () => {
-    Alert.alert("Confirm Logout", "Are you sure you want to logout?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: () => {
-          logout();
-          onClose?.();
+    // Alert.alert("Confirm Logout", "Are you sure you want to logout?", [
+    //   {
+    //     text: "Cancel",
+    //     style: "cancel",
+    //   },
+    //   {
+    //     text: "Logout",
+    //     style: "destructive",
+    //     onPress: () => {
+    //       logout();
+    //       onClose?.();
+    //     },
+    //   },
+    // ]);
+    showToast({
+      title: "Confirm Logout",
+      message: "Are you sure you want to logout?",
+      buttons: [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: () => {
+            logout();
+            onClose?.();
+          },
         },
-      },
-    ]);
+      ],
+    });
   };
 
   const handleToggleTheme = () => {

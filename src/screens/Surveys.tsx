@@ -21,6 +21,7 @@ import { formatDistanceToNow, parseISO, isPast, isFuture } from "date-fns";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { RootStackParamList } from "../navigation/RootNavigator";
+import { useToastStore } from "../state/toast";
 
 const { width } = Dimensions.get("window");
 
@@ -41,6 +42,8 @@ const SurveyCard: React.FC<SurveyCardProps> = ({ survey, onPress }) => {
   const startDate = parseISO(survey.start_at);
   const isExpired = isPast(endDate) && !isCompleted;
   const isPending = isFuture(startDate);
+
+  const showToast = useToastStore((state) => state.showToast);
 
   const getStatusInfo = () => {
     if (isCompleted) {
@@ -251,6 +254,8 @@ export const SurveysScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<SurveysScreenNavigationProp>();
 
+  const showToast = useToastStore((state) => state.showToast);
+
   const {
     surveys,
     error,
@@ -281,28 +286,32 @@ export const SurveysScreen: React.FC = () => {
     const isPending = isFuture(startDate);
 
     if (isExpired) {
-      Alert.alert(
-        "Survey Expired",
-        "This survey has expired and can no longer be taken."
-      );
+      showToast({
+        title: "Survey Expired",
+        message: "This survey has expired and can no longer be taken.",
+        buttons: [{ text: "OK", style: "destructive" }],
+      });
+      
       return;
     }
 
     if (isCompleted) {
-      Alert.alert(
-        "Survey Completed",
-        "You have already completed this survey."
-      );
+      showToast({
+        title: "Survey Completed",
+        message: "You have already completed this survey.",
+        buttons: [{ text: "OK", style: "default" }],
+      });
       return;
     }
 
     if (isPending) {
-      Alert.alert(
-        "Survey Not Available",
-        `This survey will be available ${formatDistanceToNow(startDate, {
+      showToast({
+        title: "Survey Not Available",
+        message: `This survey will be available ${formatDistanceToNow(startDate, {
           addSuffix: true,
-        })}.`
-      );
+        })}.`,
+        buttons: [{ text: "OK", style: "default" }],
+      });
       return;
     }
 

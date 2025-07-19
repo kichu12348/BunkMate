@@ -180,12 +180,6 @@ export interface ApiError {
   status_code: number;
 }
 
-export interface CacheMetadata {
-  key: string;
-  data: any;
-  timestamp: number;
-  expiresAt: number;
-}
 
 export interface SetDefaultYearRequest {
   default_academic_year: string; // "0" or "2024-25" format

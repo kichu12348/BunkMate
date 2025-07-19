@@ -30,6 +30,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttendanceDayView from "../components/AttendanceDayView";
 import { LinearGradient } from "expo-linear-gradient";
+import { normalizeAttendance } from "../utils/helpers";
 
 type SubjectDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -377,32 +378,41 @@ export const SubjectDetailsScreen: React.FC = () => {
       const colorsList: string[] = [];
       const attendanceEntries = attendanceLookup.get(date);
       const cellOpacity = getCellIntensity(sessions);
+
       if (!attendanceEntries || attendanceEntries.length === 0) {
-        return [
-          `${colors.border}${cellOpacity}`,
-          `${colors.border}${cellOpacity}`,
-        ];
+        return [`${colors.border}${cellOpacity}`, `${colors.border}${cellOpacity}`];
       }
 
       attendanceEntries.forEach((entry: any) => {
-        if (entry.attendance?.toLowerCase() === "present") {
+        // --- Start of Fix ---
+        
+        // Priority 1: If the record is marked as a conflict, always show the warning color.
+        if (entry.is_conflict === 1) {
+          colorsList.push(`${colors.warning}${cellOpacity}`);
+          return; // Go to the next entry for this day
+        }
+        const attendanceToUse = entry.final_attendance || entry.teacher_attendance || entry.user_attendance;
+        const normalizedStatus = normalizeAttendance(attendanceToUse);
+        if (normalizedStatus === "present") {
           colorsList.push(`${colors.success}${cellOpacity}`);
-        } else if (entry.attendance?.toLowerCase() === "absent") {
+        } else if (normalizedStatus === "absent") {
           colorsList.push(`${colors.error}${cellOpacity}`);
         } else {
-          colorsList.push(`${colors.warning}${cellOpacity}`);
+          // Fallback for any other state (e.g., duty leave, none)
+          colorsList.push(`${colors.border}${cellOpacity}`);
         }
+        // --- End of Fix ---
       });
 
+      if (colorsList.length === 0) {
+         return [`${colors.border}${cellOpacity}`, `${colors.border}${cellOpacity}`];
+      }
       if (colorsList.length === 1) {
         return [colorsList[0], colorsList[0]];
       }
-
-      return colorsList.length > 1
-        ? colorsList.sort()
-        : [colors.border, colors.border];
+      return colorsList.sort();
     },
-    [attendanceLookup, colors]
+    [attendanceLookup, colors, getCellIntensity]
   );
 
   // Memoize navigation handlers
@@ -463,11 +473,11 @@ export const SubjectDetailsScreen: React.FC = () => {
         visible: true,
       },
       {
-        title: "Bunkable Classes",
+        title: `Bunkable Class${canMiss > 1 ? "es" : ""}`,
         value: canMiss.toString(),
         icon: "bed-outline",
         color: colors.primary,
-        visible: true,
+        visible: canMiss > 0,
       },
       {
         title: "Classes to Attend",

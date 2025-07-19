@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   TextInput,
   KeyboardAvoidingView,
   Platform,
@@ -18,13 +17,11 @@ import { useThemedStyles, useTheme } from "../hooks/useTheme";
 import { ThemeColors } from "../types/theme";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { surveysService } from "../api/surveys";
-import {
-  SurveyStartData,
-  QuestionChoice,
-} from "../types/api";
+import { SurveyStartData, QuestionChoice } from "../types/api";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Dropdown } from "../components/Dropdown";
 import { useSurveysStore } from "../state/surveys";
+import { useToastStore } from "../state/toast";
 
 type SurveyAttemptScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -48,6 +45,7 @@ export const SurveyAttemptScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const showToast = useToastStore((state) => state.showToast);
 
   const { surveyId } = route.params;
 
@@ -59,7 +57,9 @@ export const SurveyAttemptScreen: React.FC = () => {
     new Map()
   );
   const selectChoiceSet = useRef(new Set());
-  const [selectedBulkChoice, setSelectedBulkChoice] = useState<string | null>(null);
+  const [selectedBulkChoice, setSelectedBulkChoice] = useState<string | null>(
+    null
+  );
 
   const removeSurvey = useSurveysStore((state) => state.removeSurvey);
 
@@ -138,10 +138,11 @@ export const SurveyAttemptScreen: React.FC = () => {
         question.answer_required &&
         (!response || response.choiceId === null)
       ) {
-        Alert.alert(
-          "Incomplete Survey",
-          `Please answer question ${question.question_no}: ${question.name}`
-        );
+        showToast({
+          title: "Incomplete Survey",
+          message: `Please answer question ${question.question_no}: ${question.name}`,
+          buttons: [{ text: "OK", style: "default" }],
+        });
         return false;
       }
     }
@@ -166,27 +167,32 @@ export const SurveyAttemptScreen: React.FC = () => {
         }));
 
       await surveysService.submitSurvey(surveyId, submissionData);
-
-      Alert.alert("Survey Submitted", "Thank you for your feedback!", [
-        {
-          text: "OK",
-          onPress: () => {
-            removeSurvey(surveyId);
-            navigation.goBack();
+      showToast({
+        title: "Survey Submitted",
+        message: "Thank you for your feedback!",
+        buttons: [
+          {
+            text: "OK",
+            style: "default",
+            onPress: () => {
+              removeSurvey(surveyId);
+              navigation.goBack();
+            },
           },
-        },
-      ]);
+        ],
+      });
     } catch (error: any) {
-      Alert.alert(
-        "Submission Failed",
-        error.message || "Failed to submit survey"
-      );
+      showToast({
+        title: "Submission Failed",
+        message: error.message || "Failed to submit survey",
+        buttons: [{ text: "OK", style: "destructive" }],
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const renderQuestion = (question: QuestionChoice, index: number, selectChoiceSet: any) => {
+  const renderQuestion = (question: QuestionChoice) => {
     const response = responses.get(question.id);
     const isRequired = question.answer_required === 1;
     const allowDescriptive = question.allow_descriptive === 1;
@@ -294,39 +300,41 @@ export const SurveyAttemptScreen: React.FC = () => {
 
   const getUniqueChoiceNames = (): string[] => {
     if (!surveyData) return [];
-    
+
     const choiceNames = new Set<string>();
-    surveyData.questionsChoices.forEach(question => {
-      question.choices.forEach(choice => {
+    surveyData.questionsChoices.forEach((question) => {
+      question.choices.forEach((choice) => {
         choiceNames.add(choice.name);
       });
     });
-    
+
     return Array.from(choiceNames).sort();
   };
 
   const handleBulkChoiceSelect = (choiceName: string) => {
     if (!surveyData) return;
-    
+
     setSelectedBulkChoice(choiceName);
     const updatedResponses = new Map(responses);
-    
-    surveyData.questionsChoices.forEach(question => {
-      const matchingChoice = question.choices.find(choice => choice.name === choiceName);
+
+    surveyData.questionsChoices.forEach((question) => {
+      const matchingChoice = question.choices.find(
+        (choice) => choice.name === choiceName
+      );
       if (matchingChoice) {
         const currentResponse = updatedResponses.get(question.id) || {
           questionId: question.id,
           choiceId: null,
           comment: "",
         };
-        
+
         updatedResponses.set(question.id, {
           ...currentResponse,
           choiceId: matchingChoice.id,
         });
       }
     });
-    
+
     setResponses(updatedResponses);
   };
 
@@ -453,24 +461,46 @@ export const SurveyAttemptScreen: React.FC = () => {
           {/* Questions */}
           <View style={styles.questionsContainer}>
             <Text style={styles.sectionTitle}>Survey Questions</Text>
-            
+
             {/* Bulk Choice Selection */}
             <View style={styles.bulkSelectionContainer}>
-              <Text style={styles.bulkSelectionTitle}>Quick Fill All Questions</Text>
+              <Text style={styles.bulkSelectionTitle}>
+                Quick Fill All Questions
+              </Text>
               <Text style={styles.bulkSelectionSubtitle}>
                 Select a response to apply to all questions at once
               </Text>
               <Dropdown
-                options={getUniqueChoiceNames().map(name => ({ label: name, value: name }))}
+                options={getUniqueChoiceNames().map((name) => ({
+                  label: name,
+                  value: name,
+                }))}
                 placeholder="Select a response for all questions"
                 selectedValue={selectedBulkChoice}
-                onSelect={(value) => handleBulkChoiceSelect(value)}
+                onSelect={(value) => {
+                  handleBulkChoiceSelect(value);
+                  if (getProgressPercentage() < 100) return;
+                  showToast({
+                    title: "Submit",
+                    message: `All questions will be filled with "${value}"`,
+                    buttons: [
+                      {
+                        text: "Submit",
+                        style: "default",
+                        onPress: handleSubmit,
+                      },
+                      {
+                        text: "Cancel",
+                        style: "cancel",
+                      },
+                    ],
+                    delay: 10000,
+                  });
+                }}
               />
             </View>
 
-            {surveyData.questionsChoices.map((question, index) =>
-              renderQuestion(question, index, selectChoiceSet)
-            )}
+            {surveyData.questionsChoices.map(renderQuestion)}
           </View>
 
           {/* Submit Button */}

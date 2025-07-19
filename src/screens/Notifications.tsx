@@ -7,17 +7,17 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNotificationsStore } from "../state/notifications";
-import { useThemedStyles, useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useTheme";
 import { ThemeColors } from "../types/theme";
 import { Notification } from "../api/notifications";
 import { formatDistanceToNow } from "date-fns";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useThemeStore } from "../state/themeStore";
+import { useToastStore } from "../state/toast";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -96,6 +96,8 @@ export const NotificationsScreen: React.FC = () => {
     loadMore,
   } = useNotificationsStore();
 
+  const showToast = useToastStore((state) => state.showToast);
+
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -110,18 +112,11 @@ export const NotificationsScreen: React.FC = () => {
 
   const handleMarkAllAsRead = () => {
     if (unreadCount === 0) return;
-
-    Alert.alert(
-      "Mark All as Read",
-      "Are you sure you want to mark all notifications as read?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Mark All",
-          onPress: () => markAllAsRead(),
-        },
-      ]
-    );
+    showToast({
+      title: "Notifications Updated",
+      message: "All notifications have been marked as read.",
+      buttons: [{ text: "OK", style: "destructive" }],
+    });
   };
 
   const renderNotification = ({ item }: { item: Notification }) => (

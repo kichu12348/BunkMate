@@ -23,7 +23,6 @@ import {
   getTimeAgo,
   calculateEnhancedAttendanceStats,
   getAttendanceStatus,
-  getStatusColor,
 } from "../utils/helpers";
 import { ATTENDANCE_THRESHOLDS } from "../constants/config";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -35,6 +34,7 @@ import Animated, {
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useThemeStore } from "../state/themeStore";
+import { useToastStore } from "../state/toast";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -48,14 +48,15 @@ export const Dashboard: React.FC = () => {
   const colors = useThemeStore((state) => state.colors);
   const navigation = useNavigation<DashboardNavigationProp>();
   const name = useAuthStore((state) => state.name);
+  const showToast = useToastStore((state) => state.showToast);
   const {
     data: attendanceData,
     isLoading,
     error,
     lastUpdated,
-    fetchAttendance,
     refreshAttendance,
     courseSchedule,
+    initFetchAttendance,
   } = useAttendanceStore();
 
   const { selectedYear, selectedSemester, availableYears, availableSemesters } =
@@ -123,8 +124,7 @@ export const Dashboard: React.FC = () => {
   }, [enhancedSubjects]);
 
   useEffect(() => {
-    // Fetch attendance data on mount
-    fetchAttendance();
+    initFetchAttendance();
 
     // Animate card on load
     scaleAnim.value = withSpring(1, {
@@ -139,7 +139,11 @@ export const Dashboard: React.FC = () => {
     try {
       await refreshAttendance();
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to refresh data");
+      showToast({
+        title: "Error",
+        message: error.message || "Failed to refresh attendance data",
+        buttons: [{ text: "OK", style: "destructive" }],
+      });
     } finally {
       setRefreshing(false);
     }

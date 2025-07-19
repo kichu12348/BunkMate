@@ -25,7 +25,7 @@ interface AttendanceCardProps {
 export const AttendanceCard: React.FC<AttendanceCardProps> = ({ subject, onPress }) => {
   const styles = useThemedStyles(createStyles);
   const courseSchedule = useAttendanceStore((state) => state.courseSchedule);
-  
+
   // Get user-marked records for this subject
   const userRecords = courseSchedule?.get(subject.subject.id.toString()) || [];
   
@@ -66,13 +66,13 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({ subject, onPress
     let baseMessage = '';
     switch (actualStatus) {
       case 'safe':
-        baseMessage = classesCanMiss > 0 ? `Can miss ${classesCanMiss} more classes` : 'Perfect attendance!';
+        baseMessage = classesCanMiss > 0 ? `Can miss ${classesCanMiss} more class${classesCanMiss > 1 ? 'es' : ''}` : 'Perfect attendance!';
         break;
       case 'warning':
-        baseMessage = classesToAttend > 0 ? `Attend ${classesToAttend} more classes to be safe` : 'Close to minimum requirement';
+        baseMessage = classesToAttend > 0 ? `Attend ${classesToAttend} more class${classesToAttend > 1 ? 'es' : ''} to be safe` : 'Close to minimum requirement';
         break;
       case 'danger':
-        baseMessage = classesToAttend > 0 ? `Must attend ${classesToAttend} classes to reach 75%` : 'Below minimum requirement!';
+        baseMessage = classesToAttend > 0 ? `Must attend ${classesToAttend} class${classesToAttend > 1 ? 'es' : ''} to reach 75%` : 'Below minimum requirement!';
         break;
       default:
         baseMessage = 'Status unknown';
@@ -80,7 +80,7 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({ subject, onPress
     
     // Add indicators for user data
     if (conflictCount > 0) {
-      baseMessage += ` • ${conflictCount} conflict${conflictCount > 1 ? 's' : ''}`;
+      baseMessage += ` • ${conflictCount} conflict${conflictCount > 1 ? 's' : ''} ⚠️`;
     } else if (userMarkedCount > 0) {
       baseMessage += ` • ${userMarkedCount} self-marked`;
     }
