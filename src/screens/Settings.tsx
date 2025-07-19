@@ -109,25 +109,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   };
 
   const handleLogout = () => {
-    // Alert.alert("Confirm Logout", "Are you sure you want to logout?", [
-    //   {
-    //     text: "Cancel",
-    //     style: "cancel",
-    //   },
-    //   {
-    //     text: "Logout",
-    //     style: "destructive",
-    //     onPress: () => {
-    //       logout();
-    //       onClose?.();
-    //     },
-    //   },
-    // ]);
     showToast({
       title: "Confirm Logout",
       message: "Are you sure you want to logout?",
       buttons: [
-        { text: "Cancel", style: "cancel" },
         {
           text: "Logout",
           style: "destructive",
@@ -136,6 +121,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             onClose?.();
           },
         },
+        { text: "Cancel", style: "cancel" },
       ],
     });
   };
