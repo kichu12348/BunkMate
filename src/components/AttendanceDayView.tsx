@@ -13,13 +13,14 @@ import Animated, {
   withTiming,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { AntDesign, Feather, Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../hooks/useTheme";
 import { useAttendanceStore } from "../state/attendance";
 import { AttendanceDatabase } from "../utils/attendanceDatabase";
 import { CourseSchedule } from "../types/api";
 import { ThemeColors } from "../types/theme";
+import { normalizeAttendance } from "../utils/helpers";
 
 const { width, height } = Dimensions.get("screen");
 
@@ -97,16 +98,15 @@ const AttendanceEditModal: React.FC<{
   closeThis,
 }) => {
   const insets = useSafeAreaInsets();
+  const {
+    markManualAttendance,
+    deleteManualAttendance,
+    resolveConflict,
+    courseSchedule,
+  } = useAttendanceStore();
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isVisible || !data) return null;
-
-  // Date calculations
-  const currentDate = new Date();
-  const year = data.year || currentDate.getFullYear();
-  const month = data.month || currentDate.getMonth() + 1;
-  const day = data.day || currentDate.getDate();
-
   // State calculations
   const isEnteredByProfessor = data.is_entered_by_professor === 1;
   const isEnteredByStudent = data.is_entered_by_student === 1;
@@ -119,144 +119,55 @@ const AttendanceEditModal: React.FC<{
   const hasRecord = !!data.attendance;
 
   const handleAttendanceChange = async (attendance: "Present" | "Absent") => {
-    if (!subjectId) return;
+    if (!subjectId || !data) return;
 
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-
-      // Check for conflicts
-      const hasConflict = await checkForConflicts({
+      // The component just calls the store action. That's it.
+      await markManualAttendance({
+        subjectId,
+        year: data.year,
+        month: data.month,
+        day: data.day,
         hour: data.hour,
-        day,
-        month,
-        year,
+        attendance: attendance.toLowerCase() as "present" | "absent",
       });
-
-      if (hasConflict) {
-        Alert.alert(
-          "Conflict Detected",
-          "Another subject already has attendance marked for this time slot."
-        );
-        return;
-      }
-
-      // Get existing record
-      const existingRecord = await AttendanceDatabase.getAttendanceRecord(
-        subjectId,
-        year,
-        month,
-        day,
-        data.hour
-      );
-
-      // Get all subject IDs for conflict checking
-      const courseSchedule = useAttendanceStore.getState().courseSchedule;
-      const allSubjectIds = courseSchedule
-        ? Array.from(courseSchedule.keys())
-        : undefined;
-
-      // Mark attendance
-      const updatedRecord = await AttendanceDatabase.markAttendance(
-        subjectId,
-        year,
-        month,
-        day,
-        data.hour,
-        attendance,
-        existingRecord || undefined,
-        allSubjectIds
-      );
-
-      // Update store
-      if (courseSchedule) {
-        const subjectData = courseSchedule.get(subjectId) || [];
-        const existingIndex = subjectData.findIndex(
-          (item) =>
-            item.year === year &&
-            item.month === month &&
-            item.day === day &&
-            item.hour === data.hour
-        );
-
-        let updatedData: CourseSchedule[];
-        if (existingIndex >= 0) {
-          updatedData = [...subjectData];
-          updatedData[existingIndex] = updatedRecord;
-        } else {
-          updatedData = [...subjectData, updatedRecord];
-        }
-
-        const newMap = new Map(courseSchedule);
-        newMap.set(subjectId, updatedData);
-        useAttendanceStore.setState({ courseSchedule: newMap });
-      }
-
-      onStatusUpdate?.();
-      close();
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        (error as Error).message || "Failed to update attendance"
-      );
-      console.error("Error updating attendance:", error);
+      onStatusUpdate?.(); // Refresh the parent view
+      close(); // Close the modal on success
+    } catch (error: any) {
+      // The store threw an error (e.g., conflict), so we just show it.
+      Alert.alert("Error", error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDeleteRecord = async () => {
-    if (!subjectId || !isEnteredByStudent) return;
+    if (!subjectId || !data) return;
 
     Alert.alert(
       "Delete Record",
-      "Are you sure you want to delete your attendance record for this hour?",
+      "Are you sure you want to delete this entry?",
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
+            setIsLoading(true);
             try {
-              setIsLoading(true);
-
-              await AttendanceDatabase.deleteAttendanceRecord(
+              await deleteManualAttendance({
                 subjectId,
-                year,
-                month,
-                day,
-                data.hour
-              );
-
-              // Update store
-              const courseSchedule =
-                useAttendanceStore.getState().courseSchedule;
-              if (courseSchedule) {
-                const subjectData = courseSchedule.get(subjectId) || [];
-                const updatedData = subjectData.filter(
-                  (item) =>
-                    !(
-                      item.year === year &&
-                      item.month === month &&
-                      item.day === day &&
-                      item.hour === data.hour
-                    )
-                );
-
-                const newMap = new Map(courseSchedule);
-                if (updatedData.length > 0) {
-                  newMap.set(subjectId, updatedData);
-                } else {
-                  newMap.set(subjectId, []);
-                }
-                useAttendanceStore.setState({ courseSchedule: newMap });
-              }
-
+                year: data.year,
+                month: data.month,
+                day: data.day,
+                hour: data.hour,
+              });
               onStatusUpdate?.();
               close();
               closeThis?.();
-            } catch (error) {
-              Alert.alert("Error", "Failed to delete attendance record");
-              console.error("Error deleting record:", error);
+            } catch (error: any) {
+              Alert.alert("Error", error.message);
             } finally {
               setIsLoading(false);
             }
@@ -269,50 +180,23 @@ const AttendanceEditModal: React.FC<{
   const handleResolveConflict = async (
     resolution: "accept_teacher" | "keep_user"
   ) => {
-    if (!subjectId || !isConflict) return;
+    if (!subjectId || !data || !data.is_conflict) return;
 
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-
-      const updatedRecord = await AttendanceDatabase.resolveConflict(
-        subjectId,
-        year,
-        month,
-        day,
-        data.hour,
-        resolution
-      );
-
-      // Update store
-      const courseSchedule = useAttendanceStore.getState().courseSchedule;
-      if (courseSchedule) {
-        const subjectData = courseSchedule.get(subjectId) || [];
-        const existingIndex = subjectData.findIndex(
-          (item) =>
-            item.year === year &&
-            item.month === month &&
-            item.day === day &&
-            item.hour === data.hour
-        );
-
-        let updatedData: CourseSchedule[];
-        if (existingIndex >= 0) {
-          updatedData = [...subjectData];
-          updatedData[existingIndex] = updatedRecord;
-        } else {
-          updatedData = [...subjectData, updatedRecord];
-        }
-
-        const newMap = new Map(courseSchedule);
-        newMap.set(subjectId, updatedData);
-        useAttendanceStore.setState({ courseSchedule: newMap });
+      // Find the full conflict record from the schedule
+      const conflictRecord = courseSchedule
+        .get(subjectId)
+        ?.find((rec) => rec.hour === data.hour);
+      if (conflictRecord) {
+        await resolveConflict(conflictRecord, resolution);
+        onStatusUpdate?.();
+        close();
+      } else {
+        throw new Error("Could not find the conflict record to resolve.");
       }
-
-      onStatusUpdate?.();
-      close();
-    } catch (error) {
-      Alert.alert("Error", "Failed to resolve conflict");
-      console.error("Error resolving conflict:", error);
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -428,7 +312,7 @@ const AttendanceEditModal: React.FC<{
   );
 
   const renderContent = () => {
-    //if (isConflict) return renderConflictResolution();
+    if (isConflict) return renderConflictResolution();
     if (isEnteredByProfessor && !isEnteredByStudent)
       return renderProfessorOnlyView();
     return renderEditForm();
@@ -502,6 +386,27 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
     setRefreshKey((prev) => prev + 1);
   }, []);
 
+  // useEffect(() => {
+  //   AttendanceDatabase.saveAttendanceRecord("64188", 2025, 7, 10, 1, {
+  //     created_at: 1752864646035,
+  //     day: 10,
+  //     final_attendance: "present",
+  //     hour: 1,
+  //     id: 0,
+  //     is_conflict: 0,
+  //     is_entered_by_professor: 0,
+  //     is_entered_by_student: 1,
+  //     is_user_override: 1,
+  //     last_user_update: 1752864646035,
+  //     month: 7,
+  //     subject_id: "64188",
+  //     teacher_attendance: null,
+  //     updated_at: 1752864646035,
+  //     user_attendance: "present",
+  //     year: 2025,
+  //   });
+  // }, []);
+
   // Effects
   useEffect(() => {
     if (isVisible) {
@@ -513,9 +418,8 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
     const calculateHourlyStatus = () => {
       const status = new Map<number, string>();
 
-      // Initialize all hours
       for (let hour = 1; hour <= 6; hour++) {
-        status.set(hour, "none");
+        status.set(hour, "none"); // Initialize all hours
       }
 
       if (!data?.day?.date || !subjectId) return status;
@@ -525,8 +429,8 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
       const month = currentDate.getMonth() + 1;
       const day = currentDate.getDate();
 
-      // Get manual records
       const subjectData = courseSchedule?.get(subjectId) || [];
+      console.log("[UI] Calculating hourly status for subject:", subjectData.filter(r=>r.day===10 && r.hour===1));
       const manualRecords = new Map<number, CourseSchedule>();
 
       subjectData.forEach((record) => {
@@ -539,7 +443,7 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
         }
       });
 
-      // Process each hour
+      // This is the refactored loop
       for (let hour = 1; hour <= 6; hour++) {
         const manualRecord = manualRecords.get(hour);
         const originalEntry = data?.entries?.find((e) => e.hour === hour);
@@ -549,30 +453,18 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
           const displayStatus = (() => {
             if (recordToUse.is_conflict === 1) return "conflict";
 
-            const finalAtt = recordToUse.final_attendance?.toLowerCase();
-            const userAtt = recordToUse.user_attendance?.toLowerCase();
-            const teacherAtt = recordToUse.teacher_attendance?.toLowerCase();
+            const prioritized = [
+              recordToUse.final_attendance,
+              recordToUse.user_attendance,
+              recordToUse.teacher_attendance,
+              recordToUse.attendance,
+            ];
 
-            if (
-              finalAtt === "present" ||
-              finalAtt === "p" ||
-              userAtt === "present" ||
-              userAtt === "p" ||
-              teacherAtt === "present" ||
-              teacherAtt === "p"
-            ) {
-              return "present";
-            }
-
-            if (
-              finalAtt === "absent" ||
-              finalAtt === "a" ||
-              userAtt === "absent" ||
-              userAtt === "a" ||
-              teacherAtt === "absent" ||
-              teacherAtt === "a"
-            ) {
-              return "absent";
+            for (const s of prioritized) {
+              const normalizedStatus = normalizeAttendance(s);
+              if (normalizedStatus !== "none") {
+                return normalizedStatus;
+              }
             }
 
             return "none";

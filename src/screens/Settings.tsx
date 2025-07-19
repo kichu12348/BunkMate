@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Linking,
 } from "react-native";
-import { FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "../state/settings";
 import { useAttendanceStore } from "../state/attendance";
 import { useThemedStyles, useTheme } from "../hooks/useTheme";
@@ -18,7 +18,7 @@ import { ThemeColors } from "../types/theme";
 import { useAuthStore } from "../state/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import Switch from "../components/Switch";
+import Switch from "../components/UI/Switch";
 import UPIModal from "../components/upiModal";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
@@ -37,7 +37,7 @@ function debounced(func: Function, delay: number) {
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const styles = useThemedStyles(createStyles);
-  const { isDark, toggleMode, colors } = useTheme();
+  const { isDark, toggleMode } = useTheme();
   const {
     selectedYear,
     selectedSemester,
@@ -53,8 +53,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const [themeIcon, setThemeIcon] = useState<string>(isDark ? "moon" : "sunny");
   const [showUPIModal, setShowUPIModal] = useState<boolean>(false);
-
-  const { clearCache, fetchAttendance } = useAttendanceStore();
+  const fetchAttendance = useAttendanceStore((s) => s.fetchAttendance);
   const { logout, user } = useAuthStore();
   const insets = useSafeAreaInsets();
   const bottomBarHeight = useBottomTabBarHeight();
@@ -66,7 +65,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const handleYearChange = async (year: string) => {
     try {
       await setAcademicYear(year);
-      await clearCache();
+      await setSemester(selectedSemester);
       await fetchAttendance(true);
     } catch (error: any) {
       Alert.alert("Error", error.message || "Failed to update academic year");
@@ -80,9 +79,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const handleSemesterChange = async (semester: string) => {
     try {
+      await setAcademicYear(selectedYear);
       await setSemester(semester);
-      await clearCache();
-      fetchAttendanceDebounced(true);
+      await fetchAttendance(true);
     } catch (error: any) {
       Alert.alert("Error", error.message || "Failed to update semester");
     }
@@ -90,7 +89,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const handleApplySettings = async () => {
     try {
-      await clearCache();
       fetchAttendanceDebounced();
     } catch (error) {
       Alert.alert("Error", "Failed to refresh attendance data");

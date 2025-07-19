@@ -68,65 +68,22 @@ class AttendanceService {
     };
   }
 
-  async fetchAttendanceDetailed(
-    forceRefresh: boolean = false,
-    setCourseSchedule?: (
-      courseSchedule: Map<
-        string,
-        CourseSchedule[]
-      >
-    ) => void
-  ): Promise<AttendanceDetailedResponse> {
-    // Check cache first unless force refresh
-    // if (!forceRefresh) {
-    //   const cachedData = await attendanceCache.getCachedAttendanceData();
-    //   const cachedSchedule = await attendanceCache.getCachedCourseSchedule();
-      
-    //   if (cachedData && cachedSchedule && setCourseSchedule) {
-    //     setCourseSchedule(cachedSchedule);
-    //     return cachedData;
-    //   } else if (cachedData) {
-    //     return cachedData;
-    //   }
-    // }
-
+  async fetchAttendanceDetailed(): Promise<{
+    transformedData: AttendanceDetailedResponse;
+    courseSchedule: Map<string, CourseSchedule[]>;
+  }> {
     try {
       const response: AxiosResponse<AttendanceApiResponse> =
         await this.api.post(API_CONFIG.ENDPOINTS.ATTENDANCE.DETAILED, {});
-        
+
       const courseSchedule = daysAttended(response.data);
-      
-      // Get manual attendance records from database
-      const manualRecords = await AttendanceDatabase.getAllManualAttendanceRecords();
-      
-      // Merge manual records with API data
-      const mergedCourseSchedule = this.mergeCourseScheduleWithManualRecords(courseSchedule, manualRecords);
-      
-      // Cache the course schedule
-      // await attendanceCache.cacheCourseSchedule(mergedCourseSchedule);
-      
-      if (setCourseSchedule) {
-        setCourseSchedule(mergedCourseSchedule);
-      }
-      
       const transformedData = this.transformAttendanceResponse(response.data);
-
-      // Cache the attendance data
-      // await attendanceCache.cacheAttendanceData(transformedData);
-
-      return transformedData;
-    } catch (error) {
-      // If API fails, try to return cached data as fallback
-      const cachedData = await attendanceCache.getCachedAttendanceData();
-      const cachedSchedule = await attendanceCache.getCachedCourseSchedule();
       
-      if (cachedData && cachedSchedule && setCourseSchedule) {
-        setCourseSchedule(cachedSchedule);
-        return cachedData;
-      } else if (cachedData) {
-        return cachedData;
-      }
+      return { transformedData, courseSchedule };
 
+    } catch (error) {
+      // If the API fails, there's no cache to fall back on.
+      // The store will handle the error.
       throw this.handleApiError(error);
     }
   }
@@ -263,31 +220,6 @@ class AttendanceService {
       throw error;
     }
   }
-
-  async getSubjectAttendance(
-    subjectId: number
-  ): Promise<SubjectAttendance | null> {
-    // First check cache
-    const cachedSubject = await attendanceCache.getSubjectAttendance(subjectId);
-    if (cachedSubject) {
-      return cachedSubject;
-    }
-
-    // If not in cache, fetch full data and return specific subject
-    try {
-      const fullData = await this.fetchAttendanceDetailed();
-      return fullData.subjects.find((s) => s.subject.id === subjectId) || null;
-    } catch (error) {
-      console.error("Error fetching subject attendance:", error);
-      return null;
-    }
-  }
-
-  async clearAttendanceCache(): Promise<void> {
-    await attendanceCache.clearCache();
-    await attendanceCache.clearCourseScheduleCache();
-  }
-
   /**
    * Merge course schedule from API with manual attendance records from database
    */
