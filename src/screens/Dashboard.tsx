@@ -6,9 +6,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  Alert,
   Dimensions,
+  Image,
 } from "react-native";
+import logo_dark from "../assets/bonk_icon_dark.png";
+import logo_light from "../assets/bonk_icon_light.png";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -46,6 +48,7 @@ const { width } = Dimensions.get("window");
 export const Dashboard: React.FC = () => {
   const styles = useThemedStyles(createStyles);
   const colors = useThemeStore((state) => state.colors);
+  const mode = useThemeStore((state) => state.mode);
   const navigation = useNavigation<DashboardNavigationProp>();
   const name = useAuthStore((state) => state.name);
   const showToast = useToastStore((state) => state.showToast);
@@ -229,7 +232,10 @@ export const Dashboard: React.FC = () => {
 
           {/* Header Icon Badge */}
           <View style={styles.headerIconBadge}>
-            <Ionicons name="school" size={20} color={styles.primary.color} />
+            <Image
+              source={mode === "dark" ? logo_dark : logo_light}
+              style={styles.logoImage}
+            />
           </View>
         </View>
 
@@ -467,7 +473,6 @@ const createStyles = (colors: ThemeColors) =>
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: colors.surface,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -709,5 +714,9 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: 16,
       color: colors.textSecondary,
       textAlign: "center",
+    },
+    logoImage: {
+      width: 30,
+      height: 30,
     },
   });
