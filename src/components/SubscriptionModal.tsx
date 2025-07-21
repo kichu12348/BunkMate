@@ -175,7 +175,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         visible={visible}
         transparent
         animationType="fade"
-        onRequestClose={handleClose}
+        onRequestClose={handleNext}
         hardwareAccelerated
       >
         <View style={styles.overlay}>
@@ -192,7 +192,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[styles.button, styles.secondaryButton]}
-                onPress={handleClose}
+                onPress={handleNext}
               >
                 <Text style={[styles.buttonText, styles.secondaryButtonText]}>
                   Maybe Later
