@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, ReactElement } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Linking,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "../state/settings";
 import { useAttendanceStore } from "../state/attendance";
 import { useThemedStyles, useTheme } from "../hooks/useTheme";
@@ -18,8 +18,8 @@ import { useAuthStore } from "../state/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import Switch from "../components/UI/Switch";
-import UPIModal from "../components/upiModal";
 import { useToastStore } from "../state/toast";
+import { useThemeStore } from "../state/themeStore";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 
@@ -38,6 +38,7 @@ function debounced(func: Function, delay: number) {
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const styles = useThemedStyles(createStyles);
   const { isDark, toggleMode } = useTheme();
+  const colors = useThemeStore((state) => state.colors);
   const {
     selectedYear,
     selectedSemester,
@@ -52,7 +53,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   } = useSettingsStore();
 
   const [themeIcon, setThemeIcon] = useState<string>(isDark ? "moon" : "sunny");
-  const [showUPIModal, setShowUPIModal] = useState<boolean>(false);
   const fetchAttendance = useAttendanceStore((s) => s.fetchAttendance);
   const { logout, user } = useAuthStore();
   const showToast = useToastStore((state) => state.showToast);
@@ -131,17 +131,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     setThemeIcon(isDark ? "sunny" : "moon");
   };
 
+  const handleCoffee = () => {
+    const coffeeUrl = process.env.EXPO_PUBLIC_COFFEE_URL;
+    Linking.openURL(coffeeUrl);
+  };
+
   const SettingItem = ({
-    icon,
+    Icon,
     title,
     subtitle,
     onPress,
     rightElement,
     showArrow = true,
     isGreat = false,
-    iconColor = isGreat ? styles.logOutColor.color : styles.settingIcon.color,
   }: {
-    icon: string;
+    Icon: ReactElement;
     title: string;
     subtitle?: string;
     onPress?: () => void;
@@ -157,9 +161,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       activeOpacity={0.7}
     >
       <View style={styles.settingItemLeft}>
-        <View style={styles.settingIconContainer}>
-          <Ionicons name={icon as any} size={20} color={iconColor} />
-        </View>
+        <View style={styles.settingIconContainer}>{Icon}</View>
         <View style={styles.settingItemContent}>
           <Text style={styles.settingTitle}>{title}</Text>
           {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
@@ -269,7 +271,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
           <View style={styles.card}>
             <SettingItem
-              icon={themeIcon}
+              Icon={
+                <Ionicons
+                  name={themeIcon as keyof typeof Ionicons.glyphMap}
+                  color={styles.settingIcon.color}
+                  size={24}
+                />
+              }
               title="Dark Mode"
               subtitle={isDark ? "Enabled" : "Disabled"}
               rightElement={
@@ -300,7 +308,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
           <View style={styles.card}>
             <SettingItem
-              icon="information-circle-outline"
+              Icon={
+                <Ionicons
+                  name="information-circle-outline"
+                  size={24}
+                  color={styles.settingIcon.color}
+                />
+              }
               title="App Version"
               subtitle="1.0.0"
               showArrow={false}
@@ -310,7 +324,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
           <View style={styles.card}>
             <SettingItem
-              icon="logo-github"
+              Icon={
+                <Ionicons
+                  name="logo-github"
+                  size={24}
+                  color={styles.settingIcon.color}
+                />
+              }
               title="Contribute"
               subtitle="Support the development of BunkMate"
               showArrow={true}
@@ -318,12 +338,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             />
           </View>
 
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              { borderColor: colors.warning, borderWidth: 1 },
+            ]}
+          >
             <SettingItem
-              icon="diamond-outline"
-              title={"Go Premium! "}
-              subtitle="Unlock ultimate bunking powers"
-              onPress={() => setShowUPIModal(true)}
+              Icon={<Feather name="coffee" size={24} color={colors.warning} />}
+              title={"Buy Me a Coffee"}
+              subtitle=""
+              onPress={handleCoffee}
+              iconColor={colors.warning}
             />
           </View>
         </View>
@@ -332,7 +358,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         <View style={styles.section}>
           <View style={[styles.card, styles.borderRed]}>
             <SettingItem
-              icon="log-out-outline"
+              Icon={
+                <Ionicons
+                  name="log-out-outline"
+                  size={24}
+                  color={colors.danger}
+                />
+              }
               title="Logout"
               subtitle="Sign out of your account"
               onPress={handleLogout}
@@ -362,9 +394,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </Text>
         </View>
       </ScrollView>
-
-      {/* UPI Modal */}
-      <UPIModal visible={showUPIModal} onClose={() => setShowUPIModal(false)} />
     </View>
   );
 };
