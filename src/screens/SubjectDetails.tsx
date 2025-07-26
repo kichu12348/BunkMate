@@ -28,7 +28,7 @@ import {
   subMonths,
 } from "date-fns";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AttendanceDayView from "../components/AttendanceDayView";
+import AttendanceDayView from "../components/Modals/AttendanceDayView";
 import { LinearGradient } from "expo-linear-gradient";
 import { normalizeAttendance } from "../utils/helpers";
 
