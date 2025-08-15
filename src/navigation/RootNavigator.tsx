@@ -33,13 +33,8 @@ export const RootNavigator: React.FC = () => {
   );
 
   useEffect(() => {
-    // Show the subscription modal only once
     const hasBeenShown = hasShownSubscriptionModal;
     if (!hasBeenShown) {
-      // Delay showing the modal by 2 seconds for better UX
-      // const timer = setTimeout(() => {
-      //   setShowSubscriptionModal(true);
-      // }, 2000);
       setShowSubscriptionModal(true);
     }
   }, []);

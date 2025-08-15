@@ -45,3 +45,12 @@ export const APP_CONFIG = {
   VERSION: '1.0.0',
   DESCRIPTION: 'Track your attendance and stay above 75%',
 };
+
+
+import { Easing } from "react-native-reanimated";
+
+export const TAB_BAR_HEIGHT = 80;
+export const TIMING_CONFIG = {
+  duration: 200,
+  easing: Easing.inOut(Easing.ease),
+};

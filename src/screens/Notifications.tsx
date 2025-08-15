@@ -174,12 +174,7 @@ export const NotificationsScreen: React.FC = () => {
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom + 25 },
-      ]}
-    >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Notifications</Text>
         {unreadCount > 0 && (
@@ -206,7 +201,7 @@ export const NotificationsScreen: React.FC = () => {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={[
           styles.listContainer,
-          { paddingBottom: bottomBarHeight + 10 },
+          { paddingBottom: bottomBarHeight + 24 + insets.bottom },
         ]}
         refreshControl={
           <RefreshControl

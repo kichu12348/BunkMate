@@ -182,7 +182,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom + 25 },
+        { paddingTop: insets.top},
       ]}
     >
       {/* Header */}
@@ -194,7 +194,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: bottomBarHeight + 10 }}
+        contentContainerStyle={{ paddingBottom: bottomBarHeight + 24 + insets.bottom }}
       >
         {/* User Profile Section */}
         <View style={styles.profileSection}>

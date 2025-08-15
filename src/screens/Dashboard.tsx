@@ -33,10 +33,10 @@ import Animated, {
   withSpring,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useThemeStore } from "../state/themeStore";
 import { useToastStore } from "../state/toast";
+import { TAB_BAR_HEIGHT } from "../constants/config";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -66,7 +66,6 @@ export const Dashboard: React.FC = () => {
     useSettingsStore();
 
   const insets = useSafeAreaInsets();
-  const bottomBarHeight = useBottomTabBarHeight();
   const [refreshing, setRefreshing] = useState(false);
   const scaleAnim = useSharedValue(0.8);
 
@@ -219,7 +218,7 @@ export const Dashboard: React.FC = () => {
   }));
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom + 25 }]}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <View style={styles.headerContent}>
@@ -268,7 +267,7 @@ export const Dashboard: React.FC = () => {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ paddingBottom: bottomBarHeight + 10 }}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + 24 + insets.bottom }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
