@@ -289,9 +289,7 @@ export class AttendanceDatabase {
     resolution: "accept_teacher" | "keep_user"
   ): Promise<CourseSchedule> {
     try {
-      console.log("Resolving conflict for:", { subjectId, year, month, day, hour, resolution });
       const existingRecord = await this.getAttendanceRecord(subjectId, year, month, day, hour);
-      console.log("Resolving conflict for record:", existingRecord);
       if (!existingRecord) {
         throw new Error("No record found to resolve conflict");
       }
