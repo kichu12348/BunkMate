@@ -20,7 +20,7 @@ enableScreens();
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
-  const { initializeTheme, colors } = useTheme();
+  const { initializeTheme, colors, isDark } = useTheme();
   const { isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
   const initFetchAttendance = useAttendanceStore(
     (state) => state.initFetchAttendance
@@ -77,7 +77,7 @@ export default function App() {
   return (
     <GestureHandlerRootView>
       <StatusBar
-        barStyle="light-content"
+        barStyle={isDark ? "light-content" : "dark-content"}
         translucent
         backgroundColor="transparent"
       />
