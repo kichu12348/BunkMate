@@ -69,6 +69,9 @@ interface AttendanceState {
   ) => Promise<void>;
 }
 
+let requestId=0;
+let latestRequestId=0;
+
 export const useAttendanceStore = create<AttendanceState>((set, get) => ({
   data: null,
   isLoading: false,
@@ -79,11 +82,14 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
 
   fetchAttendance: async () => {
     set({ isLoading: true, error: null });
+    const currentId = ++requestId;
+    latestRequestId = currentId;
 
     try {
       // 1. Fetch data from the simplified API service.
       const { transformedData, courseSchedule: apiSchedule } =
         await attendanceService.fetchAttendanceDetailed();
+      if (currentId !== latestRequestId) return; // prevents old fetch from overwriting state
 
       // 2. Get ONLY manual records from the local database.
       const manualRecords =
@@ -182,7 +188,6 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
     }
   },
 
-  // This function will now work correctly.
   getSubjectAttendance: (subjectId: number) => {
     const data = get().data;
     if (!data) return null;
@@ -190,15 +195,6 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       data.subjects.find((subject) => subject.subject.id === subjectId) || null
     );
   },
-
-  // getSubjectAttendance: (subjectId: number) => {
-  //   const data = get().data;
-  //   if (!data) return null;
-
-  //   return (
-  //     data.subjects.find((subject) => subject.subject.id === subjectId) || null
-  //   );
-  // },
 
   clearError: () => set({ error: null }),
 

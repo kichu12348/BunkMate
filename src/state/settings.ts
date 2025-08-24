@@ -35,31 +35,24 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      // Set on server
+      const currentState = get();
+      let nextSemester = currentState.selectedSemester;
+      if (year === "0") {
+        nextSemester = "0";
+      } 
+      else if (currentState.selectedSemester === "0") {
+        nextSemester = getDefaultSemester();
+      }
       authService.setDefaultYear(year);
       kvHelper.setSetting("selectedYear", year);
-      if (year === "0") {
-        set({
-          selectedSemester: "0",
-          selectedYear: year,
-          isLoading: false,
-          error: null,
-        });
-        kvHelper.setSetting("selectedSemester", "0");
-        return;
-      } else {
-        set({
-          selectedYear: year,
-          isLoading: false,
-          error: null,
-        });
-        if (get().selectedSemester === "0") {
-          set({
-            selectedSemester: "odd",
-          });
-          kvHelper.setSetting("selectedSemester", "odd");
-        }
-      }
+      authService.setDefaultSemester(nextSemester);
+      kvHelper.setSetting("selectedSemester", nextSemester);
+      set({
+        selectedYear: year,
+        selectedSemester: nextSemester,
+        isLoading: false,
+      });
+
     } catch (error: any) {
       set({
         isLoading: false,
@@ -73,28 +66,26 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      // Set on server
+      const currentState = get();
+      let nextYear = currentState.selectedYear;
+
+      if (semester === "0") {
+        nextYear = "0";
+      } 
+      else if (currentState.selectedYear === "0") {
+        nextYear = getDefaultAcademicYear();
+      }
       authService.setDefaultSemester(semester);
       kvHelper.setSetting("selectedSemester", semester);
-      if (semester === "0") {
-        set({
-          selectedSemester: semester,
-          selectedYear: "0",
-          isLoading: false,
-          error: null,
-        });
-        kvHelper.setSetting("selectedYear", "0");
-        return;
-      }
+      authService.setDefaultYear(nextYear);
+      kvHelper.setSetting("selectedYear", nextYear);
+
       set({
         selectedSemester: semester,
-        selectedYear:
-          get().selectedYear === "0"
-            ? getDefaultAcademicYear()
-            : get().selectedYear,
+        selectedYear: nextYear,
         isLoading: false,
-        error: null,
       });
+
     } catch (error: any) {
       set({
         isLoading: false,
@@ -106,19 +97,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   initializeSettings: async () => {
     try {
-      // Try to load from local storage first
       const savedYear = kvHelper.getSetting<string>("selectedYear");
       const savedSemester = kvHelper.getSetting<string>("selectedSemester");
+      const yearToSet = savedYear || getDefaultAcademicYear();
+      const semesterToSet = savedSemester || getDefaultSemester();
 
       set({
-        selectedYear: savedYear || getDefaultAcademicYear(),
-        selectedSemester: savedSemester || getDefaultSemester(),
+        selectedYear: yearToSet,
+        selectedSemester: semesterToSet,
       });
-      await authService.setDefaultYear(savedYear || getDefaultAcademicYear());
-      await authService.setDefaultSemester(savedSemester || getDefaultSemester());
+      
+      await authService.setDefaultYear(yearToSet);
+      await authService.setDefaultSemester(semesterToSet);
     } catch (error) {
       console.warn("Failed to initialize settings:", error);
-      // Use defaults
       set({
         selectedYear: getDefaultAcademicYear(),
         selectedSemester: getDefaultSemester(),

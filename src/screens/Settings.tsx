@@ -30,6 +30,8 @@ import Animated, {
 import AnimatedHeart from "../components/UI/AnimatedHeart";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
+const INSTAGRAM_URL = process.env.EXPO_PUBLIC_INSTAGRAM_URL;
+const INSTAGRAM_COLOR = "#d82d7e";
 
 interface SettingsScreenProps {
   onClose?: () => void;
@@ -122,11 +124,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     initializeSettings();
   }, []);
 
+  const fetchAttendanceDebounced = useMemo(
+    () => debounced(fetchAttendance, 500),
+    []
+  );
+
   const handleYearChange = async (year: string) => {
     try {
-      await setAcademicYear(year);
-      await setSemester(selectedSemester);
-      await fetchAttendance(true);
+      await setAcademicYear(year).then(fetchAttendanceDebounced);
     } catch (error: any) {
       showToast({
         title: "Error",
@@ -136,16 +141,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     }
   };
 
-  const fetchAttendanceDebounced = useMemo(
-    () => debounced(fetchAttendance, 500),
-    []
-  );
-
   const handleSemesterChange = async (semester: string) => {
     try {
-      await setAcademicYear(selectedYear);
-      await setSemester(semester);
-      await fetchAttendance(true);
+      await setSemester(semester).then(fetchAttendanceDebounced);
     } catch (error: any) {
       showToast({
         title: "Error",
@@ -397,6 +395,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               subtitle="Support the development of BunkMate"
               showArrow={true}
               onPress={() => Linking.openURL(GITHUB_URL)}
+            />
+          </AnimatedCard>
+
+          <AnimatedCard
+            style={{ borderColor: INSTAGRAM_COLOR, borderWidth: 1 }}
+          >
+            <SettingItem
+              Icon={
+                <Ionicons
+                  name="logo-instagram"
+                  size={24}
+                  color={INSTAGRAM_COLOR}
+                />
+              }
+              title="Instagram"
+              showArrow={true}
+              onPress={() => Linking.openURL(INSTAGRAM_URL)}
             />
           </AnimatedCard>
 
