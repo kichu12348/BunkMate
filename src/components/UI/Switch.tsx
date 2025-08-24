@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import Animated, {
   useSharedValue,
@@ -29,43 +29,76 @@ export default function Switch({
   const trackPadding = 5;
 
   const rightPosition = switchWidth - thumbSize - trackPadding;
+
   const translateX = useSharedValue(value ? rightPosition : trackPadding);
-  const thumbColorRef = useRef(thumbColor);
-  const trackColorRef = useRef(trackColor);
+
+  const prevThumbColorRef = useRef(thumbColor || "#ffffff");
+  const prevTrackColorRef = useRef(trackColor || "#888888");
+
+  const thumbColorFrom = useSharedValue(prevThumbColorRef.current);
+  const thumbColorTo = useSharedValue(thumbColor || prevThumbColorRef.current);
+  const thumbColorProgress = useSharedValue(1);
+
+  const trackColorFrom = useSharedValue(prevTrackColorRef.current);
+  const trackColorTo = useSharedValue(trackColor || prevTrackColorRef.current);
+  const trackColorProgress = useSharedValue(1);
+
+  // Animate translation when value prop changes externally
+  useEffect(() => {
+    const target = value ? rightPosition : trackPadding;
+    translateX.value = withTiming(target, {
+      duration: 200,
+      easing: Easing.inOut(Easing.ease),
+    });
+  }, [value, rightPosition, trackPadding, translateX]);
+
+  // Animate thumb color when thumbColor prop changes
+  useEffect(() => {
+    if (!thumbColor) return;
+    if (thumbColorTo.value === thumbColor) return; // no change
+    thumbColorFrom.value = thumbColorTo.value; // previous target becomes new start
+    prevThumbColorRef.current = thumbColorFrom.value;
+    thumbColorTo.value = thumbColor; // new target
+    thumbColorProgress.value = 0;
+    thumbColorProgress.value = withTiming(1, {
+      duration: 250,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [thumbColor, thumbColorFrom, thumbColorTo, thumbColorProgress]);
+
+  // Animate track color when trackColor prop changes
+  useEffect(() => {
+    if (!trackColor) return;
+    if (trackColorTo.value === trackColor) return;
+    trackColorFrom.value = trackColorTo.value;
+    prevTrackColorRef.current = trackColorFrom.value;
+    trackColorTo.value = trackColor;
+    trackColorProgress.value = 0;
+    trackColorProgress.value = withTiming(1, {
+      duration: 250,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [trackColor, trackColorFrom, trackColorTo, trackColorProgress]);
 
   const animatedThumbStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
     backgroundColor: interpolateColor(
-      translateX.value,
+      thumbColorProgress.value,
       [0, 1],
-      [thumbColorRef.current, thumbColor]
+      [thumbColorFrom.value, thumbColorTo.value]
     ),
   }));
 
   const animatedTrackStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
-      translateX.value,
+      trackColorProgress.value,
       [0, 1],
-      [trackColorRef.current, trackColor]
+      [trackColorFrom.value, trackColorTo.value]
     ),
   }));
 
   const handlePress = () => {
-    const newValue = !value;
-    if (newValue) {
-      // Move right
-      translateX.value = withTiming(rightPosition, {
-        duration: 200,
-        easing: Easing.inOut(Easing.ease),
-      });
-    } else {
-      // Move left
-      translateX.value = withTiming(trackPadding, {
-        duration: 200,
-        easing: Easing.inOut(Easing.ease),
-      });
-    }
-    onValueChange(newValue);
+    onValueChange(!value); // parent drives value; translation animates in effect
   };
 
   return (
@@ -84,14 +117,13 @@ export default function Switch({
         <Animated.View
           style={[
             styles.thumb,
-            animatedThumbStyle,
             {
               width: thumbSize,
               height: thumbSize,
-              backgroundColor: thumbColor,
               top: trackPadding,
               borderRadius: thumbSize / 2,
             },
+            animatedThumbStyle,
           ]}
         />
       </Animated.View>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,17 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useThemedStyles } from "../hooks/useTheme";
 import { ThemeColors } from "../types/theme";
+import { useThemeStore } from "../state/themeStore";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolateColor,
+  Easing,
+} from "react-native-reanimated";
+import { TouchableOpacity as RNTouchableOpacity } from "react-native";
+
+const AnimatedTouchable = Animated.createAnimatedComponent(RNTouchableOpacity);
 
 interface DropdownOption {
   value: string;
@@ -78,14 +89,56 @@ export const Dropdown: React.FC<DropdownProps> = ({
     </TouchableOpacity>
   );
 
+  const themeColors = useThemeStore((s) => s.colors);
+  const bgFrom = useSharedValue(themeColors.surface);
+  const bgTo = useSharedValue(themeColors.surface);
+  const borderFrom = useSharedValue(themeColors.border);
+  const borderTo = useSharedValue(themeColors.border);
+  const progress = useSharedValue(1);
+
+  useEffect(() => {
+    if (
+      bgTo.value !== themeColors.surface ||
+      borderTo.value !== themeColors.border
+    ) {
+      bgFrom.value = bgTo.value;
+      borderFrom.value = borderTo.value;
+      bgTo.value = themeColors.surface;
+      borderTo.value = themeColors.border;
+      progress.value = 0;
+      progress.value = withTiming(1, {
+        duration: 280,
+        easing: Easing.inOut(Easing.ease),
+      });
+    }
+  }, [themeColors, bgFrom, bgTo, borderFrom, borderTo, progress]);
+
+  const dropdownAnimatedStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [bgFrom.value, bgTo.value]
+    ),
+    borderColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [borderFrom.value, borderTo.value]
+    ),
+  }));
+
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
 
-      <TouchableOpacity
-        style={[styles.dropdown, disabled && styles.dropdownDisabled]}
+      <AnimatedTouchable
+        style={[
+          styles.dropdown,
+          dropdownAnimatedStyle,
+          disabled && styles.dropdownDisabled,
+        ]}
         onPress={() => !disabled && setIsVisible(true)}
         disabled={disabled}
+        activeOpacity={0.7}
       >
         <Text
           style={[
@@ -100,7 +153,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
           size={20}
           color={styles.chevronIcon.color}
         />
-      </TouchableOpacity>
+      </AnimatedTouchable>
 
       <Modal
         visible={isVisible}

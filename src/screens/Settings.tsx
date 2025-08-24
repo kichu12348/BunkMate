@@ -20,6 +20,13 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import Switch from "../components/UI/Switch";
 import { useToastStore } from "../state/toast";
 import { useThemeStore } from "../state/themeStore";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolateColor,
+  Easing,
+} from "react-native-reanimated";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 
@@ -58,6 +65,55 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const showToast = useToastStore((state) => state.showToast);
   const insets = useSafeAreaInsets();
   const bottomBarHeight = useBottomTabBarHeight();
+
+  const bgFrom = useSharedValue(colors.background);
+  const bgTo = useSharedValue(colors.background);
+  const surfaceFrom = useSharedValue(colors.surface);
+  const surfaceTo = useSharedValue(colors.surface);
+  const progress = useSharedValue(1);
+
+  useEffect(() => {
+    // When colors object changes (theme toggled), update from/to and animate
+    if (
+      bgTo.value !== colors.background ||
+      surfaceTo.value !== colors.surface
+    ) {
+      bgFrom.value = bgTo.value;
+      surfaceFrom.value = surfaceTo.value;
+      bgTo.value = colors.background;
+      surfaceTo.value = colors.surface;
+      progress.value = 0;
+      progress.value = withTiming(1, {
+        duration: 320,
+        easing: Easing.inOut(Easing.ease),
+      });
+    }
+  }, [colors, bgFrom, bgTo, surfaceFrom, surfaceTo, progress]);
+
+  const containerAnimatedStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [bgFrom.value, bgTo.value]
+    ),
+  }));
+
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [surfaceFrom.value, surfaceTo.value]
+    ),
+  }));
+
+  const AnimatedCard: React.FC<{ style?: any; children: React.ReactNode }> = ({
+    style,
+    children,
+  }) => (
+    <Animated.View style={[styles.card, cardAnimatedStyle, style]}>
+      {children}
+    </Animated.View>
+  );
 
   useEffect(() => {
     initializeSettings();
@@ -179,10 +235,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   );
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.container,
-        { paddingTop: insets.top},
+        containerAnimatedStyle,
+        { paddingTop: insets.top },
       ]}
     >
       {/* Header */}
@@ -194,11 +251,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: bottomBarHeight + 24 + insets.bottom }}
+        contentContainerStyle={{
+          paddingBottom: bottomBarHeight + 24 + insets.bottom,
+        }}
       >
         {/* User Profile Section */}
         <View style={styles.profileSection}>
-          <View style={styles.profileCard}>
+          <Animated.View style={[styles.profileCard, cardAnimatedStyle]}>
             <View style={styles.profileAvatar}>
               <Ionicons
                 name="person"
@@ -210,14 +269,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               <Text style={styles.profileName}>{user?.username || "User"}</Text>
               <Text style={styles.profileEmail}>Student Account</Text>
             </View>
-          </View>
+          </Animated.View>
         </View>
 
         {/* Academic Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Academic Settings</Text>
 
-          <View style={styles.card}>
+          <AnimatedCard>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Filter Options</Text>
               <Text style={styles.cardDescription}>
@@ -262,14 +321,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 </View>
               )}
             </TouchableOpacity>
-          </View>
+          </AnimatedCard>
         </View>
 
         {/* App Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>App Settings</Text>
 
-          <View style={styles.card}>
+          <AnimatedCard>
             <SettingItem
               Icon={
                 <Ionicons
@@ -299,14 +358,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               }
               showArrow={false}
             />
-          </View>
+          </AnimatedCard>
         </View>
 
         {/* Support Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Hehe</Text>
 
-          <View style={styles.card}>
+          <AnimatedCard>
             <SettingItem
               Icon={
                 <Ionicons
@@ -320,9 +379,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               showArrow={false}
               onPress={null}
             />
-          </View>
+          </AnimatedCard>
 
-          <View style={styles.card}>
+          <AnimatedCard>
             <SettingItem
               Icon={
                 <Ionicons
@@ -336,14 +395,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               showArrow={true}
               onPress={() => Linking.openURL(GITHUB_URL)}
             />
-          </View>
+          </AnimatedCard>
 
-          <View
-            style={[
-              styles.card,
-              { borderColor: colors.warning, borderWidth: 1 },
-            ]}
-          >
+          <AnimatedCard style={{ borderColor: colors.warning, borderWidth: 1 }}>
             <SettingItem
               Icon={<Feather name="coffee" size={24} color={colors.warning} />}
               title={"Buy Me a Coffee"}
@@ -351,12 +405,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               onPress={handleCoffee}
               iconColor={colors.warning}
             />
-          </View>
+          </AnimatedCard>
         </View>
 
         {/* Logout Section */}
         <View style={styles.section}>
-          <View style={[styles.card, styles.borderRed]}>
+          <AnimatedCard style={styles.borderRed}>
             <SettingItem
               Icon={
                 <Ionicons
@@ -371,7 +425,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               showArrow={false}
               isGreat={true}
             />
-          </View>
+          </AnimatedCard>
         </View>
 
         {/* Error Display */}
@@ -394,7 +448,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </Animated.View>
   );
 };
 
