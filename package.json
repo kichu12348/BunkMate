@@ -16,6 +16,7 @@
     "@react-navigation/stack": "^7.4.2",
     "axios": "^1.10.0",
     "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.44.4",
     "expo": "53.0.18",
     "expo-blur": "~14.1.5",
     "expo-linear-gradient": "~14.1.5",
