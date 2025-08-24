@@ -27,6 +27,7 @@ import Animated, {
   interpolateColor,
   Easing,
 } from "react-native-reanimated";
+import AnimatedHeart from "../components/UI/AnimatedHeart";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 
@@ -71,6 +72,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const surfaceFrom = useSharedValue(colors.surface);
   const surfaceTo = useSharedValue(colors.surface);
   const progress = useSharedValue(1);
+
+  const [isHeartActive, setIsHeartActive] = useState(false);
 
   useEffect(() => {
     // When colors object changes (theme toggled), update from/to and animate
@@ -443,9 +446,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </View>
         )}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Made Wid <Ionicons name="heart" size={16} color={"red"} /> By Kichu
-          </Text>
+          <TouchableOpacity
+            onPress={() => setIsHeartActive(true)}
+            disabled={isHeartActive}
+            activeOpacity={1}
+          >
+            <Text style={styles.footerText}>
+              Made Wid{" "}
+              <AnimatedHeart
+                isActive={isHeartActive}
+                setIsActive={setIsHeartActive}
+                size={20}
+              />{" "}
+              by Kichu
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </Animated.View>

@@ -37,6 +37,7 @@ import { RootStackParamList } from "../navigation/RootNavigator";
 import { useThemeStore } from "../state/themeStore";
 import { useToastStore } from "../state/toast";
 import { TAB_BAR_HEIGHT } from "../constants/config";
+import AnimatedHeart from "../components/UI/AnimatedHeart";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -67,6 +68,7 @@ export const Dashboard: React.FC = () => {
 
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
+  const [isHeartActive, setIsHeartActive] = useState(false);
   const scaleAnim = useSharedValue(0.8);
 
   // Calculate enhanced statistics using user-marked data
@@ -267,7 +269,9 @@ export const Dashboard: React.FC = () => {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + 24 + insets.bottom }}
+        contentContainerStyle={{
+          paddingBottom: TAB_BAR_HEIGHT + 24 + insets.bottom,
+        }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -440,9 +444,21 @@ export const Dashboard: React.FC = () => {
           </View>
         )}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Made Wid <Ionicons name="heart" size={16} color={"red"} /> by Kichu
-          </Text>
+          <TouchableOpacity
+            onPress={() => setIsHeartActive(true)}
+            disabled={isHeartActive}
+            activeOpacity={1}
+          >
+            <Text style={styles.footerText}>
+              Made Wid{" "}
+              <AnimatedHeart
+                isActive={isHeartActive}
+                setIsActive={setIsHeartActive}
+                size={20}
+              />{" "}
+              by Kichu
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
