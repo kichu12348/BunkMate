@@ -32,7 +32,7 @@ class NotificationsService {
 
     this.api.interceptors.request.use(
       async (config) => {
-        const token = await kvHelper.getAuthToken();
+        const token = kvHelper.getAuthToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -51,12 +51,6 @@ class NotificationsService {
       throw error;
     }
   }
-
-  async markAsRead(notificationId: number): Promise<void> {}
-
-  async markAllAsRead(): Promise<void> {}
-
-  async deleteNotification(notificationId: number): Promise<void> {}
 }
 
 export const notificationsService = new NotificationsService();

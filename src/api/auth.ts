@@ -1,12 +1,12 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { API_CONFIG } from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
-import { 
-  LoginRequest, 
-  LoginResponse, 
-  User, 
-  ApiError, 
-  UserProfile
+import {
+  LoginRequest,
+  LoginResponse,
+  User,
+  ApiError,
+  UserProfile,
 } from "../types/api";
 
 class AuthService {
@@ -23,7 +23,7 @@ class AuthService {
 
     this.api.interceptors.request.use(
       async (config) => {
-        const token = await kvHelper.getAuthToken();
+        const token = kvHelper.getAuthToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -81,12 +81,12 @@ class AuthService {
         {
           username: credentials.username,
           password: credentials.password,
-          stay_logged_in: credentials.stay_logged_in ?? true
+          stay_logged_in: credentials.stay_logged_in ?? true,
         }
       );
 
       // Store the token
-      await kvHelper.setAuthToken(response.data.access_token);
+       kvHelper.setAuthToken(response.data.access_token);
 
       return response.data;
     } catch (error) {
@@ -107,11 +107,11 @@ class AuthService {
   }
 
   async logout(): Promise<void> {
-    await kvHelper.clearAuthToken();
+    kvHelper.clearAuthToken();
   }
 
   async refreshToken(): Promise<string | null> {
-    const access_token = await kvHelper.getAuthToken();
+    const access_token = kvHelper.getAuthToken();
     if (!access_token) {
       return null; // No token to refresh
     }
@@ -119,18 +119,18 @@ class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    const token = await kvHelper.getAuthToken();
+    const token = kvHelper.getAuthToken();
     return !!token;
   }
 
   async getCurrentToken(): Promise<string | null> {
-    return await kvHelper.getAuthToken();
+    return kvHelper.getAuthToken();
   }
 
   async setDefaultYear(year: string): Promise<void> {
     try {
       await this.api.post(API_CONFIG.ENDPOINTS.SET.DEFAULT_YEAR, {
-        default_academic_year: year
+        default_academic_year: year,
       });
     } catch (error) {
       throw this.handleApiError(error);
@@ -140,7 +140,7 @@ class AuthService {
   async setDefaultSemester(semester: string): Promise<void> {
     try {
       await this.api.post(API_CONFIG.ENDPOINTS.SET.DEFAULT_SEMESTER, {
-        default_semester: semester
+        default_semester: semester,
       });
     } catch (error) {
       throw this.handleApiError(error);

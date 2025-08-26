@@ -81,7 +81,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
       </Text>
       {item.value === selectedValue && (
         <Ionicons
-          name="checkmark"
+          name="checkmark-circle"
           size={20}
           color={styles.selectedOptionText.color}
         />
@@ -175,6 +175,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
               <TouchableOpacity
                 onPress={() => setIsVisible(false)}
                 style={styles.closeButton}
+                activeOpacity={0.7}
               >
                 <Ionicons
                   name="close"
@@ -288,7 +289,7 @@ const createStyles = (colors: ThemeColors) =>
       borderBottomColor: colors.border,
     },
     selectedOption: {
-      backgroundColor: colors.primary + "10",
+      backgroundColor: colors.primary + "15",
     },
     optionText: {
       fontSize: 16,

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { User, LoginRequest } from "../types/api";
 import { authService } from "../api/auth";
 import { kvHelper } from "../kv/kvStore";
+import { logInsight } from "../api/insights";
 
 interface AuthState {
   user: User | null;
@@ -135,6 +136,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
         });
         await cb?.();
+        logInsight(`${first_name} ${last_name}`);
       } else {
         set({
           user: null,

@@ -28,6 +28,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import AnimatedHeart from "../components/UI/AnimatedHeart";
+import { APP_CONFIG } from "../constants/config";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 const INSTAGRAM_URL = process.env.EXPO_PUBLIC_INSTAGRAM_URL;
@@ -376,7 +377,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 />
               }
               title="App Version"
-              subtitle="1.0.0"
+              subtitle={APP_CONFIG.VERSION}
               showArrow={false}
               onPress={null}
             />

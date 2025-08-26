@@ -18,7 +18,7 @@ class InstitutionService {
     // Add request interceptor to include auth token
     this.api.interceptors.request.use(
       async (config) => {
-        const token = await kvHelper.getAuthToken();
+        const token = kvHelper.getAuthToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }

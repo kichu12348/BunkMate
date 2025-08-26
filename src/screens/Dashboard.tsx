@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   RefreshControl,
   Dimensions,
   Image,
+  Modal,
+  FlatList,
 } from "react-native";
 import logo_dark from "../assets/bonk_icon_dark.png";
 import logo_light from "../assets/bonk_icon_light.png";
@@ -59,17 +61,86 @@ export const Dashboard: React.FC = () => {
     error,
     lastUpdated,
     refreshAttendance,
+    fetchAttendance,
     courseSchedule,
     initFetchAttendance,
   } = useAttendanceStore();
+  const {
+    selectedYear,
+    selectedSemester,
+    availableYears,
+    availableSemesters,
+    setAcademicYear,
+    setSemester,
+  } = useSettingsStore();
 
-  const { selectedYear, selectedSemester, availableYears, availableSemesters } =
-    useSettingsStore();
+  const fetchDebounced = useMemo(() => {
+    let timeout: NodeJS.Timeout;
+    return async () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        setRefreshing(true);
+        fetchAttendance()
+          .then(() => {
+            setRefreshing(false);
+          })
+          .catch(() => {
+            setRefreshing(false);
+          });
+      }, 500);
+    };
+  }, []);
 
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [isHeartActive, setIsHeartActive] = useState(false);
   const scaleAnim = useSharedValue(0.8);
+
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<"year" | "semester" | null>(
+    null
+  );
+
+  const handleYearChange = async (year: string) => {
+    setFilterModalVisible(false);
+    if (year === selectedYear) return;
+    try {
+      await setAcademicYear(year);
+      await fetchDebounced();
+    } catch (e: any) {
+      showToast({
+        title: "Error",
+        message: e.message || "Failed to update academic year.",
+        buttons: [{ text: "OK", style: "destructive" }],
+      });
+    }
+  };
+
+  const handleSemesterChange = async (semester: string) => {
+    setFilterModalVisible(false);
+    if (semester === selectedSemester) return;
+    try {
+      await setSemester(semester);
+      await fetchDebounced();
+    } catch (e: any) {
+      showToast({
+        title: "Error",
+        message: e.message || "Failed to update semester.",
+        buttons: [{ text: "OK", style: "destructive" }],
+      });
+    }
+  };
+
+  const openFilterModal = (filter: "year" | "semester") => {
+    setActiveFilter(filter);
+    setFilterModalVisible(true);
+  };
+
+  const activeOptions = useMemo(() => {
+    if (activeFilter === "year") return availableYears;
+    if (activeFilter === "semester") return availableSemesters;
+    return [];
+  }, [activeFilter, availableYears, availableSemesters]);
 
   // Calculate enhanced statistics using user-marked data
   const enhancedSubjects = useMemo(() => {
@@ -96,7 +167,6 @@ export const Dashboard: React.FC = () => {
       };
     });
   }, [attendanceData, courseSchedule]);
-
   // Calculate enhanced overall statistics
   const enhancedOverallStats = useMemo(() => {
     if (enhancedSubjects.length === 0) {
@@ -126,7 +196,6 @@ export const Dashboard: React.FC = () => {
       totalSubjects: enhancedSubjects.length,
     };
   }, [enhancedSubjects]);
-
   useEffect(() => {
     initFetchAttendance();
 
@@ -137,7 +206,6 @@ export const Dashboard: React.FC = () => {
       mass: 0.5,
     });
   }, []);
-
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -152,7 +220,6 @@ export const Dashboard: React.FC = () => {
       setRefreshing(false);
     }
   };
-
   const handleSubjectPress = (
     subject: any,
     canMiss: number,
@@ -175,7 +242,6 @@ export const Dashboard: React.FC = () => {
     if (percentage < ATTENDANCE_THRESHOLDS.WARNING) return "warning";
     return "safe";
   };
-
   const getOverallStatusColor = () => {
     const status = getOverallStatus();
     switch (status) {
@@ -189,7 +255,6 @@ export const Dashboard: React.FC = () => {
         return styles.textSecondary;
     }
   };
-
   const getOverallStatusIcon = () => {
     const status = getOverallStatus();
     switch (status) {
@@ -203,7 +268,6 @@ export const Dashboard: React.FC = () => {
         return "help-circle";
     }
   };
-
   // Categorize subjects based on enhanced status
   const dangerSubjects = enhancedSubjects.filter(
     (s) => s.enhanced.status === "danger"
@@ -214,11 +278,9 @@ export const Dashboard: React.FC = () => {
   const safeSubjects = enhancedSubjects.filter(
     (s) => s.enhanced.status === "safe"
   );
-
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleAnim.value }],
   }));
-
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -240,9 +302,13 @@ export const Dashboard: React.FC = () => {
           </View>
         </View>
 
-        {/* Filter Info - moved inside header */}
+        {/* Filter Info - made clickable */}
         <View style={styles.filterInfo}>
-          <View style={styles.filterItem}>
+          <TouchableOpacity
+            style={styles.filterItem}
+            onPress={() => openFilterModal("year")}
+            activeOpacity={0.7}
+          >
             <Ionicons
               name="calendar-outline"
               size={16}
@@ -252,8 +318,12 @@ export const Dashboard: React.FC = () => {
               {availableYears.find((y) => y.value === selectedYear)?.label ||
                 "All Years"}
             </Text>
-          </View>
-          <View style={styles.filterItem}>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.filterItem}
+            onPress={() => openFilterModal("semester")}
+            activeOpacity={0.7}
+          >
             <Ionicons
               name="school-outline"
               size={16}
@@ -263,7 +333,7 @@ export const Dashboard: React.FC = () => {
               {availableSemesters.find((s) => s.value === selectedSemester)
                 ?.label || "All Semesters"}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -461,6 +531,78 @@ export const Dashboard: React.FC = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={filterModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFilterModalVisible(false)}
+        hardwareAccelerated
+        statusBarTranslucent
+        navigationBarTranslucent
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setFilterModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {activeFilter === "year" ? "Academic Year" : "Semester"}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setFilterModalVisible(false)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={activeOptions}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item, index }) => {
+                const isSelected =
+                  activeFilter === "year"
+                    ? item.value === selectedYear
+                    : item.value === selectedSemester;
+                const isLast = index === activeOptions.length - 1;
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.modalOption,
+                      isSelected && styles.modalOptionSelected,
+                      isLast && { borderBottomWidth: 0 },
+                    ]}
+                    onPress={() =>
+                      activeFilter === "year"
+                        ? handleYearChange(item.value)
+                        : handleSemesterChange(item.value)
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.modalOptionText,
+                        isSelected && styles.modalOptionTextSelected,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                    {isSelected && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={20}
+                        color={colors.primary}
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -658,7 +800,6 @@ const createStyles = (colors: ThemeColors) =>
     safeText: {
       color: colors.success,
     },
-    // Color utilities
     primary: {
       color: colors.primary,
     },
@@ -733,5 +874,61 @@ const createStyles = (colors: ThemeColors) =>
     logoImage: {
       width: 30,
       height: 30,
+    },
+    // Modal Styles
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: colors.background + "80",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      overflow: "hidden",
+      maxHeight: "60%",
+      width: "80%",
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    modalHeader: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      padding: 16,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.text,
+      textAlign: "center",
+    },
+    modalOption: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalOptionSelected: {
+      backgroundColor: colors.primary + "15",
+    },
+    modalOptionText: {
+      fontSize: 16,
+      color: colors.text,
+    },
+    modalOptionTextSelected: {
+      color: colors.primary,
+      fontWeight: "600",
     },
   });

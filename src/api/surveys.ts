@@ -1,11 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 import { API_CONFIG } from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
-import {
-  SurveyDetail,
-  SurveyStartData,
-  SurveySubmissionRequest,
-} from "../types/api";
+
 
 export interface SurveyPivot {
   student_id: number;

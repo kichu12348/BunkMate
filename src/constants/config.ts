@@ -1,28 +1,31 @@
 export const API_CONFIG = {
-  BASE_URL: process.env.EXPO_PUBLIC_API_URL+"/api/v1/Xcr45_salt",
-  API_VERSION: 'v1',
+  BASE_URL: process.env.EXPO_PUBLIC_API_URL + "/api/v1/Xcr45_salt",
+  API_VERSION: "v1",
   ENDPOINTS: {
     AUTH: {
-      LOGIN: '/login',
-      LOOKUP: '/login/lookup',
-      USER:'/user'
+      LOGIN: "/login",
+      LOOKUP: "/login/lookup",
+      USER: "/user",
     },
     ATTENDANCE: {
-      DETAILED: '/attendancereports/student/detailed',
-      SUMMARY: '/attendancereports/student/summary',
+      DETAILED: "/attendancereports/student/detailed",
+      SUMMARY: "/attendancereports/student/summary",
     },
-    INSTITUTIONS: '/institutions',
-    COURSES: '/courses',
-    SUBJECTS: '/subjects',
-    NOTIFICATIONS: '/user/notifications',
-    MY_PROFILE: '/myprofile',
-    SET:{
-        DEFAULT_YEAR:"/user/setting/default_academic_year",
-        DEFAULT_SEMESTER:"/user/setting/default_semester", 
+    INSTITUTIONS: "/institutions",
+    COURSES: "/courses",
+    SUBJECTS: "/subjects",
+    NOTIFICATIONS: "/user/notifications",
+    MY_PROFILE: "/myprofile",
+    SET: {
+      DEFAULT_YEAR: "/user/setting/default_academic_year",
+      DEFAULT_SEMESTER: "/user/setting/default_semester",
     },
-    SURVEY:{
-      GET:'/studfbsurveys'
-    }
+    SURVEY: {
+      GET: "/studfbsurveys",
+    },
+    INSIGHTS: {
+      LOG: "/insights",
+    },
   },
   TIMEOUT: 60000, // 60 seconds
   RETRY_ATTEMPTS: 3,
@@ -41,11 +44,10 @@ export const ATTENDANCE_THRESHOLDS = {
 };
 
 export const APP_CONFIG = {
-  NAME: 'BunkMate',
-  VERSION: '1.0.0',
-  DESCRIPTION: 'Track your attendance and stay above 75%',
+  NAME: "BunkMate",
+  VERSION: "1.2.0",
+  DESCRIPTION: "Track your attendance and stay above 75%",
 };
-
 
 import { Easing } from "react-native-reanimated";
 
@@ -54,3 +56,9 @@ export const TIMING_CONFIG = {
   duration: 200,
   easing: Easing.inOut(Easing.ease),
 };
+
+export const AUTH_ACCESS_TOKEN = "access_token";
+export const SUBSCRIPTION_MODAL_SHOWN = "subscription_modal_shown";
+export const THEME_MODE = "mode";
+export const INSIGHTS_LOGGED = "insights_logged";
+export const INSIGHTS_LOGGED_CODE = "ABCD_12348_";

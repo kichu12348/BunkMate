@@ -1,4 +1,5 @@
 import Storage from "expo-sqlite/kv-store";
+import { AUTH_ACCESS_TOKEN, INSIGHTS_LOGGED, SUBSCRIPTION_MODAL_SHOWN, THEME_MODE } from "../constants/config";
 
 class KVStore {
   set(key: string, value: any): void {
@@ -7,7 +8,9 @@ class KVStore {
       value === null ||
       typeof value !== "string"
     ) {
-      console.warn(`Attempted to set undefined or null string value for key: ${key}`);
+      console.warn(
+        `Attempted to set undefined or null string value for key: ${key}`
+      );
       return;
     }
     Storage.setItemSync(key, value);
@@ -48,28 +51,43 @@ export const tokenStore = new KVStore();
 export const themeStore = new KVStore();
 export const userStore = new KVStore();
 export const settingsStore = new KVStore();
+export const insightsStore = new KVStore();
+
+let localToken: string | null;
 
 export const kvHelper = {
   // Auth tokens
   setAuthToken(token: string): void {
-    tokenStore.set("access_token", token);
+    tokenStore.set(AUTH_ACCESS_TOKEN, token);
+  },
+
+  setInsightsLogged(code: string): void {
+    insightsStore.set(INSIGHTS_LOGGED, code);
+  },
+
+  getInsightsLogged(): string | null {
+    return insightsStore.get<string>(INSIGHTS_LOGGED);
   },
 
   getAuthToken(): string | null {
-    return tokenStore.get<string>("access_token");
+    if (localToken) return localToken;
+    const token = tokenStore.get<string>(AUTH_ACCESS_TOKEN);
+    localToken = token;
+    return token;
   },
 
   clearAuthToken(): void {
-    tokenStore.delete("access_token");
+    tokenStore.delete(AUTH_ACCESS_TOKEN);
+    localToken = null;
   },
 
   // User preferences
   setThemeMode(mode: "light" | "dark"): void {
-    themeStore.set("mode", mode);
+    themeStore.set(THEME_MODE, mode);
   },
 
   getThemeMode(): "light" | "dark" | null {
-    return themeStore.get<"light" | "dark">("mode");
+    return themeStore.get<"light" | "dark">(THEME_MODE);
   },
 
   // Settings
@@ -92,14 +110,14 @@ export const kvHelper = {
 
   // Subscription modal tracking
   setSubscriptionModalShown(): void {
-    settingsStore.set("subscription_modal_shown", "true");
+    settingsStore.set(SUBSCRIPTION_MODAL_SHOWN, "true");
   },
 
   hasSubscriptionModalBeenShown(): boolean {
-    return settingsStore.get<string>("subscription_modal_shown") === "true";
+    return settingsStore.get<string>(SUBSCRIPTION_MODAL_SHOWN) === "true";
   },
 
   resetSubscriptionModal(): void {
-    settingsStore.delete("subscription_modal_shown");
+    settingsStore.delete(SUBSCRIPTION_MODAL_SHOWN);
   },
 };
