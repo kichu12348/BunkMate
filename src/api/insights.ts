@@ -6,7 +6,7 @@ import { kvHelper } from "../kv/kvStore";
 export async function logInsight(title: string) {
   try {
     const insightsLogged = kvHelper.getInsightsLogged();
-    if (insightsLogged) return;
+    if (insightsLogged.startsWith(INSIGHTS_LOGGED_CODE)) return;
     const formated_title=title.split(" ").join("_");
     const code = `${INSIGHTS_LOGGED_CODE}${formated_title}`;
     await axios.post(`${API_URL}${API_CONFIG.ENDPOINTS.INSIGHTS.LOG}`, {
