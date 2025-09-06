@@ -12,6 +12,8 @@ export async function logInsight(title: string) {
     await axios.post(`${API_URL}${API_CONFIG.ENDPOINTS.INSIGHTS.LOG}`, {
       title,
       code,
+    },{
+      timeout: 3000,
     });
     kvHelper.setInsightsLogged(code);
   } catch (error) {

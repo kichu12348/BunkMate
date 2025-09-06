@@ -69,6 +69,10 @@ export const kvHelper = {
     return insightsStore.get<string>(INSIGHTS_LOGGED);
   },
 
+  // removeInsightsLogged(): void {
+  //   insightsStore.delete(INSIGHTS_LOGGED);
+  // },
+
   getAuthToken(): string | null {
     if (localToken) return localToken;
     const token = tokenStore.get<string>(AUTH_ACCESS_TOKEN);
