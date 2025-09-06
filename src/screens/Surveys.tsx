@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   ScrollView,
-  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -21,8 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useToastStore } from "../state/toast";
-
-const { width } = Dimensions.get("window");
+import { useThemeStore } from "../state/themeStore";
 
 type SurveysScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;
@@ -34,15 +32,13 @@ interface SurveyCardProps {
 
 const SurveyCard: React.FC<SurveyCardProps> = ({ survey, onPress }) => {
   const styles = useThemedStyles(createStyles);
-  const { colors } = useTheme();
+  const colors = useThemeStore((state) => state.colors);
 
   const isCompleted = survey.pivot.end_at !== null;
   const endDate = parseISO(survey.end_at);
   const startDate = parseISO(survey.start_at);
   const isExpired = isPast(endDate) && !isCompleted;
   const isPending = isFuture(startDate);
-
-  const showToast = useToastStore((state) => state.showToast);
 
   const getStatusInfo = () => {
     if (isCompleted) {
@@ -290,7 +286,7 @@ export const SurveysScreen: React.FC = () => {
         message: "This survey has expired and can no longer be taken.",
         buttons: [{ text: "OK", style: "destructive" }],
       });
-      
+
       return;
     }
 
@@ -306,9 +302,12 @@ export const SurveysScreen: React.FC = () => {
     if (isPending) {
       showToast({
         title: "Survey Not Available",
-        message: `This survey will be available ${formatDistanceToNow(startDate, {
-          addSuffix: true,
-        })}.`,
+        message: `This survey will be available ${formatDistanceToNow(
+          startDate,
+          {
+            addSuffix: true,
+          }
+        )}.`,
         buttons: [{ text: "OK", style: "default" }],
       });
       return;

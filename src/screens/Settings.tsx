@@ -63,7 +63,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     clearError,
   } = useSettingsStore();
 
-  const [themeIcon, setThemeIcon] = useState<string>(isDark ? "moon" : "sunny");
   const fetchAttendance = useAttendanceStore((s) => s.fetchAttendance);
   const { logout, user } = useAuthStore();
   const showToast = useToastStore((state) => state.showToast);
@@ -110,6 +109,31 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       [0, 1],
       [surfaceFrom.value, surfaceTo.value]
     ),
+  }));
+
+  const darkModeIconTransLate = useSharedValue(isDark ? 0 : -30);
+  const lightModeIconTransLate = useSharedValue(isDark ? 30 : 0);
+
+  const lightModeIconAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: lightModeIconTransLate.value,
+      },
+      {
+        translateY: lightModeIconTransLate.value,
+      },
+    ] as [{ translateX: number }, { translateY: number }],
+  }));
+
+  const darkModeIconAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: darkModeIconTransLate.value,
+      },
+      {
+        translateY: darkModeIconTransLate.value,
+      },
+    ] as [{ translateX: number }, { translateY: number }],
   }));
 
   const AnimatedCard: React.FC<{ style?: any; children: React.ReactNode }> = ({
@@ -186,7 +210,25 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const handleToggleTheme = () => {
     toggleMode();
-    setThemeIcon(isDark ? "sunny" : "moon");
+    if (isDark) {
+      darkModeIconTransLate.value = withTiming(-30, {
+        duration: 320,
+        easing: Easing.out(Easing.ease),
+      });
+      lightModeIconTransLate.value = withTiming(0, {
+        duration: 320,
+        easing: Easing.in(Easing.ease),
+      });
+    } else {
+      darkModeIconTransLate.value = withTiming(0, {
+        duration: 320,
+        easing: Easing.in(Easing.ease),
+      });
+      lightModeIconTransLate.value = withTiming(30, {
+        duration: 320,
+        easing: Easing.out(Easing.ease),
+      });
+    }
   };
 
   const handleCoffee = () => {
@@ -201,7 +243,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     onPress,
     rightElement,
     showArrow = true,
-    isGreat = false,
   }: {
     Icon: ReactElement;
     title: string;
@@ -333,11 +374,32 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           <AnimatedCard>
             <SettingItem
               Icon={
-                <Ionicons
-                  name={themeIcon as keyof typeof Ionicons.glyphMap}
-                  color={styles.settingIcon.color}
-                  size={24}
-                />
+                <View style={{ overflow: "hidden", position: "relative" }}>
+                  <Animated.View
+                    style={[
+                      lightModeIconAnimatedStyle,
+                      isDark && { position: "absolute" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="sunny"
+                      color={styles.settingIcon.color}
+                      size={24}
+                    />
+                  </Animated.View>
+                  <Animated.View
+                    style={[
+                      darkModeIconAnimatedStyle,
+                      !isDark && { position: "absolute" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="moon"
+                      color={styles.settingIcon.color}
+                      size={24}
+                    />
+                  </Animated.View>
+                </View>
               }
               title="Dark Mode"
               subtitle={isDark ? "Enabled" : "Disabled"}

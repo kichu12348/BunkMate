@@ -55,12 +55,11 @@ const getStyles = (insets: { bottom: number }) =>
       alignItems: "center",
       justifyContent: "space-around",
     },
-    // Styles for the TextRevealTab child component
     tabContainer: {
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "row",
-      height: 52,
+      height: 45,
       borderRadius: 26,
       paddingHorizontal: 14,
       borderStyle: "dashed",
@@ -164,7 +163,6 @@ const CustomTabNavigator: React.FC<CustomTabNavigatorProps> = ({
       >
         <View style={styles.tabBar}>
           {state.routes.map((route, index) => {
-            const { options } = descriptors[route.key];
             const isFocused = state.index === index;
 
             // Find the corresponding tab config

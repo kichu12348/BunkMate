@@ -13,7 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useThemedStyles, useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useTheme";
 import { ThemeColors } from "../types/theme";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { surveysService } from "../api/surveys";
@@ -22,6 +22,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Dropdown } from "../components/Dropdown";
 import { useSurveysStore } from "../state/surveys";
 import { useToastStore } from "../state/toast";
+import { useThemeStore } from "../state/themeStore";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 type SurveyAttemptScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -43,7 +50,7 @@ export const SurveyAttemptScreen: React.FC = () => {
   const route = useRoute<SurveyAttemptScreenRouteProp>();
   const navigation = useNavigation<SurveyAttemptScreenNavigationProp>();
   const styles = useThemedStyles(createStyles);
-  const { colors } = useTheme();
+  const colors = useThemeStore((state) => state.colors);
   const insets = useSafeAreaInsets();
   const showToast = useToastStore((state) => state.showToast);
 
@@ -56,12 +63,18 @@ export const SurveyAttemptScreen: React.FC = () => {
   const [responses, setResponses] = useState<Map<number, QuestionResponse>>(
     new Map()
   );
-  const selectChoiceSet = useRef(new Set());
   const [selectedBulkChoice, setSelectedBulkChoice] = useState<string | null>(
     null
   );
+  const questionsPartRef = useRef(0);
 
   const removeSurvey = useSurveysStore((state) => state.removeSurvey);
+
+  const progressWidth = useSharedValue(0);
+
+  const animatedProgressStyle = useAnimatedStyle(() => ({
+    width: `${progressWidth.value}%`,
+  }));
 
   useEffect(() => {
     loadSurveyData();
@@ -76,7 +89,7 @@ export const SurveyAttemptScreen: React.FC = () => {
 
       // Initialize responses map
       const initialResponses = new Map<number, QuestionResponse>();
-      data.questionsChoices.forEach((question) => {
+      data.questionsChoices.forEach((question: QuestionChoice) => {
         initialResponses.set(question.id, {
           questionId: question.id,
           choiceId: null,
@@ -84,6 +97,7 @@ export const SurveyAttemptScreen: React.FC = () => {
         });
       });
       setResponses(initialResponses);
+      questionsPartRef.current = 1 / data.questionsChoices.length;
     } catch (error: any) {
       setError(error.message || "Failed to load survey");
     } finally {
@@ -110,6 +124,13 @@ export const SurveyAttemptScreen: React.FC = () => {
     });
 
     setResponses(updatedResponses);
+    const answeredQuestions = Array.from(updatedResponses.values()).filter(
+      (response) => response.choiceId !== null
+    ).length;
+    progressWidth.value = withTiming(
+      (answeredQuestions / surveyData!.questionsChoices.length) * 100,
+      { duration: 300, easing: Easing.out(Easing.ease) }
+    );
   };
 
   const handleCommentChange = (questionId: number, comment: string) => {
@@ -339,6 +360,7 @@ export const SurveyAttemptScreen: React.FC = () => {
     const hasAllQuestionsAnswered = Array.from(updatedResponses.values()).every(
       (response) => response.choiceId !== null
     );
+      progressWidth.value = withTiming(100, { duration: 500, easing: Easing.out(Easing.ease) });
     if (hasAllQuestionsAnswered) {
       showToast({
         title: "Submit",
@@ -421,11 +443,8 @@ export const SurveyAttemptScreen: React.FC = () => {
         {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${getProgressPercentage()}%` },
-              ]}
+            <Animated.View
+              style={[styles.progressFill, animatedProgressStyle]}
             />
           </View>
           <Text style={styles.progressText}>

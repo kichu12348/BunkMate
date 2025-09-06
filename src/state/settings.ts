@@ -9,7 +9,9 @@ import {
 } from "../utils/helpers";
 
 interface SettingsState {
+  hasInitialized: boolean;
   selectedYear: string;
+
   selectedSemester: string;
   availableYears: Array<{ value: string; label: string }>;
   availableSemesters: Array<{ value: string; label: string }>;
@@ -24,6 +26,7 @@ interface SettingsState {
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
+  hasInitialized: false,
   selectedYear: "0",
   selectedSemester: "0",
   availableYears: generateAcademicYears(),
@@ -39,8 +42,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       let nextSemester = currentState.selectedSemester;
       if (year === "0") {
         nextSemester = "0";
-      } 
-      else if (currentState.selectedSemester === "0") {
+      } else if (currentState.selectedSemester === "0") {
         nextSemester = getDefaultSemester();
       }
       authService.setDefaultYear(year);
@@ -52,7 +54,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         selectedSemester: nextSemester,
         isLoading: false,
       });
-
     } catch (error: any) {
       set({
         isLoading: false,
@@ -71,8 +72,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
       if (semester === "0") {
         nextYear = "0";
-      } 
-      else if (currentState.selectedYear === "0") {
+      } else if (currentState.selectedYear === "0") {
         nextYear = getDefaultAcademicYear();
       }
       authService.setDefaultSemester(semester);
@@ -85,7 +85,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         selectedYear: nextYear,
         isLoading: false,
       });
-
     } catch (error: any) {
       set({
         isLoading: false,
@@ -96,6 +95,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   initializeSettings: async () => {
+    if (get().hasInitialized) return; 
     try {
       const savedYear = kvHelper.getSetting<string>("selectedYear");
       const savedSemester = kvHelper.getSetting<string>("selectedSemester");
@@ -105,8 +105,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       set({
         selectedYear: yearToSet,
         selectedSemester: semesterToSet,
+        hasInitialized: true,
       });
-      
+
       await authService.setDefaultYear(yearToSet);
       await authService.setDefaultSemester(semesterToSet);
     } catch (error) {
