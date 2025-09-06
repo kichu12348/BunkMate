@@ -63,6 +63,7 @@ const getStyles = (insets: { bottom: number }) =>
       height: 52,
       borderRadius: 26,
       paddingHorizontal: 14,
+      borderStyle: "dashed",
     },
     animatedLabelContainer: {
       overflow: "hidden",
@@ -82,8 +83,13 @@ const TextRevealTab: React.FC<TextRevealTabProps> = React.memo(
     // Animate the background color of the tab container
     const animatedContainerStyle = useAnimatedStyle(() => {
       return {
-        backgroundColor: withTiming(
+        borderColor: withTiming(
           isActive ? theme.colors.primary : "transparent",
+          TIMING_CONFIG
+        ),
+        borderWidth: withTiming(isActive ? 1.5 : 0, TIMING_CONFIG),
+        backgroundColor: withTiming(
+          isActive ? `${theme.colors.background}55` : "transparent",
           TIMING_CONFIG
         ),
       };
@@ -102,7 +108,7 @@ const TextRevealTab: React.FC<TextRevealTabProps> = React.memo(
           <Ionicons
             name={isActive ? tab.icon : tab.iconOutline}
             size={24}
-            color={isActive ? theme.colors.background : theme.colors.textSecondary}
+            color={isActive ? theme.colors.primary : theme.colors.textSecondary}
           />
           <Animated.View
             style={[styles.animatedLabelContainer, animatedLabelContainerStyle]}
@@ -112,8 +118,8 @@ const TextRevealTab: React.FC<TextRevealTabProps> = React.memo(
                 styles.label,
                 {
                   color: isActive
-                    ? theme.colors.background
-                    : theme.colors.primary,
+                    ? theme.colors.primary
+                    : "transparent",
                 },
               ]}
               numberOfLines={1}

@@ -3,6 +3,7 @@ import { User, LoginRequest } from "../types/api";
 import { authService } from "../api/auth";
 import { kvHelper } from "../kv/kvStore";
 import { logInsight } from "../api/insights";
+import { useSettingsStore } from "./settings";
 
 interface AuthState {
   user: User | null;
@@ -26,7 +27,7 @@ interface AuthState {
   resetLoginFlow: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   name: null,
@@ -87,6 +88,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+      useSettingsStore.getState().initializeSettings();
     } catch (error: any) {
       set({
         user: null,

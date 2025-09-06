@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
@@ -10,6 +9,8 @@ import {
   Image,
   Modal,
   FlatList,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
 import logo_dark from "../assets/bonk_icon_dark.png";
 import logo_light from "../assets/bonk_icon_light.png";
@@ -34,6 +35,9 @@ import Animated, {
   useSharedValue,
   withSpring,
   useAnimatedStyle,
+  useAnimatedScrollHandler,
+  Extrapolation,
+  interpolate,
 } from "react-native-reanimated";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useThemeStore } from "../state/themeStore";
@@ -45,6 +49,9 @@ type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "MainTabs"
 >;
+
+// ADDED: Define a type for our new display filter state
+type DisplayFilter = "all" | "danger" | "warning" | "safe";
 
 const { width } = Dimensions.get("window");
 
@@ -97,9 +104,16 @@ export const Dashboard: React.FC = () => {
   const scaleAnim = useSharedValue(0.8);
 
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const stickyYRef = React.useRef(0);
   const [activeFilter, setActiveFilter] = useState<"year" | "semester" | null>(
     null
   );
+  const [activeDisplayFilter, setActiveDisplayFilter] =
+    useState<DisplayFilter>("all");
+
+  const [filterInfoHeight, setFilterInfoHeight] = useState(0);
+  const scrollY = useSharedValue(0);
+  const stickyPointY = useSharedValue(0);
 
   const handleYearChange = async (year: string) => {
     setFilterModalVisible(false);
@@ -142,7 +156,6 @@ export const Dashboard: React.FC = () => {
     return [];
   }, [activeFilter, availableYears, availableSemesters]);
 
-  // Calculate enhanced statistics using user-marked data
   const enhancedSubjects = useMemo(() => {
     if (!attendanceData || !courseSchedule) return [];
 
@@ -281,9 +294,37 @@ export const Dashboard: React.FC = () => {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleAnim.value }],
   }));
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const filterInfoAnimatedStyle = useAnimatedStyle(() => {
+    if (filterInfoHeight === 0 || stickyPointY.value === 0) {
+      return {};
+    }
+    const animationRange = 60;
+    const scrollPastSticky = scrollY.value - stickyPointY.value;
+    const progress = interpolate(
+      scrollPastSticky,
+      [0, animationRange],
+      [0, 1],
+      Extrapolation.CLAMP
+    );
+    const animatedHeight = interpolate(progress, [0, 1], [filterInfoHeight, 0]);
+    const animatedMargin = interpolate(progress, [0, 1], [16, 0]);
+
+    return {
+      height: animatedHeight,
+      marginTop: animatedMargin,
+      overflow: "hidden",
+    };
+  });
+
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
@@ -292,8 +333,6 @@ export const Dashboard: React.FC = () => {
               Track your attendance progress
             </Text>
           </View>
-
-          {/* Header Icon Badge */}
           <View style={styles.headerIconBadge}>
             <Image
               source={mode === "dark" ? logo_dark : logo_light}
@@ -301,9 +340,14 @@ export const Dashboard: React.FC = () => {
             />
           </View>
         </View>
-
-        {/* Filter Info - made clickable */}
-        <View style={styles.filterInfo}>
+        <Animated.View
+          style={[styles.filterInfo, filterInfoAnimatedStyle]}
+          onLayout={(event) => {
+            if (filterInfoHeight === 0) {
+              setFilterInfoHeight(event.nativeEvent.layout.height);
+            }
+          }}
+        >
           <TouchableOpacity
             style={styles.filterItem}
             onPress={() => openFilterModal("year")}
@@ -334,10 +378,10 @@ export const Dashboard: React.FC = () => {
                 ?.label || "All Semesters"}
             </Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scrollView}
         contentContainerStyle={{
           paddingBottom: TAB_BAR_HEIGHT + 24 + insets.bottom,
@@ -352,6 +396,9 @@ export const Dashboard: React.FC = () => {
             progressBackgroundColor={colors.background}
           />
         }
+        stickyHeaderIndices={[1]}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
         {/* Overall Stats */}
         {enhancedOverallStats && (
@@ -408,6 +455,97 @@ export const Dashboard: React.FC = () => {
             </View>
           </Animated.View>
         )}
+        <View
+          style={styles.stickyHeaderContainer}
+          onLayout={(e) => {
+            const layoutY = e.nativeEvent.layout.y;
+            stickyYRef.current = layoutY;
+            stickyPointY.value = layoutY;
+          }}
+        >
+          {enhancedSubjects.length > 0 && (
+            <View style={styles.displayFilterContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.displayFilterButton,
+                  activeDisplayFilter === "all" &&
+                    styles.displayFilterButtonActive,
+                ]}
+                onPress={() => setActiveDisplayFilter("all")}
+              >
+                <Text
+                  style={[
+                    styles.displayFilterText,
+                    activeDisplayFilter === "all" && { color: colors.primary },
+                  ]}
+                >
+                  All
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.displayFilterButton,
+                  activeDisplayFilter === "danger" && [
+                    styles.displayFilterButtonActive,
+                    { borderColor: colors.danger },
+                  ],
+                ]}
+                onPress={() => setActiveDisplayFilter("danger")}
+              >
+                <Text
+                  style={[
+                    styles.displayFilterText,
+                    activeDisplayFilter === "danger" && {
+                      color: colors.danger,
+                    },
+                  ]}
+                >
+                  {dangerSubjects.length} Critical
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.displayFilterButton,
+                  activeDisplayFilter === "warning" && [
+                    styles.displayFilterButtonActive,
+                    { borderColor: colors.warning },
+                  ],
+                ]}
+                onPress={() => setActiveDisplayFilter("warning")}
+              >
+                <Text
+                  style={[
+                    styles.displayFilterText,
+                    activeDisplayFilter === "warning" && {
+                      color: colors.warning,
+                    },
+                  ]}
+                >
+                  {warningSubjects.length} Warning
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.displayFilterButton,
+                  activeDisplayFilter === "safe" && [
+                    styles.displayFilterButtonActive,
+                    { borderColor: colors.success },
+                  ],
+                ]}
+                onPress={() => setActiveDisplayFilter("safe")}
+              >
+                <Text
+                  style={[
+                    styles.displayFilterText,
+                    activeDisplayFilter === "safe" && { color: colors.success },
+                  ]}
+                >
+                  {safeSubjects.length} Safe
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
 
         {/* Error State */}
         {error && (
@@ -437,80 +575,87 @@ export const Dashboard: React.FC = () => {
         {/* Subjects List */}
         {enhancedSubjects.length > 0 && (
           <View style={styles.subjectsContainer}>
-            {/* Critical Subjects */}
-            {dangerSubjects.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <View style={styles.sectionHeaderRow}>
-                  <Ionicons
-                    name="alert-circle"
-                    size={18}
-                    color={styles.dangerColor.color}
-                  />
-                  <Text style={[styles.sectionTitle, styles.dangerText]}>
-                    Critical Attention Required
-                  </Text>
+            {(activeDisplayFilter === "all" ||
+              activeDisplayFilter === "danger") &&
+              dangerSubjects.length > 0 && (
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeaderRow}>
+                    <Ionicons
+                      name="alert-circle"
+                      size={18}
+                      color={styles.dangerColor.color}
+                    />
+                    <Text style={[styles.sectionTitle, styles.dangerText]}>
+                      Critical Attention Required
+                    </Text>
+                  </View>
+                  {dangerSubjects.map((subject, index) => (
+                    <AttendanceCard
+                      key={`danger-${index}`}
+                      subject={subject}
+                      onPress={(canMiss, classesToAttend) =>
+                        handleSubjectPress(subject, canMiss, classesToAttend)
+                      }
+                    />
+                  ))}
                 </View>
-                {dangerSubjects.map((subject, index) => (
-                  <AttendanceCard
-                    key={`danger-${index}`}
-                    subject={subject}
-                    onPress={(canMiss, classesToAttend) =>
-                      handleSubjectPress(subject, canMiss, classesToAttend)
-                    }
-                  />
-                ))}
-              </View>
-            )}
+              )}
 
             {/* Warning Subjects */}
-            {warningSubjects.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <View style={styles.sectionHeaderRow}>
-                  <Ionicons
-                    name="warning"
-                    size={18}
-                    color={styles.warningColor.color}
-                  />
-                  <Text style={[styles.sectionTitle, styles.warningText]}>
-                    Needs Attention
-                  </Text>
+            {/* MODIFIED: Conditionally render based on activeDisplayFilter */}
+            {(activeDisplayFilter === "all" ||
+              activeDisplayFilter === "warning") &&
+              warningSubjects.length > 0 && (
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeaderRow}>
+                    <Ionicons
+                      name="warning"
+                      size={18}
+                      color={styles.warningColor.color}
+                    />
+                    <Text style={[styles.sectionTitle, styles.warningText]}>
+                      Needs Attention
+                    </Text>
+                  </View>
+                  {warningSubjects.map((subject, index) => (
+                    <AttendanceCard
+                      key={`warning-${index}`}
+                      subject={subject}
+                      onPress={(canMiss, classesToAttend) =>
+                        handleSubjectPress(subject, canMiss, classesToAttend)
+                      }
+                    />
+                  ))}
                 </View>
-                {warningSubjects.map((subject, index) => (
-                  <AttendanceCard
-                    key={`warning-${index}`}
-                    subject={subject}
-                    onPress={(canMiss, classesToAttend) =>
-                      handleSubjectPress(subject, canMiss, classesToAttend)
-                    }
-                  />
-                ))}
-              </View>
-            )}
+              )}
 
             {/* Safe Subjects */}
-            {safeSubjects.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <View style={styles.sectionHeaderRow}>
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={18}
-                    color={styles.safeColor.color}
-                  />
-                  <Text style={[styles.sectionTitle, styles.safeText]}>
-                    Good Standing
-                  </Text>
+            {/* MODIFIED: Conditionally render based on activeDisplayFilter */}
+            {(activeDisplayFilter === "all" ||
+              activeDisplayFilter === "safe") &&
+              safeSubjects.length > 0 && (
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeaderRow}>
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={18}
+                      color={styles.safeColor.color}
+                    />
+                    <Text style={[styles.sectionTitle, styles.safeText]}>
+                      Good Standing
+                    </Text>
+                  </View>
+                  {safeSubjects.map((subject, index) => (
+                    <AttendanceCard
+                      key={`safe-${index}`}
+                      subject={subject}
+                      onPress={(canMiss, classesToAttend) =>
+                        handleSubjectPress(subject, canMiss, classesToAttend)
+                      }
+                    />
+                  ))}
                 </View>
-                {safeSubjects.map((subject, index) => (
-                  <AttendanceCard
-                    key={`safe-${index}`}
-                    subject={subject}
-                    onPress={(canMiss, classesToAttend) =>
-                      handleSubjectPress(subject, canMiss, classesToAttend)
-                    }
-                  />
-                ))}
-              </View>
-            )}
+              )}
           </View>
         )}
         <View style={styles.footer}>
@@ -530,7 +675,7 @@ export const Dashboard: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Filter Modal */}
       <Modal
@@ -859,6 +1004,37 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: 14,
       color: colors.textSecondary,
       marginLeft: 6,
+    },
+    stickyHeaderContainer: {
+      backgroundColor: colors.background,
+    },
+    displayFilterContainer: {
+      flexDirection: "row",
+      justifyContent: "space-around",
+      paddingHorizontal: 16,
+      marginTop: 4,
+      marginBottom: 12,
+      gap: 8,
+    },
+    displayFilterButton: {
+      flex: 1,
+      paddingVertical: 6,
+      paddingHorizontal: 8,
+      borderRadius: 16,
+      backgroundColor: colors.surface,
+      borderStyle: "dashed",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    displayFilterButtonActive: {
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      backgroundColor: "transparent",
+    },
+    displayFilterText: {
+      color: colors.textSecondary,
+      fontWeight: "500",
+      fontSize: 12,
     },
     footer: {
       marginTop: 16,

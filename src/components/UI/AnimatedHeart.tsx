@@ -62,8 +62,49 @@ export default function AnimatedHeart({
         name="heart"
         size={size}
         color={color}
-        style={{ transform: [{ translateY: size / 10 }] }}
+        style={{ verticalAlign: "middle" }}
       />
     </Animated.View>
   );
 }
+
+
+
+// interface FilterBarProps {
+//   activeFilter: SubjectFilter;
+//   onFilterChange: (filter: SubjectFilter) => void;
+// }
+
+// const FilterBar: React.FC<FilterBarProps> = ({ activeFilter, onFilterChange }) => {
+//   const styles = useThemedStyles(createStyles);
+//   const filters: { label: string; value: SubjectFilter }[] = [
+//     { label: "All", value: "all" },
+//     { label: "Critical", value: "danger" },
+//     { label: "Warning", value: "warning" },
+//     { label: "Safe", value: "safe" },
+//   ];
+
+//   return (
+//     <View style={styles.filterBarContainer}>
+//       {filters.map((filter) => (
+//         <TouchableOpacity
+//           key={filter.value}
+//           style={[
+//             styles.filterButton,
+//             activeFilter === filter.value && styles.filterButtonActive,
+//           ]}
+//           onPress={() => onFilterChange(filter.value)}
+//         >
+//           <Text
+//             style={[
+//               styles.filterButtonText,
+//               activeFilter === filter.value && styles.filterButtonTextActive,
+//             ]}
+//           >
+//             {filter.label}
+//           </Text>
+//         </TouchableOpacity>
+//       ))}
+//     </View>
+//   );
+// };
