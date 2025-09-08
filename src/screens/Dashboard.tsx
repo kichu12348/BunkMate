@@ -1031,7 +1031,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     displayFilterText: {
       color: colors.textSecondary,
-      fontSize: 14,
+      fontSize: 12,
     },
     footer: {
       marginTop: 16,
