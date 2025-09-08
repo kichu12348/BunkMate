@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Linking,
+  Image,
 } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "../state/settings";
@@ -29,6 +30,8 @@ import Animated, {
 } from "react-native-reanimated";
 import AnimatedHeart from "../components/UI/AnimatedHeart";
 import { APP_CONFIG } from "../constants/config";
+import { darkTheme,lightTheme } from "../constants/colors";
+import pfp from "../assets/bonk_pfp.jpeg";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 const INSTAGRAM_URL = process.env.EXPO_PUBLIC_INSTAGRAM_URL;
@@ -302,10 +305,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         <View style={styles.profileSection}>
           <Animated.View style={[styles.profileCard, cardAnimatedStyle]}>
             <View style={styles.profileAvatar}>
-              <Ionicons
-                name="person"
-                size={32}
-                color={styles.profileAvatarIcon.color}
+              <Image 
+                source={pfp}
+                style={styles.profileAvatarImage}
               />
             </View>
             <View style={styles.profileInfo}>
@@ -383,7 +385,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   >
                     <Ionicons
                       name="sunny"
-                      color={styles.settingIcon.color}
+                      color={lightTheme.warning}
                       size={24}
                     />
                   </Animated.View>
@@ -395,7 +397,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   >
                     <Ionicons
                       name="moon"
-                      color={styles.settingIcon.color}
+                      color={darkTheme.primary}
                       size={24}
                     />
                   </Animated.View>
@@ -408,16 +410,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   value={isDark}
                   onValueChange={handleToggleTheme}
                   size={30}
-                  thumbColor={
-                    isDark
-                      ? styles.switchThumbOn.color
-                      : styles.switchThumbOff.color
-                  }
-                  trackColor={
-                    isDark
-                      ? styles.switchTrackOn.color
-                      : styles.switchTrackOff.color
-                  }
+                  thumbDisabledColor={lightTheme.surface}
+                  thumbEnabledColor={darkTheme.surface}
+                  trackDisabledColor={lightTheme.border}
+                  trackEnabledColor={darkTheme.primary}
                 />
               }
               showArrow={false}
@@ -594,13 +590,14 @@ const createStyles = (colors: ThemeColors) =>
       width: 60,
       height: 60,
       borderRadius: 30,
-      backgroundColor: colors.primary + "20",
       alignItems: "center",
       justifyContent: "center",
       marginRight: 16,
     },
-    profileAvatarIcon: {
-      color: colors.primary,
+    profileAvatarImage: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
     },
     profileInfo: {
       flex: 1,
@@ -717,18 +714,6 @@ const createStyles = (colors: ThemeColors) =>
       color: "white",
       fontSize: 16,
       fontWeight: "600",
-    },
-    switchTrackOff: {
-      color: colors.border,
-    },
-    switchTrackOn: {
-      color: colors.primary,
-    },
-    switchThumbOff: {
-      color: colors.surface,
-    },
-    switchThumbOn: {
-      color: colors.surface,
     },
     logoutIcon: {
       color: colors.danger,

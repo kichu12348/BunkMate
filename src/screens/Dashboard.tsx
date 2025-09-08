@@ -9,8 +9,6 @@ import {
   Image,
   Modal,
   FlatList,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
 } from "react-native";
 import logo_dark from "../assets/bonk_icon_dark.png";
 import logo_light from "../assets/bonk_icon_light.png";
@@ -1033,8 +1031,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     displayFilterText: {
       color: colors.textSecondary,
-      fontWeight: "500",
-      fontSize: 12,
+      fontSize: 14,
     },
     footer: {
       marginTop: 16,

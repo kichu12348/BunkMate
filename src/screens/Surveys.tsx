@@ -202,43 +202,32 @@ const FilterChip: React.FC<{
       style={[
         styles.filterChip,
         {
-          backgroundColor: isActive ? colors.primary : colors.surface,
-          borderColor: isActive ? colors.primary : colors.border,
+          backgroundColor: isActive ? "transparent" : colors.surface,
+          borderWidth: isActive ? 1 : 0,
         },
       ]}
       onPress={onPress}
     >
       <Text
         style={[
+          styles.countText,
+          {
+            color: isActive ? colors.primary : colors.textSecondary,
+          },
+        ]}
+      >
+        {count}
+      </Text>
+      <Text
+        style={[
           styles.filterChipText,
           {
-            color: isActive ? colors.surface : colors.text,
+            color: isActive ? colors.primary : colors.text,
           },
         ]}
       >
         {label}
       </Text>
-      <View
-        style={[
-          styles.countBadge,
-          {
-            backgroundColor: isActive
-              ? colors.surface + "30"
-              : colors.primary + "20",
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.countText,
-            {
-              color: isActive ? colors.surface : colors.primary,
-            },
-          ]}
-        >
-          {count}
-        </Text>
-      </View>
     </TouchableOpacity>
   );
 };
@@ -483,20 +472,19 @@ const createStyles = (colors: ThemeColors) =>
     filterChip: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "center",
       paddingHorizontal: 16,
       paddingVertical: 8,
       borderRadius: 20,
-      borderWidth: 1,
+      borderStyle: "dashed",
       gap: 8,
+      borderColor: colors.primary,
     },
     filterChipText: {
       fontSize: 14,
       fontWeight: "600",
     },
     countBadge: {
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 10,
       minWidth: 20,
       alignItems: "center",
     },
