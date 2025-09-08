@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       set({
         user,
-        name: `${first_name || ""} ${last_name || ""}`,
+        name: `${first_name || ""} ${last_name || ""}`.trim(),
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -138,7 +138,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           isLoading: false,
         });
         await cb?.();
-        logInsight(`${first_name} ${last_name}`);
+        logInsight(`${first_name || ""} ${last_name || ""}`.trim());
       } else {
         set({
           user: null,
