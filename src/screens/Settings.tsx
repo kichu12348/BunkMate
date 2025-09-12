@@ -30,7 +30,7 @@ import Animated, {
 } from "react-native-reanimated";
 import AnimatedHeart from "../components/UI/AnimatedHeart";
 import { APP_CONFIG } from "../constants/config";
-import { darkTheme,lightTheme } from "../constants/colors";
+import { darkTheme, lightTheme } from "../constants/colors";
 import pfp from "../assets/bonk_pfp.jpeg";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
@@ -134,7 +134,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         translateX: darkModeIconTransLate.value,
       },
       {
-        translateY: darkModeIconTransLate.value,
+        translateY: darkModeIconTransLate.value * -1,
       },
     ] as [{ translateX: number }, { translateY: number }],
   }));
@@ -305,10 +305,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         <View style={styles.profileSection}>
           <Animated.View style={[styles.profileCard, cardAnimatedStyle]}>
             <View style={styles.profileAvatar}>
-              <Image 
-                source={pfp}
-                style={styles.profileAvatarImage}
-              />
+              <Image source={pfp} style={styles.profileAvatarImage} />
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{user?.username || "User"}</Text>
@@ -395,11 +392,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                       !isDark && { position: "absolute" },
                     ]}
                   >
-                    <Ionicons
-                      name="moon"
-                      color={darkTheme.primary}
-                      size={24}
-                    />
+                    <Ionicons name="moon" color={darkTheme.primary} size={24} />
                   </Animated.View>
                 </View>
               }

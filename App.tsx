@@ -14,6 +14,7 @@ import * as SystemUI from "expo-system-ui";
 import * as Update from "expo-updates";
 import { useAttendanceStore } from "./src/state/attendance";
 import Toast from "./src/components/UI/toast";
+import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
 enableScreens();
 
 // Prevent the splash screen from auto-hiding
@@ -86,6 +87,7 @@ export default function App() {
           {isAuthenticated ? <RootNavigator /> : <LoginScreen />}
         </NavigationContainer>
         <Toast />
+        <NewUpdateAlertModal />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
