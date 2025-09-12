@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useThemeStore } from "../../state/themeStore";
 
-const { width, height } = Dimensions.get("screen");
+const { width } = Dimensions.get("screen");
 
 const UPDATE_URL = process.env.EXPO_PUBLIC_OVERVIEW_URL as string | undefined;
 
