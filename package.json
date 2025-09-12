@@ -1,6 +1,6 @@
 {
   "name": "bunkmate",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
@@ -9,7 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@expo/vector-icons": "^14.1.0",
+    "@expo/vector-icons": "^15.0.2",
     "@react-navigation/bottom-tabs": "^7.4.2",
     "@react-navigation/native": "^7.1.14",
     "@react-navigation/native-stack": "^7.3.21",
@@ -17,26 +17,29 @@
     "axios": "^1.10.0",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.4",
-    "expo": "53.0.18",
-    "expo-blur": "~14.1.5",
-    "expo-linear-gradient": "~14.1.5",
-    "expo-splash-screen": "~0.30.10",
-    "expo-sqlite": "~15.2.14",
-    "expo-status-bar": "~2.2.3",
-    "expo-system-ui": "~5.0.10",
-    "expo-updates": "~0.28.16",
-    "react": "19.0.0",
-    "react-native": "0.79.5",
-    "react-native-gesture-handler": "~2.24.0",
-    "react-native-reanimated": "~3.17.4",
-    "react-native-safe-area-context": "5.4.0",
-    "react-native-screens": "~4.11.1",
-    "zustand": "^5.0.6"
+    "expo": "^54.0.2",
+    "expo-blur": "~15.0.7",
+    "expo-linear-gradient": "~15.0.7",
+    "expo-splash-screen": "~31.0.9",
+    "expo-sqlite": "~16.0.8",
+    "expo-status-bar": "~3.0.8",
+    "expo-system-ui": "~6.0.7",
+    "expo-updates": "~29.0.10",
+    "react": "19.1.0",
+    "react-native": "0.81.4",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-reanimated": "~4.1.0",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "zustand": "^5.0.6",
+    "expo-file-system": "~19.0.12",
+    "expo-image-picker": "~17.0.8",
+    "expo-insights": "~0.10.7"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
-    "@types/react": "~19.0.10",
-    "typescript": "~5.8.3"
+    "@types/react": "^19.1.12",
+    "typescript": "~5.9.2"
   },
   "private": true
 }

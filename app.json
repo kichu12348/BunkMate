@@ -2,7 +2,7 @@
   "expo": {
     "name": "BunkMate",
     "slug": "BunkMate",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -13,7 +13,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0f172a"
+        "backgroundColor": "#fff9e9"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.kichu12348.BunkMate"
@@ -22,17 +22,6 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#232323",
-          "image": "./assets/splash-icon.png",
-          "dark": {
-            "backgroundColor": "#0f172a"
-          },
-          "imageWidth": 200
-        }
-      ],
       "expo-sqlite"
     ],
     "extra": {
@@ -45,6 +34,7 @@
     },
     "updates": {
       "url": "https://u.expo.dev/578c8adf-d6a4-4607-af55-4cac93314c20"
-    }
+    },
+    "owner": "kichu12348"
   }
 }

@@ -45,7 +45,7 @@ export const ATTENDANCE_THRESHOLDS = {
 
 export const APP_CONFIG = {
   NAME: "BunkMate",
-  VERSION: "1.2.0",
+  VERSION: "2.0.0",
   DESCRIPTION: "Track your attendance and stay above 75%",
 };
 

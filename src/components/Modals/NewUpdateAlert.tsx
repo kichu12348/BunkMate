@@ -16,11 +16,13 @@ const { width } = Dimensions.get("screen");
 
 const UPDATE_URL = process.env.EXPO_PUBLIC_OVERVIEW_URL as string | undefined;
 
-const NewUpdateAlertModal = () => {
+const NewUpdateAlertModal = ({
+    defaultVisible = true
+}) => {
   const insets = useSafeAreaInsets();
   const colors = useThemeStore((state) => state.colors);
 
-  const [isVisible, setIsVisible] = React.useState(true);
+  const [isVisible, setIsVisible] = React.useState(defaultVisible);
   const onClose = () => setIsVisible(false);
 
   const handleUpdatePress = async () => {
