@@ -313,16 +313,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               onPress={updatePfp}
               activeOpacity={0.7}
             >
-              <Image
-                source={
-                  pfpUri
-                    ? {
-                        uri: pfpUri,
-                      }
-                    : pfp
-                }
-                style={styles.profileAvatarImage}
-              />
+              {pfpUri ? (
+                <Image
+                  source={{ uri: pfpUri }}
+                  style={styles.profileAvatarImage}
+                />
+              ) : (
+                <Image source={pfp} style={styles.profileAvatarImage} />
+              )}
             </TouchableOpacity>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{user?.username || "User"}</Text>
