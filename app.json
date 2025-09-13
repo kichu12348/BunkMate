@@ -30,7 +30,8 @@
           "image": "./assets/splash-icon-dark.png",
           "imageWidth": 200
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
