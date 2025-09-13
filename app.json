@@ -28,7 +28,8 @@
         {
           "backgroundColor": "#0f172a",
           "image": "./assets/splash-icon-dark.png",
-          "imageWidth": 200
+          "imageWidth": 200,
+          "resizeMode": "contain"
         }
       ],
       "expo-font"
