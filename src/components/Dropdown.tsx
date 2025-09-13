@@ -107,7 +107,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
       borderTo.value = themeColors.border;
       progress.value = 0;
       progress.value = withTiming(1, {
-        duration: 280,
+        duration: 320,
         easing: Easing.inOut(Easing.ease),
       });
     }
