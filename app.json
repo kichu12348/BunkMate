@@ -13,7 +13,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#f8f5f2"
+        "backgroundColor": "#0f172a"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.kichu12348.BunkMate"
@@ -26,14 +26,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#f8f5f2",
-          "image": "./assets/splash-icon.png",
-          "dark": {
-            "backgroundColor": "#0f172a",
-            "image": "./assets/splash-icon-dark.png"
-          },
-          "imageWidth": 200,
-          "resizeMode": "contain"
+          "backgroundColor": "#0f172a",
+          "image": "./assets/splash-icon-dark.png",
+          "imageWidth": 200
         }
       ]
     ],
