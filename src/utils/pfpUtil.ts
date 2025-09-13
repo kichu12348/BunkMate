@@ -3,7 +3,7 @@ import * as ImagePicker from "expo-image-picker";
 import { PfpState, usePfpStore } from "../state/pfpStore";
 import { useToastStore } from "../state/toast";
 
-export const usePfp = () => {
+export const usePfp = (cb?: () => void) => {
   const showToast = useToastStore.getState().showToast;
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -74,5 +74,6 @@ export const usePfp = () => {
     const localUri = saveToLocal(imageUri);
     if (!localUri) return;
     usePfpStore.setState({ uri: localUri } as PfpState);
+    cb?.();
   };
 };

@@ -74,7 +74,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const insets = useSafeAreaInsets();
   const bottomBarHeight = useBottomTabBarHeight();
   const pfpUri = usePfpStore((s) => s.uri);
-  const updatePfp = usePfp();
+  const updatePfp = usePfp(() => setPfpLoadingError(false));
 
   const bgFrom = useSharedValue(colors.background);
   const bgTo = useSharedValue(colors.background);
@@ -83,6 +83,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const progress = useSharedValue(1);
 
   const [isHeartActive, setIsHeartActive] = useState(false);
+  const [pfpLoadingError, setPfpLoadingError] = useState(false);
 
   useEffect(() => {
     // When colors object changes (theme toggled), update from/to and animate
@@ -313,13 +314,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               onPress={updatePfp}
               activeOpacity={0.7}
             >
-              {pfpUri ? (
+              {pfpUri && !pfpLoadingError ? (
                 <Image
                   source={{ uri: pfpUri }}
                   style={styles.profileAvatarImage}
+                  onError={() => setPfpLoadingError(true)}
                 />
               ) : (
-                <Image source={pfp} style={styles.profileAvatarImage} />
+                <Ionicons
+                  name="person-circle-outline"
+                  size={60}
+                  color={colors.primary}
+                />
               )}
             </TouchableOpacity>
             <View style={styles.profileInfo}>
