@@ -32,6 +32,8 @@ import AnimatedHeart from "../components/UI/AnimatedHeart";
 import { APP_CONFIG } from "../constants/config";
 import { darkTheme, lightTheme } from "../constants/colors";
 import pfp from "../assets/bonk_pfp.jpeg";
+import { usePfp } from "../utils/pfpUtil";
+import { usePfpStore } from "../state/pfpStore";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 const INSTAGRAM_URL = process.env.EXPO_PUBLIC_INSTAGRAM_URL;
@@ -71,6 +73,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const showToast = useToastStore((state) => state.showToast);
   const insets = useSafeAreaInsets();
   const bottomBarHeight = useBottomTabBarHeight();
+  const pfpUri = usePfpStore((s) => s.uri);
+  const updatePfp = usePfp();
 
   const bgFrom = useSharedValue(colors.background);
   const bgTo = useSharedValue(colors.background);
@@ -304,9 +308,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* User Profile Section */}
         <View style={styles.profileSection}>
           <Animated.View style={[styles.profileCard, cardAnimatedStyle]}>
-            <View style={styles.profileAvatar}>
-              <Image source={pfp} style={styles.profileAvatarImage} />
-            </View>
+            <TouchableOpacity
+              style={styles.profileAvatar}
+              onPress={updatePfp}
+              activeOpacity={0.7}
+            >
+              <Image
+                source={
+                  pfpUri
+                    ? {
+                        uri: pfpUri,
+                      }
+                    : pfp
+                }
+                style={styles.profileAvatarImage}
+              />
+            </TouchableOpacity>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{user?.username || "User"}</Text>
               <Text style={styles.profileEmail}>Student Account</Text>

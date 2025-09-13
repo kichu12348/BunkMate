@@ -11,8 +11,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     const colors = mode === 'light' ? lightTheme : darkTheme;
     
     set({ mode, colors });
-    
-    // Persist theme preference
+
     try {
       kvHelper.setThemeMode(mode);
     } catch (error) {

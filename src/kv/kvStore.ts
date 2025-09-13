@@ -52,8 +52,10 @@ export const themeStore = new KVStore();
 export const userStore = new KVStore();
 export const settingsStore = new KVStore();
 export const insightsStore = new KVStore();
+export const pfpStore = new KVStore();
 
 let localToken: string | null;
+let timeoutId: NodeJS.Timeout | null = null;
 
 export const kvHelper = {
   // Auth tokens
@@ -85,9 +87,11 @@ export const kvHelper = {
     localToken = null;
   },
 
-  // User preferences
   setThemeMode(mode: "light" | "dark"): void {
-    themeStore.set(THEME_MODE, mode);
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      themeStore.set(THEME_MODE, mode);
+    }, 300);
   },
 
   getThemeMode(): "light" | "dark" | null {
@@ -110,6 +114,14 @@ export const kvHelper = {
       console.error(`Error parsing setting for key ${key}:`, error);
       return null;
     }
+  },
+
+  setPfpUri(uri: string): void {
+    pfpStore.set("pfp_uri", uri);
+  },
+  
+  getPfpUri(): string | null {
+    return pfpStore.get<string>("pfp_uri");
   },
 
   // Subscription modal tracking

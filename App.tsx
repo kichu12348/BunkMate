@@ -13,6 +13,7 @@ import { StatusBar, Appearance } from "react-native";
 import * as SystemUI from "expo-system-ui";
 import * as Update from "expo-updates";
 import { useAttendanceStore } from "./src/state/attendance";
+import { usePfpStore } from "./src/state/pfpStore";
 import Toast from "./src/components/UI/toast";
 //import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
 enableScreens();
@@ -29,6 +30,8 @@ export default function App() {
   const initializeSettings = useSettingsStore(
     (state) => state.initializeSettings
   );
+
+  const initializePfp = usePfpStore((state) => state.initialize);
 
   useEffect(() => {
     const checkForUpdates = async () => {
@@ -52,6 +55,7 @@ export default function App() {
         await checkAuthStatus(async () => {
           await initializeSettings();
           await initFetchAttendance();
+          initializePfp();
         });
       } catch (error) {
         console.error("Initialization error:", error);
