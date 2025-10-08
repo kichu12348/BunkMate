@@ -249,7 +249,8 @@ export const calculateEnhancedAttendanceStats = (
 };
 
 /**
- * Enhanced calculation for classes to attend, considering user-marked data
+ * Enhanced calculation for classes to attend, using the correct formula
+ * that accounts for future classes increasing the total.
  */
 export const calculateEnhancedClassesToAttend = (
   currentStats: {
@@ -259,16 +260,23 @@ export const calculateEnhancedClassesToAttend = (
   },
   targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER
 ): number => {
+  const targetRatio = targetPercentage / 100;
   if (currentStats.percentage >= targetPercentage) return 0;
+
   const { totalClasses, attendedClasses } = currentStats;
-  const requiredAttendedClasses = Math.ceil(
-    (targetPercentage / 100) * totalClasses
+
+  // Formula derived from: (attended + x) / (total + x) >= targetRatio
+  // x >= (targetRatio * total - attended) / (1 - targetRatio)
+  const classesNeeded = Math.ceil(
+    (targetRatio * totalClasses - attendedClasses) / (1 - targetRatio)
   );
-  return Math.max(0, requiredAttendedClasses - attendedClasses);
+  
+  return Math.max(0, classesNeeded);
 };
 
 /**
- * Enhanced calculation for classes that can be missed, considering user-marked data
+ * Enhanced calculation for classes that can be missed, using the correct
+ * formula that accounts for future classes increasing the total.
  */
 export const calculateEnhancedClassesCanMiss = (
   currentStats: {
@@ -278,11 +286,18 @@ export const calculateEnhancedClassesCanMiss = (
   },
   targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER
 ): number => {
-  if (currentStats.percentage <= targetPercentage) return 0;
+  const targetRatio = targetPercentage / 100;
+  if (currentStats.percentage < targetPercentage) return 0;
+  
   const { totalClasses, attendedClasses } = currentStats;
-  const minRequiredClasses = Math.ceil((targetPercentage / 100) * totalClasses);
 
-  return Math.max(0, attendedClasses - minRequiredClasses);
+  // Formula derived from: attended / (total + x) >= targetRatio
+  // x <= (attended - targetRatio * total) / targetRatio
+  const classesCanMiss = Math.floor(
+    (attendedClasses - targetRatio * totalClasses) / targetRatio
+  );
+
+  return Math.max(0, classesCanMiss);
 };
 
 /**
