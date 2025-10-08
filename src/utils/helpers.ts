@@ -284,7 +284,7 @@ export const calculateEnhancedClassesCanMiss = (
     attendedClasses: number;
     percentage: number;
   },
-  targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER
+  targetPercentage: number = ATTENDANCE_THRESHOLDS.SAFE
 ): number => {
   const targetRatio = targetPercentage / 100;
   if (currentStats.percentage < targetPercentage) return 0;
