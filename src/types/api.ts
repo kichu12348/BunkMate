@@ -2,6 +2,14 @@ export interface LoginLookupRequest {
   username: string;
 }
 
+export interface ResetOptionsResponse{
+  username:string;
+  options:{
+    emails:string[];
+    mobiles:string[];
+  }
+}
+
 export interface LoginLookupResponse {
   usernames: string[];
 }

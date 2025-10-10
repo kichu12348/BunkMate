@@ -4,9 +4,9 @@ import { kvHelper } from "../kv/kvStore";
 import {
   LoginRequest,
   LoginResponse,
-  User,
   ApiError,
   UserProfile,
+  ResetOptionsResponse,
 } from "../types/api";
 
 class AuthService {
@@ -86,7 +86,7 @@ class AuthService {
       );
 
       // Store the token
-       kvHelper.setAuthToken(response.data.access_token);
+      kvHelper.setAuthToken(response.data.access_token);
 
       return response.data;
     } catch (error) {
@@ -141,6 +141,50 @@ class AuthService {
     try {
       await this.api.post(API_CONFIG.ENDPOINTS.SET.DEFAULT_SEMESTER, {
         default_semester: semester,
+      });
+    } catch (error) {
+      throw this.handleApiError(error);
+    }
+  }
+
+  async GetResetPasswordOptions(
+    username: string
+  ): Promise<ResetOptionsResponse> {
+    try {
+      const res = await this.api.post(API_CONFIG.ENDPOINTS.AUTH.RESET.OPTIONS, {
+        username,
+      });
+      return res.data;
+    } catch (error) {
+      throw this.handleApiError(error);
+    }
+  }
+
+  async RequestPasswordReset(
+    username: string,
+    option: "mail" | "sms"
+  ): Promise<void> {
+    try {
+      await this.api.post(API_CONFIG.ENDPOINTS.AUTH.RESET.REQUEST, {
+        username,
+        option,
+      });
+    } catch (error) {
+      throw this.handleApiError(error);
+    }
+  }
+
+  async VerifyPasswordReset(
+    username: string,
+    otp: string,
+    password: string
+  ): Promise<void> {
+    try {
+      await this.api.post(API_CONFIG.ENDPOINTS.AUTH.RESET.VERIFY, {
+        username,
+        otp,
+        password,
+        password_confirmation: password,
       });
     } catch (error) {
       throw this.handleApiError(error);

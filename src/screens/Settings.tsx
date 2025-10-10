@@ -9,7 +9,7 @@ import {
   Linking,
   Image,
 } from "react-native";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Entypo, Feather, Ionicons } from "@expo/vector-icons";
 import { useSettingsStore } from "../state/settings";
 import { useAttendanceStore } from "../state/attendance";
 import { useThemedStyles, useTheme } from "../hooks/useTheme";
@@ -251,6 +251,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     onPress,
     rightElement,
     showArrow = true,
+    titleFontFamily = false,
   }: {
     Icon: ReactElement;
     title: string;
@@ -260,6 +261,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     showArrow?: boolean;
     isGreat?: boolean;
     iconColor?: string;
+    titleFontFamily?: boolean;
   }) => (
     <TouchableOpacity
       style={styles.settingItem}
@@ -270,7 +272,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       <View style={styles.settingItemLeft}>
         <View style={styles.settingIconContainer}>{Icon}</View>
         <View style={styles.settingItemContent}>
-          <Text style={styles.settingTitle}>{title}</Text>
+          <Text
+            style={
+              titleFontFamily ? styles.customSettingTitle : styles.settingTitle
+            }
+          >
+            {title}
+          </Text>
           {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
         </View>
       </View>
@@ -438,6 +446,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* Support Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Hehe</Text>
+
+          <AnimatedCard>
+            <SettingItem
+              Icon={
+                <Entypo
+                  name="emoji-happy"
+                  size={24}
+                  color={styles.settingIcon.color}
+                />
+              }
+              title={APP_CONFIG.NAME}
+              subtitle={APP_CONFIG.DESCRIPTION}
+              titleFontFamily
+              showArrow={false}
+              onPress={null}
+            />
+          </AnimatedCard>
 
           <AnimatedCard>
             <SettingItem
@@ -695,6 +720,13 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.text,
       marginBottom: 2,
     },
+    customSettingTitle: {
+      fontSize: 16,
+      fontFamily: "Chewy-Regular",
+      color: colors.text,
+      marginBottom: 2,
+      letterSpacing: 1,
+    },
     settingSubtitle: {
       fontSize: 14,
       color: colors.textSecondary,
@@ -771,5 +803,7 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: 16,
       color: colors.textSecondary,
       textAlign: "center",
+      fontFamily: "Chewy-Regular",
+      letterSpacing: 1,
     },
   });

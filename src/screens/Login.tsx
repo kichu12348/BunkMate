@@ -17,6 +17,7 @@ import { useThemedStyles } from "../hooks/useTheme";
 import { ThemeColors } from "../types/theme";
 import { APP_CONFIG } from "../constants/config";
 import { useToastStore } from "../state/toast";
+import { OptionsModal, ResetPasswordModal } from "../components/Modals/Reset";
 
 export const LoginScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -36,6 +37,10 @@ export const LoginScreen: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetOption, setResetOption] = useState<"mail" | "sms">("mail");
 
   const handleUsernameSubmit = async () => {
     Keyboard.dismiss();
@@ -71,13 +76,11 @@ export const LoginScreen: React.FC = () => {
     }
 
     try {
-      await login(
-        {
-          username: verifiedUsername || username.trim(),
-          password: password.trim(),
-          stay_logged_in: true,
-        }
-      );
+      await login({
+        username: verifiedUsername || username.trim(),
+        password: password.trim(),
+        stay_logged_in: true,
+      });
     } catch (error: any) {
       showToast({
         title: "Login Failed",
@@ -99,6 +102,37 @@ export const LoginScreen: React.FC = () => {
       resetLoginFlow();
     }
     clearError();
+  };
+
+  const handleForgotPassword = () => {
+    const currentUsername = verifiedUsername || username.trim();
+    if (!currentUsername) {
+      showToast({
+        title: "Username Required",
+        message: "Please enter your username first",
+        buttons: [{ text: "OK", style: "destructive" }],
+      });
+      return;
+    }
+    setShowOptionsModal(true);
+  };
+
+  const handleOptionSelected = (option: "mail" | "sms") => {
+    setResetOption(option);
+    setShowOptionsModal(false);
+    setShowResetModal(true);
+  };
+
+  const handleResetSuccess = async (username: string, password: string) => {
+    try {
+      await login({ username, password, stay_logged_in: true });
+    } catch (err) {
+      showToast({
+        title: "Login Failed",
+        message: err.message || "Invalid credentials",
+        buttons: [{ text: "OK", style: "destructive" }],
+      });
+    }
   };
 
   return (
@@ -126,7 +160,7 @@ export const LoginScreen: React.FC = () => {
               style={styles.input}
               placeholder="Username"
               placeholderTextColor={styles.inputPlaceholder.color}
-              value={username}
+              value={isUsernameVerified ? verifiedUsername : username}
               onChangeText={handleUsernameChange}
               autoCapitalize="none"
               autoCorrect={false}
@@ -215,6 +249,13 @@ export const LoginScreen: React.FC = () => {
                   <Text style={styles.loginButtonText}>Login</Text>
                 )}
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.forgotPasswordButton}
+                onPress={handleForgotPassword}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
             </>
           )}
 
@@ -237,6 +278,21 @@ export const LoginScreen: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
+
+      <OptionsModal
+        visible={showOptionsModal}
+        onClose={() => setShowOptionsModal(false)}
+        onOptionSelected={handleOptionSelected}
+        username={verifiedUsername}
+      />
+
+      <ResetPasswordModal
+        visible={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        username={verifiedUsername}
+        option={resetOption}
+        onSuccess={handleResetSuccess}
+      />
     </KeyboardAvoidingView>
   );
 };
@@ -258,9 +314,10 @@ const createStyles = (colors: ThemeColors) =>
     },
     title: {
       fontSize: 32,
-      fontWeight: "bold",
+      fontFamily: "Chewy-Regular",
       color: colors.primary,
       marginBottom: 8,
+      letterSpacing: 2,
     },
     subtitle: {
       fontSize: 16,
@@ -364,5 +421,15 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.textSecondary,
       textAlign: "center",
       lineHeight: 16,
+    },
+    forgotPasswordButton: {
+      alignItems: "center",
+      marginTop: 16,
+      paddingVertical: 8,
+    },
+    forgotPasswordText: {
+      fontSize: 14,
+      color: colors.primary,
+      fontWeight: "500",
     },
   });

@@ -6,6 +6,11 @@ export const API_CONFIG = {
       LOGIN: "/login",
       LOOKUP: "/login/lookup",
       USER: "/user",
+      RESET:{
+        OPTIONS:"/password/reset/options",
+        REQUEST:"/password/reset/request",
+        VERIFY:"/password/reset"
+      }
     },
     ATTENDANCE: {
       DETAILED: "/attendancereports/student/detailed",

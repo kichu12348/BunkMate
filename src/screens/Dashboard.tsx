@@ -778,9 +778,9 @@ const createStyles = (colors: ThemeColors) =>
     },
     greeting: {
       fontSize: 24,
-      fontWeight: "700",
+      fontFamily: "Chewy-Regular",
       color: colors.text,
-      letterSpacing: 0.3,
+      letterSpacing: 1,
     },
     subGreeting: {
       fontSize: 14,
@@ -1043,6 +1043,8 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: 16,
       color: colors.textSecondary,
       textAlign: "center",
+      fontFamily: "Chewy-Regular",
+      letterSpacing: 1,
     },
     logoImage: {
       width: 30,
