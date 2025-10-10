@@ -1,4 +1,4 @@
-import React, { use, useEffect } from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { useAuthStore } from "./src/state/auth";
 import { useSettingsStore } from "./src/state/settings";
@@ -34,11 +34,9 @@ export default function App() {
 
   const initializePfp = usePfpStore((state) => state.initialize);
 
-  const [fontsLoaded, error] = useFonts({
+  useFonts({
     "Chewy-Regular": require("./src/assets/fonts/Chewy-Regular.ttf"),
   });
-
-  const [isInitializing, setIsInitializing] = React.useState(true);
 
   useEffect(() => {
     const checkForUpdates = async () => {
@@ -67,18 +65,12 @@ export default function App() {
       } catch (error) {
         console.error("Initialization error:", error);
       } finally {
-        if (!isLoading) setIsInitializing(false);
+        if (!isLoading) await SplashScreen.hideAsync();
       }
     };
 
     initialize();
   }, []);
-
-  useEffect(() => {
-    if (!isLoading && !isInitializing && (fontsLoaded || error)) {
-      SplashScreen.hideAsync();
-    }
-  }, [isInitializing, fontsLoaded, error]);
 
   // Set navigation bar color
   useEffect(() => {
