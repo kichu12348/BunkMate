@@ -1,5 +1,5 @@
 import Storage from "expo-sqlite/kv-store";
-import { AUTH_ACCESS_TOKEN, INSIGHTS_LOGGED, SUBSCRIPTION_MODAL_SHOWN, THEME_MODE } from "../constants/config";
+import { AUTH_ACCESS_TOKEN, INSIGHTS_LOGGED, PFP_URL, SUBSCRIPTION_MODAL_SHOWN, THEME_MODE } from "../constants/config";
 
 class KVStore {
   set(key: string, value: any): void {
@@ -117,15 +117,15 @@ export const kvHelper = {
   },
 
   setPfpUri(uri: string): void {
-    pfpStore.set("pfp_uri", uri);
+    pfpStore.set(PFP_URL, uri);
   },
   
   clearPfpUri(): void {
-    pfpStore.delete("pfp_uri");
+    pfpStore.delete(PFP_URL);
   },
   
   getPfpUri(): string | null {
-    return pfpStore.get<string>("pfp_uri");
+    return pfpStore.get<string>(PFP_URL);
   },
 
   // Subscription modal tracking
