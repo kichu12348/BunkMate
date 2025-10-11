@@ -56,14 +56,14 @@ export const usePfp = (cb?: () => void) => {
   };
 
   return async () => {
-    const fileUri = usePfpStore.getState().uri;
+    //const fileUri = usePfpStore.getState().uri;
     const imageUri = await pickImage();
-    if (fileUri) {
-      // check pfp directory and delete all files
-      const pfpDir = `${FileSystem.documentDirectory}pfp/`;
-      const files = await FileSystem.readDirectoryAsync(pfpDir);
-      await Promise.all(files.map(file => FileSystem.deleteAsync(`${pfpDir}${file}`)));
-    }
+    // if (fileUri) {
+    //   // check pfp directory and delete all files
+    //   const pfpDir = `${FileSystem.documentDirectory}pfp/`;
+    //   const files = await FileSystem.readDirectoryAsync(pfpDir);
+    //   await Promise.all(files.map(file => FileSystem.deleteAsync(`${pfpDir}${file}`)));
+    // }
     if (!imageUri) return;
     const localUri = await saveToLocal(imageUri);
     if (!localUri) return;
