@@ -4,6 +4,7 @@ import { authService } from "../api/auth";
 import { kvHelper } from "../kv/kvStore";
 import { logInsight } from "../api/insights";
 import { useSettingsStore } from "./settings";
+import { useAttendanceStore } from "./attendance";
 
 interface AuthState {
   user: User | null;
@@ -102,6 +103,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     set({ isLoading: true });
+    useAttendanceStore.getState().clearAttendanceData();
 
     try {
       await authService.logout();

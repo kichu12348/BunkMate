@@ -67,6 +67,8 @@ interface AttendanceState {
     },
     resolution: "accept_teacher" | "keep_user"
   ) => Promise<void>;
+
+  clearAttendanceData: () => void;
 }
 
 let requestId=0;
@@ -663,4 +665,14 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       throw new Error("Failed to resolve conflict in the database.");
     }
   },
+  clearAttendanceData: () => {
+    set({
+      data: null,
+      isLoading: false,
+      error: null,
+      lastUpdated: null,
+      courseSchedule: null,
+      hasInitFetched: false,
+    });
+  }
 }));
