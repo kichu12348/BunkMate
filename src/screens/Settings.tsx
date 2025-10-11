@@ -326,7 +326,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 <Image
                   source={{ uri: pfpUri }}
                   style={styles.profileAvatarImage}
-                  onError={() => setPfpLoadingError(true)}
+                  onError={(e) => {
+                    setPfpLoadingError(true)
+                    console.log("PFP load error:", e.nativeEvent.error);
+                  }}
                 />
               ) : (
                 <Ionicons

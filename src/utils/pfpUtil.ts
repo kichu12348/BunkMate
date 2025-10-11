@@ -1,4 +1,4 @@
-import { File, Directory, Paths } from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { PfpState, usePfpStore } from "../state/pfpStore";
 import { useToastStore } from "../state/toast";
@@ -34,18 +34,16 @@ export const usePfp = (cb?: () => void) => {
     return asset.uri;
   };
 
-  const saveToLocal = (imageUri: string) => {
+  const saveToLocal = async (imageUri: string) => {
     try {
       const fileName = imageUri.split("/").pop();
       if (!fileName) throw new Error("Invalid file name");
-
-      const imageDir = new Directory(Paths.document, "pfp");
-      if (!imageDir.exists) imageDir.create();
-
-      const destFile = new File(imageUri);
-
-      destFile.move(imageDir);
-      return destFile.uri;
+      const fileUri = `${FileSystem.documentDirectory}pfp/${fileName}`;
+      await FileSystem.makeDirectoryAsync(`${FileSystem.documentDirectory}pfp/`, {
+        intermediates: true, // Create parent directories if they don't exist
+      });
+      await FileSystem.copyAsync({ from: imageUri, to: fileUri });
+      return fileUri;
     } catch (error) {
       showToast({
         title: "Error",
@@ -61,17 +59,13 @@ export const usePfp = (cb?: () => void) => {
     const fileUri = usePfpStore.getState().uri;
     const imageUri = await pickImage();
     if (fileUri) {
-      const file = new File(fileUri);
-      try {
-        if (file.exists) {
-          file.delete();
-        }
-      } catch (e) {
-        console.log("Error deleting old file:", e);
-      }
+      // check pfp directory and delete all files
+      const pfpDir = `${FileSystem.documentDirectory}pfp/`;
+      const files = await FileSystem.readDirectoryAsync(pfpDir);
+      await Promise.all(files.map(file => FileSystem.deleteAsync(`${pfpDir}${file}`)));
     }
     if (!imageUri) return;
-    const localUri = saveToLocal(imageUri);
+    const localUri = await saveToLocal(imageUri);
     if (!localUri) return;
     usePfpStore.setState({ uri: localUri } as PfpState);
     cb?.();
