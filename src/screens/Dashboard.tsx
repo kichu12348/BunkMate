@@ -42,6 +42,7 @@ import { useThemeStore } from "../state/themeStore";
 import { useToastStore } from "../state/toast";
 import { TAB_BAR_HEIGHT } from "../constants/config";
 import AnimatedHeart from "../components/UI/AnimatedHeart";
+import { usePfpStore } from "../state/pfpStore";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -60,6 +61,10 @@ export const Dashboard: React.FC = () => {
   const navigation = useNavigation<DashboardNavigationProp>();
   const name = useAuthStore((state) => state.name);
   const showToast = useToastStore((state) => state.showToast);
+  const pfp = usePfpStore((state) => state.uri);
+
+  const [pfpUri, setPfpUri] = useState<string | null>(pfp);
+
   const {
     data: attendanceData,
     isLoading,
@@ -332,10 +337,19 @@ export const Dashboard: React.FC = () => {
             </Text>
           </View>
           <View style={styles.headerIconBadge}>
-            <Image
-              source={mode === "dark" ? logo_dark : logo_light}
-              style={styles.logoImage}
-            />
+            {pfpUri ? (
+              <Image
+                source={{ uri: pfpUri }}
+                style={styles.pfpImage}
+                resizeMode="cover"
+                onError={() => setPfpUri(null)}
+              />
+            ) : (
+              <Image
+                source={mode === "dark" ? logo_dark : logo_light}
+                style={styles.logoImage}
+              />
+            )}
           </View>
         </View>
         <Animated.View
@@ -1049,6 +1063,11 @@ const createStyles = (colors: ThemeColors) =>
     logoImage: {
       width: 30,
       height: 30,
+    },
+    pfpImage: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
     },
     // Modal Styles
     modalOverlay: {
