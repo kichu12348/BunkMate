@@ -120,6 +120,10 @@ export const kvHelper = {
     pfpStore.set("pfp_uri", uri);
   },
   
+  clearPfpUri(): void {
+    pfpStore.delete("pfp_uri");
+  },
+  
   getPfpUri(): string | null {
     return pfpStore.get<string>("pfp_uri");
   },

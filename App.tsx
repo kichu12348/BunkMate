@@ -60,7 +60,7 @@ export default function App() {
         await checkAuthStatus(async () => {
           await initializeSettings();
           await initFetchAttendance();
-          initializePfp();
+          await initializePfp();
         });
       } catch (error) {
         console.error("Initialization error:", error);

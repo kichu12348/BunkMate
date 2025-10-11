@@ -1,7 +1,32 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import { PfpState, usePfpStore } from "../state/pfpStore";
+import { usePfpStore } from "../state/pfpStore";
 import { useToastStore } from "../state/toast";
+
+export const validatePfpUri = async (uri: string): Promise<boolean> => {
+  try {
+    const fileInfo = await FileSystem.getInfoAsync(uri);
+    return fileInfo.exists;
+  } catch (error) {
+    console.log("Error validating profile picture URI:", error);
+    return false;
+  }
+};
+
+export const getCurrentValidPfpUri = async (): Promise<string | null> => {
+  const currentUri = usePfpStore.getState().uri;
+  if (!currentUri) return null;
+  
+  const isValid = await validatePfpUri(currentUri);
+  if (isValid) {
+    return currentUri;
+  } else {
+    usePfpStore.getState().setUri("");
+    return null;
+  }
+};
+
+
 
 export const usePfp = (cb?: () => void) => {
   const showToast = useToastStore.getState().showToast;
@@ -36,11 +61,14 @@ export const usePfp = (cb?: () => void) => {
 
   const saveToLocal = async (imageUri: string) => {
     try {
-      const fileName = imageUri.split("/").pop();
-      if (!fileName) throw new Error("Invalid file name");
-      const fileUri = `${FileSystem.documentDirectory}pfp/${fileName}`;
-      await FileSystem.makeDirectoryAsync(`${FileSystem.documentDirectory}pfp/`, {
-        intermediates: true, // Create parent directories if they don't exist
+      const timestamp = Date.now();
+      const fileExtension = imageUri.split('.').pop() || 'jpg';
+      const fileName = `profile_${timestamp}.${fileExtension}`;
+      const pfpDir = `${FileSystem.documentDirectory}pfp/`;
+      const fileUri = `${pfpDir}${fileName}`;
+      
+      await FileSystem.makeDirectoryAsync(pfpDir, {
+        intermediates: true,
       });
       await FileSystem.copyAsync({ from: imageUri, to: fileUri });
       return fileUri;
@@ -56,18 +84,26 @@ export const usePfp = (cb?: () => void) => {
   };
 
   return async () => {
-    //const fileUri = usePfpStore.getState().uri;
+    const currentUri = usePfpStore.getState().uri;
     const imageUri = await pickImage();
-    // if (fileUri) {
-    //   // check pfp directory and delete all files
-    //   const pfpDir = `${FileSystem.documentDirectory}pfp/`;
-    //   const files = await FileSystem.readDirectoryAsync(pfpDir);
-    //   await Promise.all(files.map(file => FileSystem.deleteAsync(`${pfpDir}${file}`)));
-    // }
+    if (currentUri) {
+      try {
+        const pfpDir = `${FileSystem.documentDirectory}pfp/`;
+        const dirInfo = await FileSystem.getInfoAsync(pfpDir);
+        if (dirInfo.exists && dirInfo.isDirectory) {
+          const files = await FileSystem.readDirectoryAsync(pfpDir);
+          await Promise.all(files.map(file => FileSystem.deleteAsync(`${pfpDir}${file}`)));
+        }
+      } catch (error) {
+        console.log("Error cleaning up old profile picture:", error);
+      }
+    }
+    
     if (!imageUri) return;
     const localUri = await saveToLocal(imageUri);
     if (!localUri) return;
-    usePfpStore.setState({ uri: localUri } as PfpState);
+  
+    usePfpStore.getState().setUri(localUri);
     cb?.();
   };
 };

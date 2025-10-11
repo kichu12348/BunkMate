@@ -4,17 +4,36 @@ import { kvHelper } from "../kv/kvStore";
 export interface PfpState {
   uri: string | null;
   setUri: (uri: string) => void;
-  initialize: () => void;
+  initialize: () => Promise<void>;
 }
 
-export const usePfpStore = create<PfpState>((set) => ({
+export const usePfpStore = create<PfpState>((set, get) => ({
   uri: null,
   setUri: (uri) => {
-    kvHelper.setPfpUri(uri);
-    set({ uri });
+    if (uri && uri.trim()) {
+      kvHelper.setPfpUri(uri);
+      set({ uri });
+    } else {
+      kvHelper.clearPfpUri();
+      set({ uri: null });
+    }
   },
-  initialize: () => {
+  initialize: async () => {
     const uri = kvHelper.getPfpUri();
-    set({ uri });
+    if (uri) {
+      // Import the validation function dynamically to avoid circular imports
+      const { validatePfpUri } = await import("../utils/pfpUtil");
+      const isValid = await validatePfpUri(uri);
+      if (isValid) {
+        set({ uri });
+      } else {
+        // Clear invalid URI
+        kvHelper.clearPfpUri();
+        set({ uri: null });
+        console.log("Profile picture file no longer exists, clearing URI");
+      }
+    } else {
+      set({ uri });
+    }
   },
 }));
