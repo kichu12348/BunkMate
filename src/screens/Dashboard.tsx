@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, use } from "react";
 import {
   View,
   Text,
@@ -64,6 +64,10 @@ export const Dashboard: React.FC = () => {
   const pfp = usePfpStore((state) => state.uri);
 
   const [pfpUri, setPfpUri] = useState<string | null>(pfp);
+
+  useEffect(() => {
+    setPfpUri(pfp);
+  }, [pfp]);
 
   const {
     data: attendanceData,
