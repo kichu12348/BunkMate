@@ -22,7 +22,7 @@ class AuthService {
     });
 
     this.api.interceptors.request.use(
-      async (config) => {
+      (config) => {
         const token = kvHelper.getAuthToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
@@ -35,10 +35,9 @@ class AuthService {
     // Add response interceptor for error handling
     this.api.interceptors.response.use(
       (response) => response,
-      async (error) => {
+      (error) => {
         if (error.response?.status === 401) {
-          // Token expired, clear it
-          await kvHelper.clearAuthToken();
+          kvHelper.clearAuthToken();
         }
         return Promise.reject(this.handleApiError(error));
       }
