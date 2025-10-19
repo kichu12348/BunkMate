@@ -225,7 +225,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         <View style={styles.modal}>
           <View style={styles.jokeContainer}>
             <Text style={styles.jokeEmoji}>
-              <AntDesign name="smileo" size={64} color={colors.text} />
+              <AntDesign name="smile" size={64} color={colors.text} />
             </Text>
             <Text style={styles.jokeTitle}>Just Kidding!</Text>
             <Text style={styles.jokeText}>
