@@ -124,7 +124,9 @@ export const AbsenteeReportScreen: React.FC = () => {
             size={16}
             color={colors.textSecondary}
           />
-          <Text style={styles.hoursLabel}>Missed periods</Text>
+          <Text style={styles.hoursLabel}>
+            Missed period{item.absentHours.length > 1 ? "s" : ""}
+          </Text>
         </View>
         <View style={styles.hoursListContainer}>
           {item.absentHours.map((hour, index) => (
