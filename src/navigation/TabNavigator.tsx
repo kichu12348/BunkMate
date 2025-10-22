@@ -7,13 +7,14 @@ import { Dashboard } from "../screens/Dashboard";
 import { NotificationsScreen } from "../screens/Notifications";
 import { SettingsScreen } from "../screens/Settings";
 import { SurveysScreen } from "../screens/Surveys";
+import { AbsenteeReportScreen } from "../screens/AbsenteeReport";
 import CustomTabNavigator from "../components/UI/CustomTabNavigator";
-
 
 export type TabParamList = {
   Dashboard: undefined;
   Notifications: undefined;
   Surveys: undefined;
+  Report: undefined;
   Settings: undefined;
 };
 
@@ -46,6 +47,12 @@ const tabs: TabItem[] = [
     iconOutline: "document-text-outline",
   },
   {
+    name: "Report",
+    label: "Report",
+    icon: "calendar",
+    iconOutline: "calendar-outline",
+  },
+  {
     name: "Settings",
     label: "Settings",
     icon: "cog",
@@ -65,6 +72,7 @@ export const TabNavigator: React.FC = () => {
       <Tab.Screen name="Dashboard" component={Dashboard} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
       <Tab.Screen name="Surveys" component={SurveysScreen} />
+      <Tab.Screen name="Report" component={AbsenteeReportScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
