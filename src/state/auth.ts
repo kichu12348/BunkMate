@@ -5,6 +5,7 @@ import { kvHelper } from "../kv/kvStore";
 import { logInsight } from "../api/insights";
 import { useSettingsStore } from "./settings";
 import { useAttendanceStore } from "./attendance";
+import { useChatStore } from "./chat";
 
 interface AuthState {
   user: User | null;
@@ -90,6 +91,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         error: null,
       });
       useSettingsStore.getState().initializeSettings();
+      useChatStore
+        .getState()
+        .initialize(`${first_name || ""} ${last_name || ""}`.trim());
     } catch (error: any) {
       set({
         user: null,
@@ -141,6 +145,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         });
         await cb?.();
         logInsight(`${first_name || ""} ${last_name || ""}`.trim());
+        useChatStore
+          .getState()
+          .initialize(`${first_name || ""} ${last_name || ""}`.trim());
       } else {
         set({
           user: null,

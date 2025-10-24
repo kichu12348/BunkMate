@@ -374,3 +374,12 @@ export interface CourseSchedule{
   last_teacher_update?: number | null;
   last_user_update?: number | null;
 };
+
+
+export interface Message {
+  id: string | number;
+  sender_id: string;
+  sender_name: string;
+  content: string;
+  timestamp: string;
+}
