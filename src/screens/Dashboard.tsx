@@ -341,19 +341,16 @@ export const Dashboard: React.FC = () => {
             </Text>
           </View>
           <View style={styles.headerIconBadge}>
-            {pfpUri ? (
-              <Image
-                source={{ uri: pfpUri }}
-                style={styles.pfpImage}
-                resizeMode="cover"
-                onError={() => setPfpUri(null)}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("PublicForum")}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="chatbubbles"
+                size={28}
+                color={styles.textSecondary.color}
               />
-            ) : (
-              <Image
-                source={mode === "dark" ? logo_dark : logo_light}
-                style={styles.logoImage}
-              />
-            )}
+            </TouchableOpacity>
           </View>
         </View>
         <Animated.View

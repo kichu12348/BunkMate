@@ -59,13 +59,12 @@ export default function App() {
         await initializeTheme(appearance);
         await checkAuthStatus(async () => {
           await initializeSettings();
-          await initFetchAttendance();
           await initializePfp();
+          initFetchAttendance();
         });
+        await SplashScreen.hideAsync();
       } catch (error) {
         console.error("Initialization error:", error);
-      } finally {
-        if (!isLoading) await SplashScreen.hideAsync();
       }
     };
 
