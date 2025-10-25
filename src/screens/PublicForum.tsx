@@ -233,7 +233,7 @@ export const PublicForum: React.FC = () => {
     <AnimatedIconBackground>
       <View
         style={{
-          paddingBottom: insets.bottom + 0,
+          paddingBottom: insets.bottom,
           flex: 1,
         }}
       >
