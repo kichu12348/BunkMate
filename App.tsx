@@ -62,7 +62,9 @@ export default function App() {
           await initializePfp();
           initFetchAttendance();
         });
-        await SplashScreen.hideAsync();
+        if (!isLoading) {
+          await SplashScreen.hideAsync();
+        }
       } catch (error) {
         console.error("Initialization error:", error);
       }
