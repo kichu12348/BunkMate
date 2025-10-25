@@ -9,7 +9,7 @@ import { SettingsScreen } from "../screens/Settings";
 import { SurveysScreen } from "../screens/Surveys";
 import { AbsenteeReportScreen } from "../screens/AbsenteeReport";
 import CustomTabNavigator from "../components/UI/CustomTabNavigator";
-import { PublicForum } from "../screens/PublicForum";
+import { ForumsScreen } from "../screens/Forums";
 
 export type TabParamList = {
   Dashboard: undefined;
@@ -56,7 +56,7 @@ const tabs: TabItem[] = [
   },
   {
     name: "Forum",
-    label: "Forum",
+    label: "Forums",
     icon: "chatbubbles",
     iconOutline: "chatbubbles-outline",
   },
@@ -75,13 +75,14 @@ export const TabNavigator: React.FC = () => {
       tabBar={(props) => <CustomTabNavigator {...props} tabs={tabs} />}
       screenOptions={{
         headerShown: false,
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tab.Screen name="Dashboard" component={Dashboard} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
       <Tab.Screen name="Surveys" component={SurveysScreen} />
       <Tab.Screen name="Report" component={AbsenteeReportScreen} />
-      <Tab.Screen name="Forum" component={PublicForum} />
+      <Tab.Screen name="Forum" component={ForumsScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

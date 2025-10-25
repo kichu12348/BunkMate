@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   TouchableOpacity,
   Text,
   StyleSheet,
   ColorValue,
+  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
@@ -116,9 +117,7 @@ const TextRevealTab: React.FC<TextRevealTabProps> = React.memo(
               style={[
                 styles.label,
                 {
-                  color: isActive
-                    ? theme.colors.primary
-                    : "transparent",
+                  color: isActive ? theme.colors.primary : "transparent",
                 },
               ]}
               numberOfLines={1}

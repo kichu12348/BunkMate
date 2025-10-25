@@ -5,19 +5,18 @@ import { useEffect, useRef, useCallback } from "react";
 
 export const useWebSocket = (
   onmessage: (msg: Message) => void,
-  onconnect?: () => void
+  onconnect?: (isConnected: boolean) => void
 ) => {
   const wsUrl = API_BASE_URL?.replace("http", "ws") + "/ws";
   const socket = useRef<WebSocket | null>(null);
   const timeoutHandle = useRef<NodeJS.Timeout | null>(null);
 
   const memoizedOnMessage = useCallback(onmessage, [onmessage]);
-  const memoizedOnConnect = useCallback(() => onconnect?.(), [onconnect]);
+  const memoizedOnConnect = useCallback(() => onconnect?.(true), [onconnect]);
 
-  const connect = useCallback(() => {
+  const connect = () => {
     socket.current = new WebSocket(wsUrl!);
     socket.current.addEventListener("open", () => {
-      console.log("WebSocket connected");
       clearTimeout(timeoutHandle.current!);
       memoizedOnConnect();
     });
@@ -28,14 +27,12 @@ export const useWebSocket = (
     });
 
     socket.current.addEventListener("close", () => {
-      console.log("WebSocket disconnected, attempting to reconnect...");
       timeoutHandle.current = setTimeout(connect, WEBSOCKET_TIMEOUT);
     });
     socket.current.addEventListener("error", (error) => {
-      console.error("WebSocket error:", error);
       socket.current?.close();
     });
-  }, [wsUrl, memoizedOnMessage, memoizedOnConnect]);
+  };
 
   useEffect(() => {
     connect();
@@ -43,11 +40,11 @@ export const useWebSocket = (
       clearTimeout(timeoutHandle.current!);
       socket.current?.close();
     };
-  }, [connect]);
+  }, []);
 
-  return (msg:Message)=>{
+  return (msg: Message) => {
     if (socket.current?.readyState === WebSocket.OPEN) {
-        socket.current.send(JSON.stringify(msg));
+      socket.current.send(JSON.stringify(msg));
     }
-  }
+  };
 };
