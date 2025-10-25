@@ -240,7 +240,7 @@ export const PublicForum: React.FC = () => {
         {renderHeader()}
         <KeyboardAvoidingView
           style={styles.container}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <FlatList
             ref={flatListRef}
@@ -258,6 +258,8 @@ export const PublicForum: React.FC = () => {
                 refreshing={isLoadingHistory}
                 onRefresh={handleLoadMore}
                 tintColor={colors.primary}
+                colors={[colors.primary]}
+                progressBackgroundColor={colors.background}
               />
             }
           />
