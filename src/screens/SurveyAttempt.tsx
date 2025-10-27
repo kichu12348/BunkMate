@@ -360,8 +360,11 @@ export const SurveyAttemptScreen: React.FC = () => {
     const hasAllQuestionsAnswered = Array.from(updatedResponses.values()).every(
       (response) => response.choiceId !== null
     );
-      progressWidth.value = withTiming(100, { duration: 500, easing: Easing.out(Easing.ease) });
-    if (hasAllQuestionsAnswered) {
+    progressWidth.value = withTiming(100, {
+      duration: 500,
+      easing: Easing.out(Easing.ease),
+    });
+    if (validateResponses() && hasAllQuestionsAnswered) {
       showToast({
         title: "Submit",
         message: `All questions will be filled with "${choiceName}"`,
