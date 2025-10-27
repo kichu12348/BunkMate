@@ -6,11 +6,11 @@ export const API_CONFIG = {
       LOGIN: "/login",
       LOOKUP: "/login/lookup",
       USER: "/user",
-      RESET:{
-        OPTIONS:"/password/reset/options",
-        REQUEST:"/password/reset/request",
-        VERIFY:"/password/reset"
-      }
+      RESET: {
+        OPTIONS: "/password/reset/options",
+        REQUEST: "/password/reset/request",
+        VERIFY: "/password/reset",
+      },
     },
     ATTENDANCE: {
       DETAILED: "/attendancereports/student/detailed",
@@ -69,3 +69,13 @@ export const INSIGHTS_LOGGED = "insights_logged";
 export const INSIGHTS_LOGGED_CODE = "ABCD_12348_";
 export const PFP_URL = "pfp_url";
 export const WEBSOCKET_TIMEOUT = 3000;
+
+export const CHAT_CONFIG = {
+  GET_MESSAGES: (
+    offset: number,
+    limit: number,
+    API_BASE_URL: string
+  ): string => {
+    return `${API_BASE_URL}/get-messages/${offset}/${limit}`;
+  },
+};
