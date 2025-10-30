@@ -280,7 +280,7 @@ export const PublicForum: React.FC = () => {
                 }}
                 placeholder="Type a message..."
                 placeholderTextColor={colors.textSecondary}
-                editable={!isConnected}
+                editable={isConnected}
                 multiline
                 maxLength={500}
               />
