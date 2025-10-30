@@ -24,11 +24,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ userName: name, userId: id });
   },
   addMessage: (message: Message) => {
+    if (keySet.has(message.id.toString())) return;
     set((state) => {
-      // Prevent adding duplicate messages
-      if (keySet.has(message.id.toString())) {
-        return state;
-      }
       keySet.add(message.id.toString());
       return { messages: [...state.messages, message] };
     });
