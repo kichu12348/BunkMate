@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, use } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -6,12 +6,9 @@ import {
   TouchableOpacity,
   RefreshControl,
   Dimensions,
-  Image,
   Modal,
   FlatList,
 } from "react-native";
-import logo_dark from "../assets/bonk_icon_dark.png";
-import logo_light from "../assets/bonk_icon_light.png";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -57,13 +54,12 @@ const { width } = Dimensions.get("window");
 export const Dashboard: React.FC = () => {
   const styles = useThemedStyles(createStyles);
   const colors = useThemeStore((state) => state.colors);
-  const mode = useThemeStore((state) => state.mode);
   const navigation = useNavigation<DashboardNavigationProp>();
   const name = useAuthStore((state) => state.name);
   const showToast = useToastStore((state) => state.showToast);
   const pfp = usePfpStore((state) => state.uri);
 
-  const [pfpUri, setPfpUri] = useState<string | null>(pfp);
+  const [_, setPfpUri] = useState<string | null>(pfp);
 
   useEffect(() => {
     setPfpUri(pfp);
@@ -106,7 +102,7 @@ export const Dashboard: React.FC = () => {
   }, []);
 
   const insets = useSafeAreaInsets();
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(true);
   const [isHeartActive, setIsHeartActive] = useState(false);
   const scaleAnim = useSharedValue(0.8);
 
@@ -217,7 +213,7 @@ export const Dashboard: React.FC = () => {
     };
   }, [enhancedSubjects]);
   useEffect(() => {
-    initFetchAttendance();
+    initFetchAttendance().finally(() => setRefreshing(false));
 
     // Animate card on load
     scaleAnim.value = withSpring(1, {
@@ -227,6 +223,7 @@ export const Dashboard: React.FC = () => {
     });
   }, []);
   const handleRefresh = async () => {
+    if (refreshing) return;
     setRefreshing(true);
     try {
       await refreshAttendance();

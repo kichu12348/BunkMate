@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Dimensions,
   ActivityIndicator,
-  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeStore } from "../../../state/themeStore";
@@ -18,7 +17,7 @@ import { useToastStore } from "../../../state/toast";
 interface OptionsModalProps {
   visible: boolean;
   onClose: () => void;
-  onOptionSelected: (username: string, option: "mail" | "sms") => void;
+  onOptionSelected: (option: "mail" | "sms") => void;
   username: string;
 }
 
@@ -73,7 +72,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
 
   const handleOptionSelect = (option: "mail" | "sms") => {
     if (resetOptions) {
-      onOptionSelected(resetOptions.username, option);
+      onOptionSelected(option);
       handleClose();
     }
   };

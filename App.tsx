@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { useAuthStore } from "./src/state/auth";
-import { useSettingsStore } from "./src/state/settings";
 import { useTheme } from "./src/hooks/useTheme";
 import { LoginScreen } from "./src/screens/Login";
 import { RootNavigator } from "./src/navigation/RootNavigator";
@@ -13,7 +12,6 @@ import { StatusBar, Appearance } from "react-native";
 import * as SystemUI from "expo-system-ui";
 import * as Update from "expo-updates";
 import { useFonts } from "expo-font";
-import { useAttendanceStore } from "./src/state/attendance";
 import { usePfpStore } from "./src/state/pfpStore";
 import Toast from "./src/components/UI/toast";
 //import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
@@ -24,13 +22,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const { initializeTheme, colors, isDark } = useTheme();
-  const { isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
-  const initFetchAttendance = useAttendanceStore(
-    (state) => state.initFetchAttendance
-  );
-  const initializeSettings = useSettingsStore(
-    (state) => state.initializeSettings
-  );
+  const { isAuthenticated, checkAuthStatus } = useAuthStore();
 
   const initializePfp = usePfpStore((state) => state.initialize);
 
@@ -58,14 +50,12 @@ export default function App() {
         const appearance = Appearance.getColorScheme() || "light";
         await initializeTheme(appearance);
         await checkAuthStatus(async () => {
-          await initializeSettings();
-          await initFetchAttendance();
           await initializePfp();
         });
       } catch (error) {
         console.error("Initialization error:", error);
       } finally {
-        if (!isLoading) await SplashScreen.hideAsync();
+        await SplashScreen.hideAsync();
       }
     };
 
