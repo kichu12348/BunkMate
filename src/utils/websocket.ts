@@ -3,6 +3,8 @@ import { Message } from "../types/api";
 import { WEBSOCKET_TIMEOUT } from "../constants/config";
 import { useEffect, useRef, useCallback } from "react";
 
+let isConnected = false;
+
 export const useWebSocket = (
   onmessage: (msg: Message) => void,
   onconnect?: (isConnected: boolean) => void
@@ -12,13 +14,16 @@ export const useWebSocket = (
   const timeoutHandle = useRef<NodeJS.Timeout | null>(null);
 
   const memoizedOnMessage = useCallback(onmessage, [onmessage]);
-  const memoizedOnConnect = useCallback(() => onconnect?.(true), [onconnect]);
+  const memoizedOnConnect = useCallback(
+    (val: boolean) => onconnect?.(val),
+    [onconnect]
+  );
 
   const connect = () => {
     socket.current = new WebSocket(wsUrl!);
     socket.current.addEventListener("open", () => {
       clearTimeout(timeoutHandle.current!);
-      memoizedOnConnect();
+      if (!isConnected) memoizedOnConnect(true);
     });
 
     socket.current.addEventListener("message", (event) => {
@@ -28,9 +33,11 @@ export const useWebSocket = (
 
     socket.current.addEventListener("close", () => {
       timeoutHandle.current = setTimeout(connect, WEBSOCKET_TIMEOUT);
+      if(isConnected) memoizedOnConnect(false);
     });
     socket.current.addEventListener("error", (error) => {
       socket.current?.close();
+      if(isConnected) memoizedOnConnect(false);
     });
   };
 

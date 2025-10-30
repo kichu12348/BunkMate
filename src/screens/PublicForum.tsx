@@ -146,6 +146,7 @@ export const PublicForum: React.FC = () => {
 
   // Handler for sending a new message
   const handleSendMessage = () => {
+    if (!isConnected) return;
     const trimmedMessage = newMessage.trim();
     if (trimmedMessage.length === 0 || !userId || !userName) {
       return;
@@ -279,13 +280,14 @@ export const PublicForum: React.FC = () => {
                 }}
                 placeholder="Type a message..."
                 placeholderTextColor={colors.textSecondary}
+                editable={!isConnected}
                 multiline
                 maxLength={500}
               />
               <TouchableOpacity
                 onPress={handleSendMessage}
                 activeOpacity={0.7}
-                disabled={newMessage.trim().length === 0}
+                disabled={newMessage.trim().length === 0 || !isConnected}
               >
                 <Animated.View style={[styles.sendButton, animatedStyle]}>
                   <AnimatedIcon
