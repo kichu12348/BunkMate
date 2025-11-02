@@ -12,3 +12,8 @@ declare module "*.webp" {
   const content: string;
   export default value;
 }
+
+declare module "*.gif" {
+  const content: string;
+  export default value;
+}

@@ -30,6 +30,7 @@ import Animated, {
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
+import loadingError from "../assets/loading_error_gif.gif";
 
 type PublicForumNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -43,10 +44,12 @@ const MessageItem = ({
   item,
   styles,
   userId,
+  colors,
 }: {
   item: Message;
   styles: ReturnType<typeof createStyles>;
   userId: string;
+  colors: ThemeColors;
 }) => {
   const isMyMessage = item.sender_id === userId;
   const [imageLoadingError, setImageLoadingError] = useState(false);
@@ -69,17 +72,24 @@ const MessageItem = ({
           isImageMessage && styles.imageBubble,
         ]}
       >
-        {!isMyMessage && !imageLoadingError && (
+        {!isMyMessage && (
           <Text style={styles.senderName}>{item.sender_name}</Text>
         )}
-        {isImageMessage &&  (
-          <Image
-            source={{ uri: imageUrl, cache: "force-cache" }}
-            style={styles.messageImage}
-            resizeMode="cover"
-            onError={() => setImageLoadingError(true)}
-          />
-        )}
+        {isImageMessage &&
+          (!imageLoadingError ? (
+            <Image
+              source={{ uri: imageUrl, cache: "force-cache" }}
+              style={styles.messageImage}
+              resizeMode="cover"
+              onError={() => setImageLoadingError(true)}
+            />
+          ) : (
+            <Image
+              source={loadingError}
+              style={styles.messageImage}
+              resizeMode="contain"
+            />
+          ))}
         {item.content && (
           <Text
             style={isMyMessage ? styles.myMessageText : styles.otherMessageText}
@@ -101,6 +111,7 @@ export const PublicForum: React.FC = () => {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>();
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [imageLoadingError, setImageLoadingError] = useState(false);
   const isButtonActive = useRef(false);
   const isAnimating = useRef(false);
 
@@ -306,7 +317,12 @@ export const PublicForum: React.FC = () => {
             ref={flatListRef}
             data={messages}
             renderItem={({ item }) => (
-              <MessageItem item={item} styles={styles} userId={userId} />
+              <MessageItem
+                item={item}
+                styles={styles}
+                userId={userId}
+                colors={colors}
+              />
             )}
             keyExtractor={(item) => item.id.toString()}
             style={[styles.messageList]}
@@ -328,15 +344,40 @@ export const PublicForum: React.FC = () => {
 
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
-              {previewImageUrl && (
-                <View style={styles.imagePreviewContainer}>
-                  <Image
-                    source={{ uri: previewImageUrl, cache: "force-cache" }}
-                    style={styles.previewImage}
-                    resizeMode="cover"
-                  />
-                </View>
-              )}
+              {previewImageUrl &&
+                (!imageLoadingError ? (
+                  <View style={styles.imagePreviewContainer}>
+                    <Image
+                      source={{ uri: previewImageUrl, cache: "force-cache" }}
+                      style={styles.previewImage}
+                      resizeMode="cover"
+                      onError={() => setImageLoadingError(true)}
+                    />
+                  </View>
+                ) : (
+                  <View
+                    style={[
+                      styles.imagePreviewContainer,
+                      {
+                        borderColor: colors.error,
+                        borderWidth: 1.5,
+                        borderStyle: "dashed",
+                        backgroundColor: colors.surface,
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.previewImage,
+                        { justifyContent: "center", alignItems: "center" },
+                      ]}
+                    >
+                      <Text style={styles.imagePreviewText}>
+                        Image failed to load
+                      </Text>
+                    </View>
+                  </View>
+                ))}
               <TextInput
                 style={styles.textInput}
                 value={newMessage}
@@ -501,11 +542,17 @@ const createStyles = (colors: ThemeColors) =>
       position: "absolute",
       top: -160,
       left: 0,
+      borderRadius: 12,
     },
     previewImage: {
       width: 150,
       height: 150,
       borderRadius: 12,
+    },
+    imagePreviewText: {
+      fontSize: 12,
+      color: colors.error,
+      fontWeight: "bold",
     },
     inputWrapper: {
       flexDirection: "row",
