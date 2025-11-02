@@ -49,6 +49,7 @@ const MessageItem = ({
   userId: string;
 }) => {
   const isMyMessage = item.sender_id === userId;
+  const [imageLoadingError, setImageLoadingError] = useState(false);
 
   // Check if message has image_url property
   const imageUrl = item.image_url;
@@ -68,14 +69,15 @@ const MessageItem = ({
           isImageMessage && styles.imageBubble,
         ]}
       >
-        {!isMyMessage && (
+        {!isMyMessage && !imageLoadingError && (
           <Text style={styles.senderName}>{item.sender_name}</Text>
         )}
-        {isImageMessage && (
+        {isImageMessage &&  (
           <Image
             source={{ uri: imageUrl, cache: "force-cache" }}
             style={styles.messageImage}
             resizeMode="cover"
+            onError={() => setImageLoadingError(true)}
           />
         )}
         {item.content && (
