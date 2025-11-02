@@ -13,7 +13,6 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import { StyleSheet } from "react-native";
-import { runOnRuntime, scheduleOnRN } from "react-native-worklets";
 import { useThemeStore } from "../../state/themeStore";
 
 const REFRESH_THRESHOLD = 80;
