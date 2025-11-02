@@ -9,6 +9,7 @@ import {
   Platform,
   RefreshControl,
   KeyboardAvoidingView,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,12 +39,64 @@ import AnimatedIconBackground from "../components/UI/ChatBackground";
 
 const AnimatedIcon = Animated.createAnimatedComponent(Ionicons);
 
+const MessageItem = ({
+  item,
+  styles,
+  userId,
+}: {
+  item: Message;
+  styles: ReturnType<typeof createStyles>;
+  userId: string;
+}) => {
+  const isMyMessage = item.sender_id === userId;
+
+  // Check if message has image_url property
+  const imageUrl = item.image_url;
+  const isImageMessage = !!imageUrl;
+
+  return (
+    <View
+      style={[
+        styles.messageRow,
+        isMyMessage ? styles.myMessageRow : styles.otherMessageRow,
+      ]}
+    >
+      <View
+        style={[
+          styles.messageBubble,
+          isMyMessage ? styles.myMessageBubble : styles.otherMessageBubble,
+          isImageMessage && styles.imageBubble,
+        ]}
+      >
+        {!isMyMessage && (
+          <Text style={styles.senderName}>{item.sender_name}</Text>
+        )}
+        {isImageMessage && (
+          <Image
+            source={{ uri: imageUrl, cache: "force-cache" }}
+            style={styles.messageImage}
+            resizeMode="cover"
+          />
+        )}
+        {item.content && (
+          <Text
+            style={isMyMessage ? styles.myMessageText : styles.otherMessageText}
+          >
+            {item.content}
+          </Text>
+        )}
+      </View>
+    </View>
+  );
+};
+
 export const PublicForum: React.FC = () => {
   const styles = useThemedStyles(createStyles);
   const { colors } = useThemeStore();
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>();
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const isButtonActive = useRef(false);
@@ -151,17 +204,35 @@ export const PublicForum: React.FC = () => {
     if (trimmedMessage.length === 0 || !userId || !userName) {
       return;
     }
+
+    // Extract first image URL if present
+    const imageMatches = trimmedMessage.match(/\*img:(.+?)\*/g);
+    let imageUrl: string | undefined;
+    let cleanedContent = trimmedMessage;
+
+    if (imageMatches && imageMatches.length > 0) {
+      // Get first image match and extract URL
+      const firstImageMatch = imageMatches[0].match(/\*img:(.+)\*$/);
+      if (firstImageMatch) {
+        imageUrl = firstImageMatch[1].trim();
+      }
+      // Remove all *img:url* patterns from content
+      cleanedContent = trimmedMessage.replace(/\*img:.+?\*/g, "").trim();
+    }
+
     const message: Message = {
       id: Date.now().toString(),
       sender_id: userId,
       sender_name: userName,
-      content: trimmedMessage,
+      content: cleanedContent,
       timestamp: new Date().toISOString(),
+      ...(imageUrl && { image_url: imageUrl }),
     };
 
     sendMessage(message);
     addMessage(message);
     setNewMessage("");
+    setPreviewImageUrl(undefined);
 
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
@@ -176,35 +247,6 @@ export const PublicForum: React.FC = () => {
     await onScrollToTop();
     setIsLoadingHistory(false);
   };
-
-  const MessageItem = React.memo(({ item }: { item: Message }) => {
-    const isMyMessage = item.sender_id === userId;
-
-    return (
-      <View
-        style={[
-          styles.messageRow,
-          isMyMessage ? styles.myMessageRow : styles.otherMessageRow,
-        ]}
-      >
-        <View
-          style={[
-            styles.messageBubble,
-            isMyMessage ? styles.myMessageBubble : styles.otherMessageBubble,
-          ]}
-        >
-          {!isMyMessage && (
-            <Text style={styles.senderName}>{item.sender_name}</Text>
-          )}
-          <Text
-            style={isMyMessage ? styles.myMessageText : styles.otherMessageText}
-          >
-            {item.content}
-          </Text>
-        </View>
-      </View>
-    );
-  });
 
   const renderHeader = () => (
     <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
@@ -230,6 +272,21 @@ export const PublicForum: React.FC = () => {
     </View>
   );
 
+  // Check for image pattern whenever message changes
+  useEffect(() => {
+    const imageMatches = newMessage.match(/\*img:(.+?)\*/g);
+    if (imageMatches && imageMatches.length > 0) {
+      const firstImageMatch = imageMatches[0].match(/\*img:(.+)\*$/);
+      if (firstImageMatch) {
+        setPreviewImageUrl(firstImageMatch[1].trim());
+      } else {
+        setPreviewImageUrl(undefined);
+      }
+    } else {
+      setPreviewImageUrl(undefined);
+    }
+  }, [newMessage]);
+
   return (
     <AnimatedIconBackground>
       <View
@@ -246,7 +303,9 @@ export const PublicForum: React.FC = () => {
           <FlatList
             ref={flatListRef}
             data={messages}
-            renderItem={({ item }) => <MessageItem item={item} />}
+            renderItem={({ item }) => (
+              <MessageItem item={item} styles={styles} userId={userId} />
+            )}
             keyExtractor={(item) => item.id.toString()}
             style={[styles.messageList]}
             contentContainerStyle={[
@@ -267,6 +326,15 @@ export const PublicForum: React.FC = () => {
 
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
+              {previewImageUrl && (
+                <View style={styles.imagePreviewContainer}>
+                  <Image
+                    source={{ uri: previewImageUrl, cache: "force-cache" }}
+                    style={styles.previewImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              )}
               <TextInput
                 style={styles.textInput}
                 value={newMessage}
@@ -278,7 +346,7 @@ export const PublicForum: React.FC = () => {
                     deactiveButton();
                   }
                 }}
-                placeholder="Type a message..."
+                placeholder="Type a message... (or *img:url* )"
                 placeholderTextColor={colors.textSecondary}
                 editable={isConnected}
                 multiline
@@ -390,6 +458,9 @@ const createStyles = (colors: ThemeColors) =>
         },
       }),
     },
+    imageBubble: {
+      padding: 4,
+    },
     myMessageBubble: {
       backgroundColor: colors.primary,
       borderBottomRightRadius: 4,
@@ -421,11 +492,25 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: 16,
       paddingTop: 12,
     },
+    imagePreviewContainer: {
+      alignItems: "flex-start",
+      justifyContent: "center",
+      maxWidth: 150,
+      position: "absolute",
+      top: -160,
+      left: 0,
+    },
+    previewImage: {
+      width: 150,
+      height: 150,
+      borderRadius: 12,
+    },
     inputWrapper: {
       flexDirection: "row",
       alignItems: "flex-end",
       gap: 10,
       marginBottom: 8,
+      position: "relative",
     },
     textInput: {
       flex: 1,
@@ -446,5 +531,10 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 22,
       alignItems: "center",
       justifyContent: "center",
+    },
+    messageImage: {
+      width: 200,
+      height: 200,
+      borderRadius: 16,
     },
   });

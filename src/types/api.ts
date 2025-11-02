@@ -382,4 +382,5 @@ export interface Message {
   sender_name: string;
   content: string;
   timestamp: string;
+  image_url?: string;
 }
