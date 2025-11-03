@@ -104,7 +104,7 @@ const MessageItem = ({
 
 export const PublicForum: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const { colors } = useThemeStore();
+  const colors = useThemeStore((s) => s.colors);
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const [newMessage, setNewMessage] = useState("");
@@ -292,6 +292,7 @@ export const PublicForum: React.FC = () => {
       const firstImageMatch = imageMatches[0].match(/\*img:(.+)\*$/);
       if (firstImageMatch) {
         setPreviewImageUrl(firstImageMatch[1].trim());
+        setImageLoadingError(false);
       } else {
         setPreviewImageUrl(undefined);
       }
