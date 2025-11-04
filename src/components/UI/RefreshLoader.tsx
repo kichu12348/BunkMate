@@ -105,19 +105,19 @@ const CustomRefreshLoader = ({
   isRefreshing,
   onRefresh,
   children,
-  scrollGesture,
   size = 1,
   shouldShowLoader = true, // new prop
 }: {
   isRefreshing: boolean;
   onRefresh: () => void;
   children?: React.ReactNode;
-  scrollGesture?: any;
   size?: number;
   shouldShowLoader?: boolean;
 }) => {
   const translationY = useSharedValue(0);
   const pullProgress = useSharedValue(0);
+
+  const scrollGesture = Gesture.Native();
 
   React.useEffect(() => {
     if (isRefreshing) {
@@ -208,7 +208,7 @@ const CustomRefreshLoader = ({
         )}
 
         <Animated.View style={[styles.content, containerStyle]}>
-          {children}
+          <GestureDetector gesture={scrollGesture}>{children}</GestureDetector>
         </Animated.View>
       </Animated.View>
     </GestureDetector>

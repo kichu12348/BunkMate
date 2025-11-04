@@ -41,7 +41,6 @@ import { TAB_BAR_HEIGHT } from "../constants/config";
 import AnimatedHeart from "../components/UI/AnimatedHeart";
 import { usePfpStore } from "../state/pfpStore";
 import CustomRefreshLoader from "../components/UI/RefreshLoader";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -63,7 +62,6 @@ export const Dashboard: React.FC = () => {
 
   const [_, setPfpUri] = useState<string | null>(pfp);
 
-  const scrollGesture = Gesture.Native();
 
   useEffect(() => {
     setPfpUri(pfp);
@@ -402,11 +400,9 @@ export const Dashboard: React.FC = () => {
       <CustomRefreshLoader
         isRefreshing={refreshing}
         onRefresh={handleRefresh}
-        scrollGesture={scrollGesture}
         shouldShowLoader={shouldShowLoader}
         size={1.5}
       >
-        <GestureDetector gesture={scrollGesture}>
           <Animated.ScrollView
             style={styles.scrollView}
             contentContainerStyle={{
@@ -714,7 +710,6 @@ export const Dashboard: React.FC = () => {
               </TouchableOpacity>
             </View>
           </Animated.ScrollView>
-        </GestureDetector>
       </CustomRefreshLoader>
       {/* Filter Modal */}
       <Modal

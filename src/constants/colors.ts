@@ -12,14 +12,14 @@ export const loaderColorsLight = [
 ];
 
 export const loaderColorsDark = [
-  "#f8fafc", // Off-White
-  "#94a3b8", // Cool Silver
-  "#38bdf8", // Sky Blue
-  "#60a5fa", // Blue Glow
-  "#34d399", // Mint Green
-  "#facc15", // Yellow Bright
-  "#fb7185", // Coral Pink
-  "#c084fc"  // Soft Lavender
+  "#1e293b", // Deep Slate (base tone, replaces off-white)
+  "#64748b", // Cool Steel (replaces silver, adds contrast)
+  "#0ea5e9", // Vibrant Sky Blue (strong glow)
+  "#3b82f6", // Electric Blue
+  "#10b981", // Fresh Mint Glow
+  "#eab308", // Golden Yellow (warmer pop)
+  "#f43f5e", // Coral Red (deeper, more neon on dark)
+  "#a855f7"  // Bright Lavender (keeps that soft energy)
 ];
 
 
@@ -42,20 +42,20 @@ export const lightTheme: ThemeColors = {
 };
 
 export const darkTheme: ThemeColors = {
-  background: "#0f172a",
-  surface: "#1e293b",
-  text: "#f1f5f9",
-  textSecondary: "#94a3b8",
-  accent: "#818cf8",
-  primary: "#60a5fa",
-  secondary: "#8b5cf6",
-  danger: "#f87171",
-  warning: "#fbbf24",
-  success: "#4ade80",
-  border: "#334155",
-  shadow: "#00000040",
-  error: "#f87171",
-  info: "#60a5fa",
+  background: "#0f1117",      // deep navy-charcoal; feels premium, not flat black
+  surface: "#181b24",         // slightly lighter for cards/surfaces, keeps depth
+  text: "#f8f9fa",            // crisp but not pure white
+  textSecondary: "#b0b7c3",   // soft cool tone, matches the light theme’s calm
+  primary: "#6ea8fe",         // brightened version of light mode primary
+  secondary: "#a58cff",       // keeps the lavender tone vibrant on dark
+  accent: "#ff8b3d",          // rich orange pop — killer for CTA/hover
+  error: "#ef5350",           // balanced red that doesn’t glare
+  danger: "#ef5350",          // same tone for consistency
+  warning: "#f4c04e",         // warm golden, readable and natural
+  success: "#3ddc97",         // cool mint-green pop
+  border: "#2a2d36",          // just enough separation without harsh contrast
+  shadow: "#00000090",        // deeper shadow for real depth
+  info: "#6ea8fe",            // same as primary
   loaderColors: loaderColorsDark,
 };
 

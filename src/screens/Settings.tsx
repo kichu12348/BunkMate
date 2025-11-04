@@ -31,7 +31,6 @@ import Animated, {
 import AnimatedHeart from "../components/UI/AnimatedHeart";
 import { APP_CONFIG } from "../constants/config";
 import { darkTheme, lightTheme } from "../constants/colors";
-import pfp from "../assets/bonk_pfp.jpeg";
 import { usePfp } from "../utils/pfpUtil";
 import { usePfpStore } from "../state/pfpStore";
 
