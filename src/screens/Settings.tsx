@@ -9,7 +9,12 @@ import {
   Linking,
   Image,
 } from "react-native";
-import { Entypo, Feather, Ionicons } from "@expo/vector-icons";
+import {
+  Entypo,
+  Feather,
+  Ionicons,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import { useSettingsStore } from "../state/settings";
 import { useAttendanceStore } from "../state/attendance";
 import { useThemedStyles, useTheme } from "../hooks/useTheme";
@@ -251,6 +256,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     rightElement,
     showArrow = true,
     titleFontFamily = false,
+    danger = false,
   }: {
     Icon: ReactElement;
     title: string;
@@ -261,20 +267,32 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     isGreat?: boolean;
     iconColor?: string;
     titleFontFamily?: boolean;
+    danger?: boolean;
   }) => (
     <TouchableOpacity
-      style={styles.settingItem}
+      style={[
+        styles.settingItem,
+        !onPress && !rightElement && styles.settingItemDisabled,
+      ]}
       onPress={onPress}
       disabled={!onPress}
       activeOpacity={0.7}
     >
       <View style={styles.settingItemLeft}>
-        <View style={styles.settingIconContainer}>{Icon}</View>
+        <View
+          style={[
+            styles.settingIconContainer,
+            danger && styles.dangerIconContainer,
+          ]}
+        >
+          {Icon}
+        </View>
         <View style={styles.settingItemContent}>
           <Text
-            style={
-              titleFontFamily ? styles.customSettingTitle : styles.settingTitle
-            }
+            style={[
+              titleFontFamily ? styles.customSettingTitle : styles.settingTitle,
+              danger && styles.dangerText,
+            ]}
           >
             {title}
           </Text>
@@ -282,11 +300,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         </View>
       </View>
       {rightElement ||
-        (showArrow && (
+        (showArrow && onPress && (
           <Ionicons
             name="chevron-forward"
-            size={16}
-            color={styles.settingArrow.color}
+            size={20}
+            color={danger ? colors.danger : styles.settingArrow.color}
           />
         ))}
     </TouchableOpacity>
@@ -302,8 +320,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Settings</Text>
-        <View style={styles.placeholder} />
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Settings</Text>
+        </View>
       </View>
 
       <ScrollView
@@ -316,119 +335,144 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* User Profile Section */}
         <View style={styles.profileSection}>
           <Animated.View style={[styles.profileCard, cardAnimatedStyle]}>
-            <TouchableOpacity
-              style={styles.profileAvatar}
-              onPress={updatePfp}
-              activeOpacity={0.7}
-            >
-              {pfpUri && !pfpLoadingError ? (
-                <Image
-                  source={{ uri: pfpUri }}
-                  style={styles.profileAvatarImage}
-                  onError={(e) => {
-                    setPfpLoadingError(true)
-                    console.log("PFP load error:", e.nativeEvent.error);
-                  }}
-                />
-              ) : (
-                <Ionicons
-                  name="person-circle-outline"
-                  size={60}
-                  color={colors.primary}
-                />
-              )}
-            </TouchableOpacity>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{user?.username || "User"}</Text>
-              <Text style={styles.profileEmail}>Student Account</Text>
+            <View style={styles.profileHeader}>
+              <TouchableOpacity
+                style={styles.profileAvatarContainer}
+                onPress={updatePfp}
+                activeOpacity={0.7}
+              >
+                {pfpUri && !pfpLoadingError ? (
+                  <Image
+                    source={{ uri: pfpUri }}
+                    style={styles.profileAvatarImage}
+                    onError={(e) => {
+                      setPfpLoadingError(true);
+                      console.log("PFP load error:", e.nativeEvent.error);
+                    }}
+                  />
+                ) : (
+                  <View style={styles.profileAvatarPlaceholder}>
+                    <Ionicons name="person" size={40} color={colors.primary} />
+                  </View>
+                )}
+                <View style={styles.editBadge}>
+                  <Ionicons name="camera" size={14} color="white" />
+                </View>
+              </TouchableOpacity>
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>
+                  {user?.username || "User"}
+                </Text>
+                <View style={styles.profileBadge}>
+                  <MaterialCommunityIcons
+                    name="school"
+                    size={14}
+                    color={colors.primary}
+                  />
+                  <Text style={styles.profileBadgeText}>Student Account</Text>
+                </View>
+              </View>
             </View>
           </Animated.View>
         </View>
-
         {/* Academic Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Academic Settings</Text>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons
+              name="book-open-variant"
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={styles.sectionTitle}>Academic Settings</Text>
+          </View>
 
           <AnimatedCard>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Filter Options</Text>
-              <Text style={styles.cardDescription}>
-                Select academic year and semester to filter your attendance data
-              </Text>
-            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.dropdownContainer}>
+                <Dropdown
+                  label="Academic Year"
+                  options={availableYears}
+                  selectedValue={selectedYear}
+                  onSelect={handleYearChange}
+                  placeholder="Select academic year"
+                  disabled={isLoading}
+                />
+              </View>
 
-            <View style={styles.form}>
-              <Dropdown
-                label="Academic Year"
-                options={availableYears}
-                selectedValue={selectedYear}
-                onSelect={handleYearChange}
-                placeholder="Select academic year"
+              <View style={styles.dropdownContainer}>
+                <Dropdown
+                  label="Semester"
+                  options={availableSemesters}
+                  selectedValue={selectedSemester}
+                  onSelect={handleSemesterChange}
+                  placeholder="Select semester"
+                  disabled={isLoading}
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.primaryButton,
+                  isLoading && styles.primaryButtonDisabled,
+                ]}
+                onPress={handleApplySettings}
                 disabled={isLoading}
-              />
-
-              <Dropdown
-                label="Semester"
-                options={availableSemesters}
-                selectedValue={selectedSemester}
-                onSelect={handleSemesterChange}
-                placeholder="Select semester"
-                disabled={isLoading}
-              />
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <View style={styles.primaryButtonContent}>
+                    <Ionicons name="refresh-outline" size={20} color="white" />
+                    <Text style={styles.primaryButtonText}>
+                      Refresh Attendance
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              style={[
-                styles.refreshButton,
-                isLoading && styles.refreshButtonDisabled,
-              ]}
-              onPress={handleApplySettings}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <View style={styles.refreshButtonContent}>
-                  <Ionicons name="refresh" size={18} color="white" />
-                  <Text style={styles.refreshButtonText}>Refresh Data</Text>
-                </View>
-              )}
-            </TouchableOpacity>
           </AnimatedCard>
         </View>
-
-        {/* App Settings */}
+        {/* Preferences */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Settings</Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons
+              name="color-palette-outline"
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={styles.sectionTitle}>Preferences</Text>
+          </View>
 
           <AnimatedCard>
             <SettingItem
               Icon={
-                <View style={{ overflow: "hidden", position: "relative" }}>
+                <View style={styles.themeIconContainer}>
                   <Animated.View
                     style={[
                       lightModeIconAnimatedStyle,
-                      isDark && { position: "absolute" },
+                      styles.themeIcon,
+                      isDark && styles.themeIconHidden,
                     ]}
                   >
                     <Ionicons
                       name="sunny"
                       color={lightTheme.warning}
-                      size={24}
+                      size={22}
                     />
                   </Animated.View>
                   <Animated.View
                     style={[
                       darkModeIconAnimatedStyle,
-                      !isDark && { position: "absolute" },
+                      styles.themeIcon,
+                      !isDark && styles.themeIconHidden,
                     ]}
                   >
-                    <Ionicons name="moon" color={darkTheme.primary} size={24} />
+                    <Ionicons name="moon" color={darkTheme.primary} size={22} />
                   </Animated.View>
                 </View>
               }
               title="Dark Mode"
-              subtitle={isDark ? "Enabled" : "Disabled"}
+              subtitle={isDark ? "Dark theme enabled" : "Light theme enabled"}
               rightElement={
                 <Switch
                   value={isDark}
@@ -444,104 +488,98 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             />
           </AnimatedCard>
         </View>
-
-        {/* Support Section */}
+        {/* About & Support */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hehe</Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={styles.sectionTitle}>About & Support</Text>
+          </View>
 
           <AnimatedCard>
             <SettingItem
               Icon={
-                <Entypo
-                  name="emoji-happy"
-                  size={24}
-                  color={styles.settingIcon.color}
-                />
+                <Entypo name="emoji-happy" size={22} color={colors.primary} />
               }
               title={APP_CONFIG.NAME}
               subtitle={APP_CONFIG.DESCRIPTION}
               titleFontFamily
               showArrow={false}
-              onPress={null}
             />
-          </AnimatedCard>
-
-          <AnimatedCard>
+            <View style={styles.itemSeparator} />
             <SettingItem
               Icon={
-                <Ionicons
-                  name="information-circle-outline"
-                  size={24}
-                  color={styles.settingIcon.color}
+                <MaterialCommunityIcons
+                  name="information-variant"
+                  size={22}
+                  color={colors.primary}
                 />
               }
-              title="App Version"
+              title="Version"
               subtitle={APP_CONFIG.VERSION}
               showArrow={false}
-              onPress={null}
             />
           </AnimatedCard>
 
           <AnimatedCard>
             <SettingItem
               Icon={
-                <Ionicons
-                  name="logo-github"
-                  size={24}
-                  color={styles.settingIcon.color}
-                />
+                <Ionicons name="logo-github" size={22} color={colors.text} />
               }
-              title="Contribute"
-              subtitle="Support the development of BunkMate"
-              showArrow={true}
+              title="Contribute on GitHub"
+              subtitle="Star the repository & contribute"
               onPress={() => Linking.openURL(GITHUB_URL)}
             />
-          </AnimatedCard>
-
-          <AnimatedCard
-            style={{ borderColor: INSTAGRAM_COLOR, borderWidth: 1 }}
-          >
+            <View style={styles.itemSeparator} />
             <SettingItem
               Icon={
                 <Ionicons
                   name="logo-instagram"
-                  size={24}
+                  size={22}
                   color={INSTAGRAM_COLOR}
                 />
               }
-              title="Instagram"
-              showArrow={true}
+              title="Follow me on Instagram"
+              subtitle="blu blu blu"
               onPress={() => Linking.openURL(INSTAGRAM_URL)}
             />
-          </AnimatedCard>
-
-          <AnimatedCard style={{ borderColor: colors.warning, borderWidth: 1 }}>
+            <View style={styles.itemSeparator} />
             <SettingItem
-              Icon={<Feather name="coffee" size={24} color={colors.warning} />}
-              title={"Buy Me a Coffee"}
-              subtitle=""
+              Icon={<Feather name="coffee" size={22} color={colors.warning} />}
+              title="Buy Me a Coffee"
+              subtitle="Support the development"
               onPress={handleCoffee}
-              iconColor={colors.warning}
             />
           </AnimatedCard>
         </View>
 
-        {/* Logout Section */}
+        {/* Account Actions */}
         <View style={styles.section}>
-          <AnimatedCard style={styles.borderRed}>
+          <View style={styles.sectionHeader}>
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={styles.sectionTitle}>Account</Text>
+          </View>
+
+          <AnimatedCard style={styles.dangerCard}>
             <SettingItem
               Icon={
                 <Ionicons
                   name="log-out-outline"
-                  size={24}
+                  size={22}
                   color={colors.danger}
                 />
               }
               title="Logout"
-              subtitle="Sign out of your account"
+              subtitle="Sign out from your account"
               onPress={handleLogout}
-              showArrow={false}
-              isGreat={true}
+              danger={true}
             />
           </AnimatedCard>
         </View>
@@ -549,17 +587,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* Error Display */}
         {error && (
           <View style={styles.errorContainer}>
-            <Ionicons
-              name="alert-circle-outline"
-              size={20}
-              color={styles.errorIcon.color}
-            />
-            <Text style={styles.errorText}>{error}</Text>
+            <View style={styles.errorContent}>
+              <Ionicons name="alert-circle" size={20} color={colors.danger} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
             <TouchableOpacity onPress={clearError} style={styles.errorClose}>
-              <Ionicons name="close" size={16} color={styles.errorIcon.color} />
+              <Ionicons name="close-circle" size={20} color={colors.danger} />
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Footer */}
         <View style={styles.footer}>
           <TouchableOpacity
             onPress={() => setIsHeartActive(true)}
@@ -567,11 +605,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             activeOpacity={1}
           >
             <Text style={styles.footerText}>
-              Made Wid{" "}
+              Made with{" "}
               <AnimatedHeart
                 isActive={isHeartActive}
                 setIsActive={setIsHeartActive}
-                size={20}
+                size={18}
               />{" "}
               by Kichu
             </Text>
@@ -589,223 +627,296 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.background,
     },
     header: {
+      paddingHorizontal: 20,
+      paddingVertical: 20,
+    },
+    headerContent: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-    },
-    closeButton: {
-      padding: 8,
-    },
-    headerIcon: {
-      color: colors.text,
+      gap: 12,
     },
     headerTitle: {
-      fontSize: 24,
-      fontWeight: "bold",
+      fontSize: 28,
+      fontWeight: "700",
       color: colors.text,
-    },
-    placeholder: {
-      width: 40,
+      letterSpacing: 0.5,
     },
     content: {
       flex: 1,
     },
+
+    // Profile Section
     profileSection: {
-      padding: 16,
+      padding: 20,
+      paddingTop: 24,
     },
     profileCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: 24,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
+    },
+    profileHeader: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: colors.surface,
-      borderRadius: 16,
-      padding: 20,
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
+      gap: 16,
     },
-    profileAvatar: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      alignItems: "center",
-      justifyContent: "center",
-      marginRight: 16,
+    profileAvatarContainer: {
+      position: "relative",
     },
     profileAvatarImage: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      borderWidth: 3,
+      borderColor: colors.primary + "30",
+    },
+    profileAvatarPlaceholder: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: colors.primary + "15",
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 3,
+      borderColor: colors.primary + "30",
+    },
+    editBadge: {
+      position: "absolute",
+      bottom: 0,
+      right: 0,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 3,
+      borderColor: colors.surface,
     },
     profileInfo: {
       flex: 1,
+      gap: 6,
     },
     profileName: {
-      fontSize: 18,
-      fontWeight: "600",
+      fontSize: 22,
+      fontWeight: "700",
       color: colors.text,
-      marginBottom: 4,
+      letterSpacing: 0.3,
     },
-    profileEmail: {
-      fontSize: 14,
-      color: colors.textSecondary,
+    profileBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: colors.primary + "15",
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 12,
+      alignSelf: "flex-start",
     },
+    profileBadgeText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.primary,
+    },
+
+    // Section Styles
     section: {
-      marginBottom: 24,
-      gap: 16,
+      marginBottom: 8,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
     },
     sectionTitle: {
-      fontSize: 16,
-      fontWeight: "600",
+      fontSize: 15,
+      fontWeight: "700",
       color: colors.text,
-      marginBottom: 12,
-      paddingHorizontal: 16,
+      textTransform: "uppercase",
+      letterSpacing: 0.8,
     },
     card: {
       backgroundColor: colors.surface,
-      marginHorizontal: 16,
+      marginHorizontal: 20,
       borderRadius: 16,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 2,
+      marginBottom: 12,
+      overflow: "hidden",
     },
-    cardHeader: {
+    cardContent: {
       padding: 16,
+      gap: 12,
     },
-    cardTitle: {
-      fontSize: 16,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 4,
+    dangerCard: {
+      borderWidth: 1,
+      borderColor: colors.danger + "30",
     },
-    cardDescription: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      lineHeight: 20,
+
+    // Dropdown Container
+    dropdownContainer: {
+      marginBottom: 8,
     },
-    form: {
-      padding: 16,
-    },
+
+    // Setting Item
     settingItem: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      padding: 16,
-      minHeight: 60,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      minHeight: 64,
+    },
+    settingItemDisabled: {
+      opacity: 1,
     },
     settingItemLeft: {
       flexDirection: "row",
       alignItems: "center",
       flex: 1,
+      gap: 14,
     },
     settingIconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: colors.primary + "15",
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: colors.primary + "12",
       alignItems: "center",
       justifyContent: "center",
-      marginRight: 12,
     },
-    settingIcon: {
-      color: colors.primary,
-    },
-    logOutColor: {
-      color: colors.danger,
+    dangerIconContainer: {
+      backgroundColor: colors.danger + "12",
     },
     settingItemContent: {
       flex: 1,
+      gap: 3,
     },
     settingTitle: {
       fontSize: 16,
-      fontWeight: "500",
+      fontWeight: "600",
       color: colors.text,
-      marginBottom: 2,
+      letterSpacing: 0.2,
     },
     customSettingTitle: {
-      fontSize: 16,
+      fontSize: 17,
       fontFamily: "Chewy-Regular",
       color: colors.text,
-      marginBottom: 2,
       letterSpacing: 1,
     },
     settingSubtitle: {
-      fontSize: 14,
+      fontSize: 13,
       color: colors.textSecondary,
+      lineHeight: 18,
     },
     settingArrow: {
       color: colors.textSecondary,
     },
-    separator: {
-      height: 1,
-      backgroundColor: colors.border,
-      marginLeft: 68,
+    dangerText: {
+      color: colors.danger,
     },
-    refreshButton: {
+    itemSeparator: {
+      height: 1,
+      backgroundColor: colors.border + "20",
+      marginLeft: 74,
+    },
+
+    // Theme Icon
+    themeIconContainer: {
+      position: "relative",
+      width: 22,
+      height: 22,
+      overflow: "hidden",
+    },
+    themeIcon: {
+      position: "absolute",
+    },
+    themeIconHidden: {
+      opacity: 0,
+    },
+
+    // Primary Button
+    primaryButton: {
       backgroundColor: colors.primary,
-      borderRadius: 12,
-      paddingVertical: 12,
+      borderRadius: 14,
+      paddingVertical: 14,
       paddingHorizontal: 20,
       alignItems: "center",
       justifyContent: "center",
-      margin: 16,
+      marginTop: 8,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
     },
-    refreshButtonDisabled: {
+    primaryButtonDisabled: {
       opacity: 0.6,
     },
-    refreshButtonContent: {
+    primaryButtonContent: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      gap: 10,
     },
-    refreshButtonText: {
+    primaryButtonText: {
       color: "white",
       fontSize: 16,
-      fontWeight: "600",
+      fontWeight: "700",
+      letterSpacing: 0.5,
     },
-    logoutIcon: {
-      color: colors.danger,
-    },
+
+    // Error
     errorContainer: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: colors.danger + "20",
-      borderRadius: 12,
+      justifyContent: "space-between",
+      backgroundColor: colors.danger + "15",
+      borderRadius: 14,
       padding: 16,
-      marginHorizontal: 16,
+      marginHorizontal: 20,
       marginBottom: 16,
+      borderWidth: 1,
+      borderColor: colors.danger + "30",
     },
-    errorIcon: {
-      color: colors.danger,
+    errorContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+      gap: 12,
     },
     errorText: {
       flex: 1,
-      marginLeft: 12,
       fontSize: 14,
       color: colors.danger,
+      fontWeight: "500",
+      lineHeight: 20,
     },
     errorClose: {
       padding: 4,
     },
-    bottomSpacing: {
-      height: 32,
-    },
-    borderRed: {
-      borderColor: colors.danger,
-      borderWidth: 1,
-    },
+
+    // Footer
     footer: {
-      marginTop: 16,
-      padding: 16,
-      width: "100%",
+      marginTop: 24,
+      marginBottom: 16,
+      padding: 20,
       alignItems: "center",
       justifyContent: "center",
     },
     footerText: {
-      fontSize: 16,
+      fontSize: 15,
       color: colors.textSecondary,
       textAlign: "center",
       fontFamily: "Chewy-Regular",
-      letterSpacing: 1,
+      letterSpacing: 0.8,
     },
   });
