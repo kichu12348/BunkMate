@@ -67,9 +67,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
       style={[
         styles.option,
         item.value === selectedValue && styles.selectedOption,
-        index === options.length - 1 && { borderBottomWidth: 0 },
+        index === 0 && styles.firstOption,
+        index === options.length - 1 && styles.lastOption,
       ]}
       onPress={() => handleSelect(item.value)}
+      activeOpacity={0.7}
     >
       <Text
         style={[
@@ -80,11 +82,13 @@ export const Dropdown: React.FC<DropdownProps> = ({
         {item.label}
       </Text>
       {item.value === selectedValue && (
-        <Ionicons
-          name="checkmark-circle"
-          size={20}
-          color={styles.selectedOptionText.color}
-        />
+        <View style={styles.checkmarkContainer}>
+          <Ionicons
+            name="checkmark"
+            size={20}
+            color={styles.selectedOptionText.color}
+          />
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -148,11 +152,13 @@ export const Dropdown: React.FC<DropdownProps> = ({
         >
           {selectedOption ? selectedOption.label : placeholder}
         </Text>
-        <Ionicons
-          name={isVisible ? "chevron-up" : "chevron-down"}
-          size={20}
-          color={styles.chevronIcon.color}
-        />
+        <View style={styles.chevronContainer}>
+          <Ionicons
+            name={isVisible ? "chevron-up" : "chevron-down"}
+            size={18}
+            color={styles.chevronIcon.color}
+          />
+        </View>
       </AnimatedTouchable>
 
       <Modal
@@ -162,36 +168,38 @@ export const Dropdown: React.FC<DropdownProps> = ({
         onRequestClose={() => setIsVisible(false)}
         hardwareAccelerated
         statusBarTranslucent
-        navigationBarTranslucent
       >
         <TouchableOpacity
           style={styles.overlay}
           activeOpacity={1}
           onPress={() => setIsVisible(false)}
         >
-          <View style={styles.modal}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{label || "Select Option"}</Text>
-              <TouchableOpacity
-                onPress={() => setIsVisible(false)}
-                style={styles.closeButton}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name="close"
-                  size={24}
-                  color={styles.closeIcon.color}
-                />
-              </TouchableOpacity>
-            </View>
+          <View style={styles.modalContainer}>
+            <View style={styles.modal}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{label || "Select Option"}</Text>
+                <TouchableOpacity
+                  onPress={() => setIsVisible(false)}
+                  style={styles.closeButton}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name="close-circle"
+                    size={28}
+                    color={styles.closeIcon.color}
+                  />
+                </TouchableOpacity>
+              </View>
 
-            <FlatList
-              data={options}
-              renderItem={renderOption}
-              keyExtractor={(item) => item.value}
-              style={styles.optionsList}
-              showsVerticalScrollIndicator={false}
-            />
+              <FlatList
+                data={options}
+                renderItem={renderOption}
+                keyExtractor={(item) => item.value}
+                style={styles.optionsList}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.optionsListContent}
+              />
+            </View>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -202,102 +210,134 @@ export const Dropdown: React.FC<DropdownProps> = ({
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
-      marginVertical: 8,
+      marginBottom: 4,
     },
     label: {
       fontSize: 14,
-      fontWeight: "500",
+      fontWeight: "600",
       color: colors.text,
-      marginBottom: 8,
+      marginBottom: 10,
+      letterSpacing: 0.3,
     },
     dropdown: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       backgroundColor: colors.surface,
-      borderRadius: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      borderWidth: 1.5,
       borderColor: colors.border,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 1,
     },
     dropdownDisabled: {
       opacity: 0.5,
     },
     dropdownText: {
-      fontSize: 16,
+      fontSize: 15,
       color: colors.text,
       flex: 1,
+      fontWeight: "500",
+      letterSpacing: 0.2,
     },
     placeholderText: {
       color: colors.textSecondary,
+      fontWeight: "400",
+    },
+    chevronContainer: {
+      marginLeft: 12,
     },
     chevronIcon: {
       color: colors.textSecondary,
     },
     overlay: {
       flex: 1,
-      backgroundColor: colors.background + "80",
+      backgroundColor: colors.overlay,
       justifyContent: "center",
       alignItems: "center",
     },
+    modalContainer: {
+      width: "85%",
+      maxWidth: 400,
+    },
     modal: {
       backgroundColor: colors.surface,
-      borderRadius: 12,
-      margin: 20,
-      maxHeight: "60%",
-      width: "80%",
+      borderRadius: 20,
+      maxHeight: "100%",
       overflow: "hidden",
       shadowColor: colors.shadow,
       shadowOffset: {
         width: 0,
-        height: 4,
+        height: 10,
       },
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 5,
+      shadowOpacity: 0.3,
+      shadowRadius: 20,
+      elevation: 10,
     },
     modalHeader: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      padding: 16,
+      paddingHorizontal: 20,
+      paddingVertical: 18,
       borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      borderBottomColor: colors.border + "40",
     },
     modalTitle: {
       fontSize: 18,
-      fontWeight: "600",
+      fontWeight: "700",
       color: colors.text,
+      letterSpacing: 0.3,
+      flex: 1,
     },
     closeButton: {
       padding: 4,
+      marginLeft: 12,
     },
     closeIcon: {
       color: colors.textSecondary,
     },
     optionsList: {
-      maxHeight: 300,
+      flexGrow: 0
+    },
+    optionsListContent: {
+      paddingVertical: 8,
     },
     option: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      marginHorizontal: 8,
+    },
+    firstOption: {
+      marginTop: 4,
+    },
+    lastOption: {
+      marginBottom: 4,
     },
     selectedOption: {
       backgroundColor: colors.primary + "15",
+      borderRadius: 12,
     },
     optionText: {
-      fontSize: 16,
+      fontSize: 15,
       color: colors.text,
       flex: 1,
+      fontWeight: "500",
+      letterSpacing: 0.2,
     },
     selectedOptionText: {
       color: colors.primary,
       fontWeight: "600",
+    },
+    checkmarkContainer: {
+      marginLeft: 12,
     },
   });

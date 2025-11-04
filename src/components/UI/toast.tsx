@@ -82,7 +82,7 @@ export default function Toast() {
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
-      backgroundColor: colors.background + "cc",
+      backgroundColor: colors.overlay,
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
@@ -94,7 +94,7 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       minWidth: 280,
       maxWidth: "90%",
-      shadowColor: "#000",
+      shadowColor: colors.shadow,
       shadowOffset: {
         width: 0,
         height: 2,
@@ -146,6 +146,7 @@ const createStyles = (colors: ThemeColors) =>
     cancelButton: {
         borderColor: colors.textSecondary,
         borderWidth: 1,
+        borderStyle: "dashed",
     },
     cancelButtonText: {
         color: colors.textSecondary,

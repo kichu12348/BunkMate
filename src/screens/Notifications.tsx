@@ -43,12 +43,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   };
 
   return (
-    <View
-      style={[
-        styles.notificationItem,
-        !notification.read_at && styles.unreadNotification,
-      ]}
-    >
+    <View style={styles.notificationItem}>
       <View style={styles.notificationHeader}>
         <View style={styles.notificationTitleRow}>
           <Ionicons
@@ -275,7 +270,7 @@ const createStyles = (colors: ThemeColors) =>
       elevation: 2,
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
+      shadowOpacity: 0.3,
       shadowRadius: 4,
     },
     unreadNotification: {
@@ -312,7 +307,6 @@ const createStyles = (colors: ThemeColors) =>
     notificationTime: {
       fontSize: 12,
       color: colors.textSecondary,
-      marginLeft: 28,
     },
     notificationMessage: {
       fontSize: 14,

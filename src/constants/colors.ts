@@ -38,6 +38,7 @@ export const lightTheme: ThemeColors = {
   border: "#e2e2e2",
   shadow: "#00000010",
   info: "#5d8bf4",
+  overlay: "#00000080",
   loaderColors: loaderColorsLight,
 };
 
@@ -56,6 +57,7 @@ export const darkTheme: ThemeColors = {
   border: "#2a2d36",          // just enough separation without harsh contrast
   shadow: "#00000090",        // deeper shadow for real depth
   info: "#6ea8fe",            // same as primary
+  overlay: "#000000B3",       // 70% opacity black for overlays
   loaderColors: loaderColorsDark,
 };
 

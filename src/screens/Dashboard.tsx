@@ -62,7 +62,6 @@ export const Dashboard: React.FC = () => {
 
   const [_, setPfpUri] = useState<string | null>(pfp);
 
-
   useEffect(() => {
     setPfpUri(pfp);
   }, [pfp]);
@@ -403,313 +402,296 @@ export const Dashboard: React.FC = () => {
         shouldShowLoader={shouldShowLoader}
         size={1.5}
       >
-          <Animated.ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={{
-              paddingBottom: TAB_BAR_HEIGHT + 24 + insets.bottom,
-            }}
-            showsVerticalScrollIndicator={false}
-            stickyHeaderIndices={[1]}
-            onScroll={scrollHandler}
-            scrollEventThrottle={16}
-          >
-            {/* Overall Stats */}
-            {enhancedOverallStats && (
-              <Animated.View style={[styles.statsCardContainer, animatedStyle]}>
-                <View style={styles.statsGradientBanner}>
-                  <Text style={styles.statsTitle}>Overall Attendance</Text>
-                  <Ionicons
-                    name={getOverallStatusIcon()}
-                    size={24}
-                    color={styles.textSecondary.color}
-                  />
-                </View>
-
-                <View style={styles.statsCard}>
-                  <View style={styles.statsContent}>
-                    <Text
-                      style={[
-                        styles.overallPercentage,
-                        getOverallStatusColor(),
-                      ]}
-                    >
-                      {formatPercentage(enhancedOverallStats.percentage)}
-                    </Text>
-                    <Text style={styles.totalSubjects}>
-                      {enhancedOverallStats.totalSubjects} subjects
-                    </Text>
-
-                    {lastUpdated && (
-                      <Text style={styles.lastUpdated}>
-                        Last updated: {getTimeAgo(lastUpdated)}
-                      </Text>
-                    )}
-                  </View>
-
-                  <View style={styles.statusCounts}>
-                    <View style={styles.statusCountItem}>
-                      <Text style={[styles.statusCount, styles.dangerText]}>
-                        {dangerSubjects.length}
-                      </Text>
-                      <Text style={styles.statusLabel}>Critical</Text>
-                    </View>
-
-                    <View style={styles.statusCountItem}>
-                      <Text style={[styles.statusCount, styles.warningText]}>
-                        {warningSubjects.length}
-                      </Text>
-                      <Text style={styles.statusLabel}>Warning</Text>
-                    </View>
-
-                    <View style={styles.statusCountItem}>
-                      <Text style={[styles.statusCount, styles.safeText]}>
-                        {safeSubjects.length}
-                      </Text>
-                      <Text style={styles.statusLabel}>Safe</Text>
-                    </View>
-                  </View>
-                </View>
-              </Animated.View>
-            )}
-            <View
-              style={styles.stickyHeaderContainer}
-              onLayout={(e) => {
-                const layoutY = e.nativeEvent.layout.y;
-                stickyYRef.current = layoutY;
-                stickyPointY.value = layoutY;
-              }}
-            >
-              {enhancedSubjects.length > 0 && (
-                <View style={styles.displayFilterContainer}>
-                  <TouchableOpacity
-                    style={[
-                      styles.displayFilterButton,
-                      activeDisplayFilter === "all" &&
-                        styles.displayFilterButtonActive,
-                    ]}
-                    onPress={() => setActiveDisplayFilter("all")}
-                  >
-                    <Text
-                      style={[
-                        styles.displayFilterText,
-                        activeDisplayFilter === "all" && {
-                          color: colors.primary,
-                        },
-                      ]}
-                    >
-                      All
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.displayFilterButton,
-                      activeDisplayFilter === "danger" && [
-                        styles.displayFilterButtonActive,
-                        { borderColor: colors.danger },
-                      ],
-                    ]}
-                    onPress={() => setActiveDisplayFilter("danger")}
-                  >
-                    <Text
-                      style={[
-                        styles.displayFilterText,
-                        activeDisplayFilter === "danger" && {
-                          color: colors.danger,
-                        },
-                      ]}
-                    >
-                      {dangerSubjects.length} Critical
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.displayFilterButton,
-                      activeDisplayFilter === "warning" && [
-                        styles.displayFilterButtonActive,
-                        { borderColor: colors.warning },
-                      ],
-                    ]}
-                    onPress={() => setActiveDisplayFilter("warning")}
-                  >
-                    <Text
-                      style={[
-                        styles.displayFilterText,
-                        activeDisplayFilter === "warning" && {
-                          color: colors.warning,
-                        },
-                      ]}
-                    >
-                      {warningSubjects.length} Warning
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.displayFilterButton,
-                      activeDisplayFilter === "safe" && [
-                        styles.displayFilterButtonActive,
-                        { borderColor: colors.success },
-                      ],
-                    ]}
-                    onPress={() => setActiveDisplayFilter("safe")}
-                  >
-                    <Text
-                      style={[
-                        styles.displayFilterText,
-                        activeDisplayFilter === "safe" && {
-                          color: colors.success,
-                        },
-                      ]}
-                    >
-                      {safeSubjects.length} Safe
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-
-            {/* Error State */}
-            {error && (
-              <View style={styles.errorCard}>
+        <Animated.ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={{
+            paddingBottom: TAB_BAR_HEIGHT + 24 + insets.bottom,
+          }}
+          showsVerticalScrollIndicator={false}
+          stickyHeaderIndices={[1]}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+        >
+          {/* Overall Stats */}
+          {enhancedOverallStats && (
+            <Animated.View style={[styles.statsCardContainer, animatedStyle]}>
+              <View style={styles.statsGradientBanner}>
+                <Text style={styles.statsTitle}>Overall Attendance</Text>
                 <Ionicons
-                  name="alert-circle-outline"
+                  name={getOverallStatusIcon()}
                   size={24}
-                  color={styles.errorText.color}
+                  color={styles.textSecondary.color}
                 />
-                <Text style={styles.errorText}>{error}</Text>
+              </View>
+
+              <View style={styles.statsCard}>
+                <View style={styles.statsContent}>
+                  <Text
+                    style={[styles.overallPercentage, getOverallStatusColor()]}
+                  >
+                    {formatPercentage(enhancedOverallStats.percentage)}
+                  </Text>
+                  <Text style={styles.totalSubjects}>
+                    {enhancedOverallStats.totalSubjects} subjects
+                  </Text>
+
+                  {lastUpdated && (
+                    <Text style={styles.lastUpdated}>
+                      Last updated: {getTimeAgo(lastUpdated)}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.statusCounts}>
+                  <View style={styles.statusCountItem}>
+                    <Text style={[styles.statusCount, styles.dangerText]}>
+                      {dangerSubjects.length}
+                    </Text>
+                    <Text style={styles.statusLabel}>Critical</Text>
+                  </View>
+
+                  <View style={styles.statusCountItem}>
+                    <Text style={[styles.statusCount, styles.warningText]}>
+                      {warningSubjects.length}
+                    </Text>
+                    <Text style={styles.statusLabel}>Warning</Text>
+                  </View>
+
+                  <View style={styles.statusCountItem}>
+                    <Text style={[styles.statusCount, styles.safeText]}>
+                      {safeSubjects.length}
+                    </Text>
+                    <Text style={styles.statusLabel}>Safe</Text>
+                  </View>
+                </View>
+              </View>
+            </Animated.View>
+          )}
+          <View
+            style={styles.stickyHeaderContainer}
+            onLayout={(e) => {
+              const layoutY = e.nativeEvent.layout.y;
+              stickyYRef.current = layoutY;
+              stickyPointY.value = layoutY;
+            }}
+          >
+            {enhancedSubjects.length > 0 && (
+              <View style={styles.displayFilterContainer}>
                 <TouchableOpacity
-                  style={styles.retryButton}
-                  onPress={handleRefresh}
+                  style={[
+                    styles.displayFilterButton,
+                    activeDisplayFilter === "all" &&
+                      styles.displayFilterButtonActive,
+                  ]}
+                  onPress={() => setActiveDisplayFilter("all")}
                 >
-                  <Text style={styles.retryButtonText}>Retry</Text>
+                  <Text
+                    style={[
+                      styles.displayFilterText,
+                      activeDisplayFilter === "all" && {
+                        color: colors.primary,
+                      },
+                    ]}
+                  >
+                    All
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.displayFilterButton,
+                    activeDisplayFilter === "danger" && [
+                      styles.displayFilterButtonActive,
+                      { borderColor: colors.danger },
+                    ],
+                  ]}
+                  onPress={() => setActiveDisplayFilter("danger")}
+                >
+                  <Text
+                    style={[
+                      styles.displayFilterText,
+                      activeDisplayFilter === "danger" && {
+                        color: colors.danger,
+                      },
+                    ]}
+                  >
+                    {dangerSubjects.length} Critical
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.displayFilterButton,
+                    activeDisplayFilter === "warning" && [
+                      styles.displayFilterButtonActive,
+                      { borderColor: colors.warning },
+                    ],
+                  ]}
+                  onPress={() => setActiveDisplayFilter("warning")}
+                >
+                  <Text
+                    style={[
+                      styles.displayFilterText,
+                      activeDisplayFilter === "warning" && {
+                        color: colors.warning,
+                      },
+                    ]}
+                  >
+                    {warningSubjects.length} Warning
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.displayFilterButton,
+                    activeDisplayFilter === "safe" && [
+                      styles.displayFilterButtonActive,
+                      { borderColor: colors.success },
+                    ],
+                  ]}
+                  onPress={() => setActiveDisplayFilter("safe")}
+                >
+                  <Text
+                    style={[
+                      styles.displayFilterText,
+                      activeDisplayFilter === "safe" && {
+                        color: colors.success,
+                      },
+                    ]}
+                  >
+                    {safeSubjects.length} Safe
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
+          </View>
 
-            {/* Loading State */}
-            {isLoading && enhancedSubjects.length === 0 && (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>
-                  Loading attendance data...
-                </Text>
-              </View>
-            )}
-
-            {/* Subjects List */}
-            {enhancedSubjects.length > 0 && (
-              <View style={styles.subjectsContainer}>
-                {(activeDisplayFilter === "all" ||
-                  activeDisplayFilter === "danger") &&
-                  dangerSubjects.length > 0 && (
-                    <View style={styles.sectionContainer}>
-                      <View style={styles.sectionHeaderRow}>
-                        <Ionicons
-                          name="alert-circle"
-                          size={18}
-                          color={styles.dangerColor.color}
-                        />
-                        <Text style={[styles.sectionTitle, styles.dangerText]}>
-                          Critical Attention Required
-                        </Text>
-                      </View>
-                      {dangerSubjects.map((subject, index) => (
-                        <AttendanceCard
-                          key={`danger-${index}`}
-                          subject={subject}
-                          onPress={(canMiss, classesToAttend) =>
-                            handleSubjectPress(
-                              subject,
-                              canMiss,
-                              classesToAttend
-                            )
-                          }
-                        />
-                      ))}
-                    </View>
-                  )}
-
-                {/* Warning Subjects */}
-                {/* MODIFIED: Conditionally render based on activeDisplayFilter */}
-                {(activeDisplayFilter === "all" ||
-                  activeDisplayFilter === "warning") &&
-                  warningSubjects.length > 0 && (
-                    <View style={styles.sectionContainer}>
-                      <View style={styles.sectionHeaderRow}>
-                        <Ionicons
-                          name="warning"
-                          size={18}
-                          color={styles.warningColor.color}
-                        />
-                        <Text style={[styles.sectionTitle, styles.warningText]}>
-                          Needs Attention
-                        </Text>
-                      </View>
-                      {warningSubjects.map((subject, index) => (
-                        <AttendanceCard
-                          key={`warning-${index}`}
-                          subject={subject}
-                          onPress={(canMiss, classesToAttend) =>
-                            handleSubjectPress(
-                              subject,
-                              canMiss,
-                              classesToAttend
-                            )
-                          }
-                        />
-                      ))}
-                    </View>
-                  )}
-
-                {/* Safe Subjects */}
-                {/* MODIFIED: Conditionally render based on activeDisplayFilter */}
-                {(activeDisplayFilter === "all" ||
-                  activeDisplayFilter === "safe") &&
-                  safeSubjects.length > 0 && (
-                    <View style={styles.sectionContainer}>
-                      <View style={styles.sectionHeaderRow}>
-                        <Ionicons
-                          name="checkmark-circle"
-                          size={18}
-                          color={styles.safeColor.color}
-                        />
-                        <Text style={[styles.sectionTitle, styles.safeText]}>
-                          Good Standing
-                        </Text>
-                      </View>
-                      {safeSubjects.map((subject, index) => (
-                        <AttendanceCard
-                          key={`safe-${index}`}
-                          subject={subject}
-                          onPress={(canMiss, classesToAttend) =>
-                            handleSubjectPress(
-                              subject,
-                              canMiss,
-                              classesToAttend
-                            )
-                          }
-                        />
-                      ))}
-                    </View>
-                  )}
-              </View>
-            )}
-            <View style={styles.footer}>
+          {/* Error State */}
+          {error && (
+            <View style={styles.errorCard}>
+              <Ionicons
+                name="alert-circle-outline"
+                size={24}
+                color={styles.errorText.color}
+              />
+              <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity
-                onPress={() => setIsHeartActive(true)}
-                disabled={isHeartActive}
-                activeOpacity={1}
+                style={styles.retryButton}
+                onPress={handleRefresh}
               >
-                <Text style={styles.footerText}>
-                  Made Wid{" "}
-                  <AnimatedHeart
-                    isActive={isHeartActive}
-                    setIsActive={setIsHeartActive}
-                    size={20}
-                  />{" "}
-                  by Kichu
-                </Text>
+                <Text style={styles.retryButtonText}>Retry</Text>
               </TouchableOpacity>
             </View>
-          </Animated.ScrollView>
+          )}
+
+          {/* Loading State */}
+          {isLoading && enhancedSubjects.length === 0 && (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading attendance data...</Text>
+            </View>
+          )}
+
+          {/* Subjects List */}
+          {enhancedSubjects.length > 0 && (
+            <View style={styles.subjectsContainer}>
+              {(activeDisplayFilter === "all" ||
+                activeDisplayFilter === "danger") &&
+                dangerSubjects.length > 0 && (
+                  <View style={styles.sectionContainer}>
+                    <View style={styles.sectionHeaderRow}>
+                      <Ionicons
+                        name="alert-circle"
+                        size={18}
+                        color={styles.dangerColor.color}
+                      />
+                      <Text style={[styles.sectionTitle, styles.dangerText]}>
+                        Critical Attention Required
+                      </Text>
+                    </View>
+                    {dangerSubjects.map((subject, index) => (
+                      <AttendanceCard
+                        key={`danger-${index}`}
+                        subject={subject}
+                        onPress={(canMiss, classesToAttend) =>
+                          handleSubjectPress(subject, canMiss, classesToAttend)
+                        }
+                      />
+                    ))}
+                  </View>
+                )}
+
+              {/* Warning Subjects */}
+              {/* MODIFIED: Conditionally render based on activeDisplayFilter */}
+              {(activeDisplayFilter === "all" ||
+                activeDisplayFilter === "warning") &&
+                warningSubjects.length > 0 && (
+                  <View style={styles.sectionContainer}>
+                    <View style={styles.sectionHeaderRow}>
+                      <Ionicons
+                        name="warning"
+                        size={18}
+                        color={styles.warningColor.color}
+                      />
+                      <Text style={[styles.sectionTitle, styles.warningText]}>
+                        Needs Attention
+                      </Text>
+                    </View>
+                    {warningSubjects.map((subject, index) => (
+                      <AttendanceCard
+                        key={`warning-${index}`}
+                        subject={subject}
+                        onPress={(canMiss, classesToAttend) =>
+                          handleSubjectPress(subject, canMiss, classesToAttend)
+                        }
+                      />
+                    ))}
+                  </View>
+                )}
+
+              {/* Safe Subjects */}
+              {/* MODIFIED: Conditionally render based on activeDisplayFilter */}
+              {(activeDisplayFilter === "all" ||
+                activeDisplayFilter === "safe") &&
+                safeSubjects.length > 0 && (
+                  <View style={styles.sectionContainer}>
+                    <View style={styles.sectionHeaderRow}>
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={18}
+                        color={styles.safeColor.color}
+                      />
+                      <Text style={[styles.sectionTitle, styles.safeText]}>
+                        Good Standing
+                      </Text>
+                    </View>
+                    {safeSubjects.map((subject, index) => (
+                      <AttendanceCard
+                        key={`safe-${index}`}
+                        subject={subject}
+                        onPress={(canMiss, classesToAttend) =>
+                          handleSubjectPress(subject, canMiss, classesToAttend)
+                        }
+                      />
+                    ))}
+                  </View>
+                )}
+            </View>
+          )}
+          <View style={styles.footer}>
+            <TouchableOpacity
+              onPress={() => setIsHeartActive(true)}
+              disabled={isHeartActive}
+              activeOpacity={1}
+            >
+              <Text style={styles.footerText}>
+                Made Wid{" "}
+                <AnimatedHeart
+                  isActive={isHeartActive}
+                  setIsActive={setIsHeartActive}
+                  size={20}
+                />{" "}
+                by Kichu
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.ScrollView>
       </CustomRefreshLoader>
       {/* Filter Modal */}
       <Modal
@@ -735,12 +717,13 @@ export const Dashboard: React.FC = () => {
                 onPress={() => setFilterModalVisible(false)}
                 activeOpacity={0.7}
               >
-                <Ionicons name="close" size={24} color={colors.textSecondary} />
+                <Ionicons name="close-circle" size={28} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <FlatList
               data={activeOptions}
               keyExtractor={(item) => item.value}
+              contentContainerStyle={{ paddingVertical: 8 }}
               renderItem={({ item, index }) => {
                 const isSelected =
                   activeFilter === "year"
@@ -751,7 +734,7 @@ export const Dashboard: React.FC = () => {
                   <TouchableOpacity
                     style={[
                       styles.modalOption,
-                      isSelected && styles.modalOptionSelected,
+                      isSelected && styles.selectedOption,
                       isLast && { borderBottomWidth: 0 },
                     ]}
                     onPress={() =>
@@ -759,18 +742,19 @@ export const Dashboard: React.FC = () => {
                         ? handleYearChange(item.value)
                         : handleSemesterChange(item.value)
                     }
+                    activeOpacity={0.7}
                   >
                     <Text
                       style={[
-                        styles.modalOptionText,
-                        isSelected && styles.modalOptionTextSelected,
+                        styles.optionText,
+                        isSelected && styles.selectedOptionText,
                       ]}
                     >
                       {item.label}
                     </Text>
                     {isSelected && (
                       <Ionicons
-                        name="checkmark-circle"
+                        name="checkmark"
                         size={20}
                         color={colors.primary}
                       />
@@ -836,7 +820,7 @@ const createStyles = (colors: ThemeColors) =>
         width: 0,
         height: 5,
       },
-      shadowOpacity: 0.15,
+      shadowOpacity: 0.3,
       shadowRadius: 10,
       elevation: 5,
     },
@@ -848,7 +832,6 @@ const createStyles = (colors: ThemeColors) =>
       paddingVertical: 12,
     },
     statsCard: {
-      backgroundColor: colors.surface,
       padding: 20,
     },
     statsTitle: {
@@ -1114,37 +1097,45 @@ const createStyles = (colors: ThemeColors) =>
       elevation: 5,
     },
     modalHeader: {
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      padding: 16,
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 20,
+      paddingVertical: 18,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border + "40",
     },
     modalTitle: {
       fontSize: 18,
-      fontWeight: "600",
+      fontWeight: "700",
       color: colors.text,
-      textAlign: "center",
+      letterSpacing: 0.3,
+      flex: 1,
     },
     modalOption: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      marginHorizontal: 8,
     },
-    modalOptionSelected: {
+    selectedOption: {
       backgroundColor: colors.primary + "15",
+      borderRadius: 12,
     },
-    modalOptionText: {
-      fontSize: 16,
+    optionText: {
+      fontSize: 15,
       color: colors.text,
+      flex: 1,
+      fontWeight: "500",
+      letterSpacing: 0.2,
     },
-    modalOptionTextSelected: {
+    selectedOptionText: {
       color: colors.primary,
       fontWeight: "600",
+    },
+    checkmarkContainer: {
+      marginLeft: 12,
     },
   });

@@ -15,6 +15,7 @@ export interface ThemeColors {
   shadow: string;
   error: string;
   info: string;
+  overlay: string;
   loaderColors: string[];
 }
 

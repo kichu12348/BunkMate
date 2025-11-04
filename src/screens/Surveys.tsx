@@ -504,7 +504,7 @@ const createStyles = (colors: ThemeColors) =>
       elevation: 2,
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
+      shadowOpacity: 0.3,
       shadowRadius: 4,
     },
     cardHeader: {
