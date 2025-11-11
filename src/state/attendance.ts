@@ -6,7 +6,6 @@ import {
 } from "../types/api";
 import { attendanceService } from "../api/attendance";
 import { AttendanceDatabase } from "../utils/attendanceDatabase";
-import { useSettingsStore } from "./settings";
 
 interface AttendanceState {
   data: AttendanceDetailedResponse | null;
@@ -183,7 +182,6 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
 
   initFetchAttendance: async () => {
     if (get().hasInitFetched) return;
-    await useSettingsStore.getState().initializeSettings();
     try {
       await get().fetchAttendance();
       set({ hasInitFetched: true });

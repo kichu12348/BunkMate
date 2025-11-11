@@ -34,7 +34,7 @@ export interface User {
     default_institutionUser: number;
     default_institute: number;
     default_academic_year: string;
-    default_semester: string;
+    default_semester: "odd" | "even" | "0";
   };
 }
 

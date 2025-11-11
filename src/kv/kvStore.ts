@@ -98,24 +98,6 @@ export const kvHelper = {
     return themeStore.get<"light" | "dark">(THEME_MODE);
   },
 
-  // Settings
-  setSetting(key: string, value: any): void {
-    settingsStore.set(key, JSON.stringify(value));
-  },
-
-  getSetting<T = any>(key: string): T | null {
-    const value = settingsStore.get<string>(key);
-    if (value === null) {
-      return null;
-    }
-    try {
-      return JSON.parse(value) as T;
-    } catch (error) {
-      console.error(`Error parsing setting for key ${key}:`, error);
-      return null;
-    }
-  },
-
   setPfpUri(uri: string): void {
     pfpStore.set(PFP_URL, uri);
   },

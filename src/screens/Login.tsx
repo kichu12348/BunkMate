@@ -18,6 +18,7 @@ import { ThemeColors } from "../types/theme";
 import { APP_CONFIG } from "../constants/config";
 import { useToastStore } from "../state/toast";
 import { OptionsModal, ResetPasswordModal } from "../components/Modals/Reset";
+import { useThemeStore } from "../state/themeStore";
 
 export const LoginScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -31,6 +32,8 @@ export const LoginScreen: React.FC = () => {
     resetLoginFlow,
     clearError,
   } = useAuthStore();
+
+  const colors = useThemeStore((state) => state.colors);
 
   const showToast = useToastStore((state) => state.showToast);
 
@@ -52,9 +55,22 @@ export const LoginScreen: React.FC = () => {
       });
       return;
     }
-
+    let formattedUsername = username.trim();
+    const checkIfPhone = /^\d+$/.test(username.trim());
+    if (checkIfPhone) {
+      if (username.trim().length < 10) {
+        showToast({
+          title: "Error",
+          message: "Please enter a valid phone number of at least 10 digits",
+          buttons: [{ text: "OK", style: "destructive" }],
+        });
+        return;
+      }
+      const formattedPhone = `91${username.slice(-10).trim()}`;
+      formattedUsername = formattedPhone;
+    }
     try {
-      await lookupUsername(username.trim());
+      await lookupUsername(formattedUsername);
     } catch (error: any) {
       showToast({
         title: "Username Not Found",
@@ -158,7 +174,7 @@ export const LoginScreen: React.FC = () => {
             />
             <TextInput
               style={styles.input}
-              placeholder="Username"
+              placeholder="Username/Email/Phone"
               placeholderTextColor={styles.inputPlaceholder.color}
               value={isUsernameVerified ? verifiedUsername : username}
               onChangeText={handleUsernameChange}
@@ -182,9 +198,6 @@ export const LoginScreen: React.FC = () => {
 
           {!isUsernameVerified && (
             <>
-              <Text style={styles.inputPlaceholder}>
-                eg: 91{"<your_phone_number>"}
-              </Text>
               <TouchableOpacity
                 style={[
                   styles.continueButton,
@@ -195,7 +208,7 @@ export const LoginScreen: React.FC = () => {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <ActivityIndicator size="small" color="white" />
+                  <ActivityIndicator size="small" color={colors.secondary} />
                 ) : (
                   <Text style={styles.continueButtonText}>Continue</Text>
                 )}
@@ -244,18 +257,21 @@ export const LoginScreen: React.FC = () => {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <ActivityIndicator size="small" color="white" />
+                  <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
                   <Text style={styles.loginButtonText}>Login</Text>
                 )}
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.forgotPasswordButton}
-                onPress={handleForgotPassword}
-              >
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
+              <View style={styles.forgotPasswordContainer}>
+                <TouchableOpacity
+                  style={styles.forgotPasswordButton}
+                  onPress={handleForgotPassword}
+                >
+                  <Text style={styles.forgotPasswordText}>
+                    Forgot Password ?
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </>
           )}
 
@@ -359,18 +375,20 @@ const createStyles = (colors: ThemeColors) =>
       marginLeft: 8,
     },
     continueButton: {
-      backgroundColor: colors.secondary,
       borderRadius: 12,
       paddingVertical: 16,
       alignItems: "center",
       justifyContent: "center",
       marginBottom: 16,
+      borderWidth: 1.5,
+      borderColor: colors.secondary,
+      borderStyle: "dashed",
     },
     continueButtonDisabled: {
       opacity: 0.6,
     },
     continueButtonText: {
-      color: "white",
+      color: colors.secondary,
       fontSize: 16,
       fontWeight: "600",
     },
@@ -390,25 +408,19 @@ const createStyles = (colors: ThemeColors) =>
       flex: 1,
     },
     loginButton: {
-      backgroundColor: colors.primary,
       borderRadius: 12,
       paddingVertical: 16,
       alignItems: "center",
       justifyContent: "center",
-      shadowColor: colors.shadow,
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
+      borderColor: colors.primary,
+      borderWidth: 1.5,
+      borderStyle: "dashed",
     },
     loginButtonDisabled: {
       opacity: 0.6,
     },
     loginButtonText: {
-      color: "white",
+      color: colors.primary,
       fontSize: 16,
       fontWeight: "600",
     },
@@ -424,12 +436,15 @@ const createStyles = (colors: ThemeColors) =>
     },
     forgotPasswordButton: {
       alignItems: "center",
-      marginTop: 16,
-      paddingVertical: 8,
+      padding: 8,
     },
     forgotPasswordText: {
       fontSize: 14,
       color: colors.primary,
       fontWeight: "500",
+    },
+    forgotPasswordContainer: {
+      alignItems: "center",
+      marginTop: 16,
     },
   });

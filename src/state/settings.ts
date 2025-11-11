@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { authService } from "../api/auth";
-import { kvHelper } from "../kv/kvStore";
 import {
   generateAcademicYears,
   generateSemesters,
@@ -21,7 +20,6 @@ interface SettingsState {
   // Actions
   setAcademicYear: (year: string) => Promise<void>;
   setSemester: (semester: string) => Promise<void>;
-  initializeSettings: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -46,9 +44,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         nextSemester = getDefaultSemester();
       }
       authService.setDefaultYear(year);
-      kvHelper.setSetting("selectedYear", year);
       authService.setDefaultSemester(nextSemester);
-      kvHelper.setSetting("selectedSemester", nextSemester);
       set({
         selectedYear: year,
         selectedSemester: nextSemester,
@@ -76,9 +72,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         nextYear = getDefaultAcademicYear();
       }
       authService.setDefaultSemester(semester);
-      kvHelper.setSetting("selectedSemester", semester);
       authService.setDefaultYear(nextYear);
-      kvHelper.setSetting("selectedYear", nextYear);
 
       set({
         selectedSemester: semester,
@@ -91,31 +85,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         error: error.message || "Failed to set semester",
       });
       throw error;
-    }
-  },
-
-  initializeSettings: async () => {
-    if (get().hasInitialized) return; 
-    try {
-      const savedYear = kvHelper.getSetting<string>("selectedYear");
-      const savedSemester = kvHelper.getSetting<string>("selectedSemester");
-      const yearToSet = savedYear || getDefaultAcademicYear();
-      const semesterToSet = savedSemester || getDefaultSemester();
-
-      set({
-        selectedYear: yearToSet,
-        selectedSemester: semesterToSet,
-        hasInitialized: true,
-      });
-
-      await authService.setDefaultYear(yearToSet);
-      await authService.setDefaultSemester(semesterToSet);
-    } catch (error) {
-      console.warn("Failed to initialize settings:", error);
-      set({
-        selectedYear: getDefaultAcademicYear(),
-        selectedSemester: getDefaultSemester(),
-      });
     }
   },
 

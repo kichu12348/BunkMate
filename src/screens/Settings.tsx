@@ -68,7 +68,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     error,
     setAcademicYear,
     setSemester,
-    initializeSettings,
     clearError,
   } = useSettingsStore();
 
@@ -156,10 +155,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       {children}
     </Animated.View>
   );
-
-  useEffect(() => {
-    initializeSettings();
-  }, []);
 
   const fetchAttendanceDebounced = useMemo(
     () => debounced(fetchAttendance, 500),
