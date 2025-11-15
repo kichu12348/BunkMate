@@ -6,6 +6,7 @@ import {
 } from "../types/api";
 import { attendanceService } from "../api/attendance";
 import { AttendanceDatabase } from "../utils/attendanceDatabase";
+import { useAssignmentStore } from "./assignments";
 
 interface AttendanceState {
   data: AttendanceDetailedResponse | null;
@@ -166,6 +167,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
         error: null,
         lastUpdated: new Date(),
       });
+      useAssignmentStore.getState().fetchAssignments();
     } catch (error: any) {
       set({
         isLoading: false,

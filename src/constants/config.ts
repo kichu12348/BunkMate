@@ -21,6 +21,12 @@ export const API_CONFIG = {
     SUBJECTS: "/subjects",
     NOTIFICATIONS: "/user/notifications",
     MY_PROFILE: "/myprofile",
+    EXAMS_AND_ASSIGNMENTS: {
+      GET: "/exams",
+      GET_QUESTIONS:(id: string) => `/exams/${id}/examquestions`,
+      GET_ANSWERS:(id: string) => `/exams/${id}/institutionuser/examanswers`,
+      GET_Q_GROUPS:(id: string) => `/examorquestiongroups?exam_id=${id}`,
+    },
     SET: {
       DEFAULT_YEAR: "/user/setting/default_academic_year",
       DEFAULT_SEMESTER: "/user/setting/default_semester",

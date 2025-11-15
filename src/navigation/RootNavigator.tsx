@@ -5,6 +5,8 @@ import { SubjectDetailsScreen } from "../screens/SubjectDetails";
 import { SurveyAttemptScreen } from "../screens/SurveyAttempt";
 import { PublicForum } from "../screens/PublicForum";
 import { SubscriptionModal } from "../components/SubscriptionModal";
+import { AssignmentsScreen } from "../screens/Assignments";
+import { AssignmentsDetailsScreen } from "../screens/AssignmentsDetails";
 import { kvHelper } from "../kv/kvStore";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../state/auth";
@@ -23,6 +25,15 @@ export type RootStackParamList = {
     surveyName: string;
   };
   PublicForum: undefined;
+  Assignments: {
+    subjectId: string;
+    subjectName: string;
+    subjectCode: string;
+  };
+  AssignmentsDetails: {
+    assignmentId: string;
+    assignmentName: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -61,29 +72,13 @@ export const RootNavigator: React.FC = () => {
             headerShown: false,
           }}
         />
+        <Stack.Screen name="SubjectDetails" component={SubjectDetailsScreen} />
+        <Stack.Screen name="SurveyAttempt" component={SurveyAttemptScreen} />
+        <Stack.Screen name="PublicForum" component={PublicForum} />
+        <Stack.Screen name="Assignments" component={AssignmentsScreen} />
         <Stack.Screen
-          name="SubjectDetails"
-          component={SubjectDetailsScreen}
-          options={{
-            headerShown: false,
-            animation: "slide_from_right",
-          }}
-        />
-        <Stack.Screen
-          name="SurveyAttempt"
-          component={SurveyAttemptScreen}
-          options={{
-            headerShown: false,
-            animation: "slide_from_right",
-          }}
-        />
-        <Stack.Screen
-          name="PublicForum"
-          component={PublicForum}
-          options={{
-            headerShown: false,
-            animation: "slide_from_right",
-          }}
+          name="AssignmentsDetails"
+          component={AssignmentsDetailsScreen}
         />
       </Stack.Navigator>
 

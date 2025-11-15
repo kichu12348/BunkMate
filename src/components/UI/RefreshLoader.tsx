@@ -21,7 +21,9 @@ const OPEN_DURATION = 300;
 const CLOSE_DURATION = 220;
 const OPEN_EASING = Easing.out(Easing.cubic);
 const CLOSE_EASING = Easing.out(Easing.cubic);
-const CustomLoader = ({
+
+
+export const CustomLoader = ({
   pullProgress,
   size = 1,
 }: {

@@ -15,6 +15,7 @@ import { useFonts } from "expo-font";
 import { usePfpStore } from "./src/state/pfpStore";
 import Toast from "./src/components/UI/toast";
 //import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
+
 enableScreens();
 
 // Prevent the splash screen from auto-hiding
@@ -26,41 +27,49 @@ export default function App() {
 
   const initializePfp = usePfpStore((state) => state.initialize);
 
-  useFonts({
-    "Chewy-Regular": require("./src/assets/fonts/Chewy-Regular.ttf"),
+  const [isDone, setIsDone] = React.useState(false);
+
+  const [fontsLoaded, error] = useFonts({
+    "Fredoka-Regular": require("./src/assets/fonts/Fredoka-Regular.ttf"),
   });
 
+  const checkForUpdates = async () => {
+    try {
+      if (__DEV__) return; // Skip update check in development mode
+      const update = await Update.checkForUpdateAsync();
+      if (update.isAvailable) {
+        await Update.fetchUpdateAsync();
+        await Update.reloadAsync();
+      }
+    } catch (error) {
+      console.error("Error checking for updates:", error);
+    }
+  };
+
+  const initialize = async () => {
+    if (isDone) return;
+    try {
+      const appearance = Appearance.getColorScheme() || "light";
+      await Promise.all([
+        checkForUpdates(),
+        initializeTheme(appearance),
+        checkAuthStatus(),
+        initializePfp(),
+      ]);
+    } catch (error) {
+      console.error("Initialization error:", error);
+    } finally {
+      setIsDone(true);
+    }
+  };
+
   useEffect(() => {
-    const checkForUpdates = async () => {
-      try {
-        if (__DEV__) return; // Skip update check in development mode
-        const update = await Update.checkForUpdateAsync();
-        if (update.isAvailable) {
-          await Update.fetchUpdateAsync();
-          await Update.reloadAsync();
-        }
-      } catch (error) {
-        console.error("Error checking for updates:", error);
-      }
-    };
-
-    const initialize = async () => {
-      try {
-        await checkForUpdates();
-        const appearance = Appearance.getColorScheme() || "light";
-        await initializeTheme(appearance);
-        await checkAuthStatus(async () => {
-          await initializePfp();
-        });
-      } catch (error) {
-        console.error("Initialization error:", error);
-      } finally {
-        await SplashScreen.hideAsync();
-      }
-    };
-
     initialize();
   }, []);
+
+  useEffect(() => {
+    if ((fontsLoaded || error) && isDone) SplashScreen.hideAsync();
+  }, [error, fontsLoaded, isDone]);
 
   // Set navigation bar color
   useEffect(() => {
@@ -75,7 +84,9 @@ export default function App() {
   }, [colors.background]);
 
   return (
-    <GestureHandlerRootView>
+    <GestureHandlerRootView
+      style={{ flex: 1, backgroundColor: colors.background }}
+    >
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
         translucent

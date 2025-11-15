@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useEffect } from "react";
+import { useRef } from "react";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,104 +7,90 @@ import Animated, {
   withSequence,
   withRepeat,
   Easing,
-  runOnJS,
 } from "react-native-reanimated";
+import { runOnJS } from "react-native-worklets";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { ThemeColors } from "../../types/theme";
+import { useThemeStore } from "../../state/themeStore";
 
 type AnimatedHeartProps = {
-  isActive: boolean;
-  setIsActive: (value: boolean) => void;
   size?: number;
   color?: string;
   pulses?: number;
 };
 
 export default function AnimatedHeart({
-  isActive,
-  setIsActive,
   size = 16,
   color = "red",
   pulses = 3,
 }: AnimatedHeartProps) {
   const scale = useSharedValue(1);
+  const colors = useThemeStore((state) => state.colors);
 
-  useEffect(() => {
-    if (isActive) {
-      const up = withTiming(1.4, {
-        duration: 200,
-        easing: Easing.inOut(Easing.ease),
-      });
-      const down = withTiming(1, {
-        duration: 200,
-        easing: Easing.inOut(Easing.ease),
-      });
-      scale.value = withSequence(
-        withRepeat(withSequence(up, down), pulses, false),
-        withTiming(
-          1,
-          { duration: 200, easing: Easing.in(Easing.ease) },
-          (finished) => {
-            if (finished) runOnJS(setIsActive)(false);
-          }
-        )
-      );
-    } else {
-      scale.value = withTiming(1, { duration: 120 });
-    }
-  }, [isActive, scale, setIsActive, pulses]);
+  const styles = createStyles(colors);
+
+  const isAnimatingRef = useRef(false);
+
+  const resetAnimation = () => {
+    scale.value = withTiming(1, { duration: 120 });
+    isAnimatingRef.current = false;
+  };
+
+  const handlePress = () => {
+    if (isAnimatingRef.current) return;
+    isAnimatingRef.current = true;
+    const up = withTiming(1.4, {
+      duration: 200,
+      easing: Easing.inOut(Easing.ease),
+    });
+    const down = withTiming(1, {
+      duration: 200,
+      easing: Easing.inOut(Easing.ease),
+    });
+    scale.value = withSequence(
+      withRepeat(withSequence(up, down), pulses, false),
+      withTiming(
+        1,
+        { duration: 200, easing: Easing.in(Easing.ease) },
+        (finished) => {
+          if (finished) runOnJS(resetAnimation)();
+        }
+      )
+    );
+  };
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
   return (
-    <Animated.View style={animatedStyle}>
-      <Ionicons
-        name="heart"
-        size={size}
-        color={color}
-        style={{ verticalAlign: "middle" }}
-      />
-    </Animated.View>
+    <TouchableOpacity
+      onPress={handlePress}
+      activeOpacity={1}
+      style={styles.container}
+    >
+      <Text style={styles.heartText}>Made Wid</Text>
+      <Animated.View style={animatedStyle}>
+        <Ionicons name="heart" size={size} color={color} />
+      </Animated.View>
+      <Text style={styles.heartText}>by Kichu</Text>
+    </TouchableOpacity>
   );
 }
 
-
-
-// interface FilterBarProps {
-//   activeFilter: SubjectFilter;
-//   onFilterChange: (filter: SubjectFilter) => void;
-// }
-
-// const FilterBar: React.FC<FilterBarProps> = ({ activeFilter, onFilterChange }) => {
-//   const styles = useThemedStyles(createStyles);
-//   const filters: { label: string; value: SubjectFilter }[] = [
-//     { label: "All", value: "all" },
-//     { label: "Critical", value: "danger" },
-//     { label: "Warning", value: "warning" },
-//     { label: "Safe", value: "safe" },
-//   ];
-
-//   return (
-//     <View style={styles.filterBarContainer}>
-//       {filters.map((filter) => (
-//         <TouchableOpacity
-//           key={filter.value}
-//           style={[
-//             styles.filterButton,
-//             activeFilter === filter.value && styles.filterButtonActive,
-//           ]}
-//           onPress={() => onFilterChange(filter.value)}
-//         >
-//           <Text
-//             style={[
-//               styles.filterButtonText,
-//               activeFilter === filter.value && styles.filterButtonTextActive,
-//             ]}
-//           >
-//             {filter.label}
-//           </Text>
-//         </TouchableOpacity>
-//       ))}
-//     </View>
-//   );
-// };
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    heartText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: "center",
+      fontFamily: "Fredoka-Regular",
+    },
+    container: {
+      flexDirection: "row",
+      flexWrap: "nowrap",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 5,
+    },
+  });

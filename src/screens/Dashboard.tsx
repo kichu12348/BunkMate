@@ -41,6 +41,7 @@ import { TAB_BAR_HEIGHT } from "../constants/config";
 import AnimatedHeart from "../components/UI/AnimatedHeart";
 import { usePfpStore } from "../state/pfpStore";
 import CustomRefreshLoader from "../components/UI/RefreshLoader";
+import { useAssignmentStore } from "../state/assignments";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -59,6 +60,13 @@ export const Dashboard: React.FC = () => {
   const name = useAuthStore((state) => state.name);
   const showToast = useToastStore((state) => state.showToast);
   const pfp = usePfpStore((state) => state.uri);
+
+
+  const fetchAssignments = useAssignmentStore((state) => state.fetchAssignments);
+
+  useEffect(() => {
+    fetchAssignments();
+  }, [fetchAssignments]);
 
   const [_, setPfpUri] = useState<string | null>(pfp);
 
@@ -104,7 +112,6 @@ export const Dashboard: React.FC = () => {
 
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(true);
-  const [isHeartActive, setIsHeartActive] = useState(false);
   const [shouldShowLoader, setShouldShowLoader] = useState(true);
   const scaleAnim = useSharedValue(0.8);
 
@@ -675,21 +682,7 @@ export const Dashboard: React.FC = () => {
             </View>
           )}
           <View style={styles.footer}>
-            <TouchableOpacity
-              onPress={() => setIsHeartActive(true)}
-              disabled={isHeartActive}
-              activeOpacity={1}
-            >
-              <Text style={styles.footerText}>
-                Made Wid{" "}
-                <AnimatedHeart
-                  isActive={isHeartActive}
-                  setIsActive={setIsHeartActive}
-                  size={20}
-                />{" "}
-                by Kichu
-              </Text>
-            </TouchableOpacity>
+            <AnimatedHeart size={20} />
           </View>
         </Animated.ScrollView>
       </CustomRefreshLoader>
@@ -717,7 +710,11 @@ export const Dashboard: React.FC = () => {
                 onPress={() => setFilterModalVisible(false)}
                 activeOpacity={0.7}
               >
-                <Ionicons name="close-circle" size={28} color={colors.textSecondary} />
+                <Ionicons
+                  name="close-circle"
+                  size={28}
+                  color={colors.textSecondary}
+                />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -798,9 +795,8 @@ const createStyles = (colors: ThemeColors) =>
     },
     greeting: {
       fontSize: 24,
-      fontFamily: "Chewy-Regular",
+      fontFamily: "Fredoka-Regular",
       color: colors.text,
-      letterSpacing: 1,
     },
     subGreeting: {
       fontSize: 14,
@@ -966,16 +962,10 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.primary,
     },
     primaryLight: {
-      color: colors.primary || "#5c9ce6",
+      color: colors.primary
     },
     safeColor: {
       color: colors.success,
-    },
-    safeGradientStart: {
-      color: colors.success,
-    },
-    safeGradientEnd: {
-      color: "#2a965a",
     },
     warningColor: {
       color: colors.warning,
@@ -983,17 +973,11 @@ const createStyles = (colors: ThemeColors) =>
     warningGradientStart: {
       color: colors.warning,
     },
-    warningGradientEnd: {
-      color: "#e09400",
-    },
     dangerColor: {
       color: colors.danger,
     },
     dangerGradientStart: {
       color: colors.danger,
-    },
-    dangerGradientEnd: {
-      color: "#c41c1c",
     },
     textSecondary: {
       color: colors.textSecondary,
@@ -1057,22 +1041,6 @@ const createStyles = (colors: ThemeColors) =>
       padding: 16,
       alignItems: "center",
       justifyContent: "center",
-    },
-    footerText: {
-      fontSize: 16,
-      color: colors.textSecondary,
-      textAlign: "center",
-      fontFamily: "Chewy-Regular",
-      letterSpacing: 1,
-    },
-    logoImage: {
-      width: 30,
-      height: 30,
-    },
-    pfpImage: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
     },
     // Modal Styles
     modalOverlay: {

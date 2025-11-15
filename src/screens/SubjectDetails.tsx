@@ -99,14 +99,12 @@ const StatCard = React.memo(
 const AttendanceCell = React.memo(
   ({
     day,
-    dayIndex,
     isCurrentMonth,
     cellColor,
     colors,
     onPress,
   }: {
     day: AttendanceDay;
-    dayIndex: number;
     isCurrentMonth: boolean;
     cellColor: ColorValue[];
     colors: ThemeColors;
@@ -163,6 +161,7 @@ export const SubjectDetailsScreen: React.FC = () => {
 
   const { subjectId, subjectName, subjectCode, toAttend, canMiss } =
     route.params;
+
   const {
     data: attendanceData,
     isLoading,
@@ -190,7 +189,6 @@ export const SubjectDetailsScreen: React.FC = () => {
   } | null>(null);
 
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-
 
   const handleOpen = () => {
     setIsModalVisible(true);
@@ -380,18 +378,24 @@ export const SubjectDetailsScreen: React.FC = () => {
       const cellOpacity = getCellIntensity(sessions);
 
       if (!attendanceEntries || attendanceEntries.length === 0) {
-        return [`${colors.border}${cellOpacity}`, `${colors.border}${cellOpacity}`];
+        return [
+          `${colors.border}${cellOpacity}`,
+          `${colors.border}${cellOpacity}`,
+        ];
       }
 
       attendanceEntries.forEach((entry: any) => {
         // --- Start of Fix ---
-        
+
         // Priority 1: If the record is marked as a conflict, always show the warning color.
         if (entry.is_conflict === 1) {
           colorsList.push(`${colors.warning}${cellOpacity}`);
           return; // Go to the next entry for this day
         }
-        const attendanceToUse = entry.final_attendance || entry.teacher_attendance || entry.user_attendance;
+        const attendanceToUse =
+          entry.final_attendance ||
+          entry.teacher_attendance ||
+          entry.user_attendance;
         const normalizedStatus = normalizeAttendance(attendanceToUse);
         if (normalizedStatus === "present") {
           colorsList.push(`${colors.success}${cellOpacity}`);
@@ -405,7 +409,10 @@ export const SubjectDetailsScreen: React.FC = () => {
       });
 
       if (colorsList.length === 0) {
-         return [`${colors.border}${cellOpacity}`, `${colors.border}${cellOpacity}`];
+        return [
+          `${colors.border}${cellOpacity}`,
+          `${colors.border}${cellOpacity}`,
+        ];
       }
       if (colorsList.length === 1) {
         return [colorsList[0], colorsList[0]];
@@ -570,7 +577,6 @@ export const SubjectDetailsScreen: React.FC = () => {
                   <AttendanceCell
                     key={dayIndex}
                     day={day}
-                    dayIndex={dayIndex}
                     isCurrentMonth={isCurrentMonth}
                     cellColor={getCellColor(day.date, day.sessions)}
                     colors={colors}
@@ -647,6 +653,39 @@ export const SubjectDetailsScreen: React.FC = () => {
             {renderStats()}
           </View>
 
+          {/*Assignments Screen Button */}
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={[styles.viewAssignmentsButton, { borderColor: colors.primary }]}
+              onPress={() =>
+                navigation.navigate("Assignments", {
+                  subjectId: subjectId,
+                  subjectName: subjectName,
+                  subjectCode: subjectCode,
+                })
+              }
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="document-text-outline"
+                size={20}
+                color={colors.primary}
+              />
+              <Text
+                style={[styles.viewAssignmentsButtonText, { color: colors.primary }]}
+              >
+                View Assignments
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.primary}
+                style={styles.marginLeftAuto}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Attendance History Section */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Attendance History
@@ -853,6 +892,22 @@ const styles = StyleSheet.create({
     fontSize: 6,
     fontWeight: "bold",
     marginTop: 2,
+  },
+  viewAssignmentsButton: {
+    borderRadius: 24,
+    padding: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+  },
+  viewAssignmentsButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  marginLeftAuto: {
+    marginLeft: "auto",
   },
 });
 

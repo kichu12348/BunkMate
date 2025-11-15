@@ -330,7 +330,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     title: {
       fontSize: 32,
-      fontFamily: "Chewy-Regular",
+      fontFamily: "Fredoka-Regular",
       color: colors.primary,
       marginBottom: 8,
       letterSpacing: 2,

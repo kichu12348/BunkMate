@@ -85,7 +85,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const surfaceTo = useSharedValue(colors.surface);
   const progress = useSharedValue(1);
 
-  const [isHeartActive, setIsHeartActive] = useState(false);
   const [pfpLoadingError, setPfpLoadingError] = useState(false);
 
   useEffect(() => {
@@ -594,21 +593,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <TouchableOpacity
-            onPress={() => setIsHeartActive(true)}
-            disabled={isHeartActive}
-            activeOpacity={1}
-          >
-            <Text style={styles.footerText}>
-              Made with{" "}
-              <AnimatedHeart
-                isActive={isHeartActive}
-                setIsActive={setIsHeartActive}
-                size={18}
-              />{" "}
-              by Kichu
-            </Text>
-          </TouchableOpacity>
+          <AnimatedHeart size={20} />
         </View>
       </ScrollView>
     </Animated.View>
@@ -804,7 +789,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     customSettingTitle: {
       fontSize: 17,
-      fontFamily: "Chewy-Regular",
+      fontFamily: "Fredoka-Regular",
       color: colors.text,
       letterSpacing: 1,
     },
@@ -898,7 +883,6 @@ const createStyles = (colors: ThemeColors) =>
     errorClose: {
       padding: 4,
     },
-
     // Footer
     footer: {
       marginTop: 24,
@@ -906,12 +890,5 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       alignItems: "center",
       justifyContent: "center",
-    },
-    footerText: {
-      fontSize: 15,
-      color: colors.textSecondary,
-      textAlign: "center",
-      fontFamily: "Chewy-Regular",
-      letterSpacing: 0.8,
     },
   });
