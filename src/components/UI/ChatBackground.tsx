@@ -14,7 +14,7 @@ const ChatBackground = ({ children }) => {
         position: "absolute",
         backgroundColor: colors.background,
       }}
-      resizeMode="stretch"
+      resizeMode="cover"
     >
       {children}
     </ImageBackground>
