@@ -90,7 +90,7 @@ export const AssignmentsDetailsScreen: React.FC = () => {
     const itemMax = (item as any).maximum_mark ?? null; // using any in case type not updated
     return (
       <View style={styles.detailRow}>
-          <Text style={styles.itemTitle}>{questionLabel}</Text>
+        <Text style={styles.itemTitle}>{questionLabel}</Text>
         {itemScore !== null && itemMax !== null && (
           <View style={styles.scoreBadge}>
             <Text style={styles.scoreBadgeText}>
@@ -172,8 +172,7 @@ export const AssignmentsDetailsScreen: React.FC = () => {
                 color={colors.primary}
               />
               <Text style={styles.summaryTitle}>Performance</Text>
-              <Text 
-                style={[styles.summaryTitle, { marginLeft: "auto" }]}>
+              <Text style={[styles.summaryTitle, { marginLeft: "auto" }]}>
                 {Math.round(progress * 100)}%
               </Text>
             </View>
@@ -392,7 +391,7 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 8,
       borderWidth: 1.5,
       borderColor: colors.primary,
-      borderStyle: "dashed"
+      borderStyle: "dashed",
     },
     retryButtonText: {
       color: colors.primary,
