@@ -15,17 +15,17 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import { useSettingsStore } from "../state/settings";
-import { useAttendanceStore } from "../state/attendance";
-import { useThemedStyles, useTheme } from "../hooks/useTheme";
-import { Dropdown } from "../components/Dropdown";
-import { ThemeColors } from "../types/theme";
-import { useAuthStore } from "../state/auth";
+import { useSettingsStore } from "../../state/settings";
+import { useAttendanceStore } from "../../state/attendance";
+import { useThemedStyles, useTheme } from "../../hooks/useTheme";
+import { Dropdown } from "../../components/Dropdown";
+import { ThemeColors } from "../../types/theme";
+import { useAuthStore } from "../../state/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import Switch from "../components/UI/Switch";
-import { useToastStore } from "../state/toast";
-import { useThemeStore } from "../state/themeStore";
+import Switch from "../../components/UI/Switch";
+import { useToastStore } from "../../state/toast";
+import { useThemeStore } from "../../state/themeStore";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -33,11 +33,11 @@ import Animated, {
   interpolateColor,
   Easing,
 } from "react-native-reanimated";
-import AnimatedHeart from "../components/UI/AnimatedHeart";
-import { APP_CONFIG } from "../constants/config";
-import { darkTheme, lightTheme } from "../constants/colors";
-import { usePfp } from "../utils/pfpUtil";
-import { usePfpStore } from "../state/pfpStore";
+import AnimatedHeart from "../../components/UI/AnimatedHeart";
+import { APP_CONFIG } from "../../constants/config";
+import { darkTheme, lightTheme } from "../../constants/colors";
+import { usePfp } from "../../utils/pfpUtil";
+import { usePfpStore } from "../../state/pfpStore";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 const INSTAGRAM_URL = process.env.EXPO_PUBLIC_INSTAGRAM_URL;

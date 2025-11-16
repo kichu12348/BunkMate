@@ -12,13 +12,13 @@ import {
   Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuthStore } from "../state/auth";
-import { useThemedStyles } from "../hooks/useTheme";
-import { ThemeColors } from "../types/theme";
-import { APP_CONFIG } from "../constants/config";
-import { useToastStore } from "../state/toast";
-import { OptionsModal, ResetPasswordModal } from "../components/Modals/Reset";
-import { useThemeStore } from "../state/themeStore";
+import { useAuthStore } from "../../state/auth";
+import { useThemedStyles } from "../../hooks/useTheme";
+import { ThemeColors } from "../../types/theme";
+import { APP_CONFIG } from "../../constants/config";
+import { useToastStore } from "../../state/toast";
+import { OptionsModal, ResetPasswordModal } from "../../components/Modals/Reset";
+import { useThemeStore } from "../../state/themeStore";
 
 export const LoginScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);

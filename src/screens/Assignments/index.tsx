@@ -7,13 +7,13 @@ import {
 } from "react-native";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemeStore } from "../state/themeStore";
+import { useThemeStore } from "../../state/themeStore";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
-import { RootStackParamList } from "../navigation/RootNavigator";
-import { useAssignmentStore } from "../state/assignments";
-import { AssignmentCard } from "../components/AssignmentCard";
-import { useThemedStyles } from "../hooks/useTheme";
-import { ThemeColors } from "../types/theme";
+import { RootStackParamList } from "../../navigation/RootNavigator";
+import { useAssignmentStore } from "../../state/assignments";
+import { AssignmentCard } from "../../components/AssignmentCard";
+import { useThemedStyles } from "../../hooks/useTheme";
+import { ThemeColors } from "../../types/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -95,6 +95,7 @@ export const AssignmentsScreen = () => {
           <AssignmentCard assignment={item} onPress={handleAssignmentPress} />
         )}
         ListEmptyComponent={renderEmptyState}
+        scrollEnabled={subjectAssignments.length > 0}
         contentContainerStyle={
           subjectAssignments.length === 0
             ? styles.emptyList

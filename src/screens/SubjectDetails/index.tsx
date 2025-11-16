@@ -13,10 +13,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useThemedStyles, useTheme } from "../hooks/useTheme";
-import { useAttendanceStore } from "../state/attendance";
-import { ThemeColors } from "../types/theme";
-import { RootStackParamList } from "../navigation/RootNavigator";
+import { useThemedStyles, useTheme } from "../../hooks/useTheme";
+import { useAttendanceStore } from "../../state/attendance";
+import { ThemeColors } from "../../types/theme";
+import { RootStackParamList } from "../../navigation/RootNavigator";
 import {
   format,
   startOfWeek,
@@ -28,9 +28,9 @@ import {
   subMonths,
 } from "date-fns";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AttendanceDayView from "../components/Modals/AttendanceDayView";
+import AttendanceDayView from "../../components/Modals/AttendanceDayView";
 import { LinearGradient } from "expo-linear-gradient";
-import { normalizeAttendance } from "../utils/helpers";
+import { normalizeAttendance } from "../../utils/helpers";
 
 type SubjectDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -894,7 +894,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   viewAssignmentsButton: {
-    borderRadius: 24,
+    borderRadius: 8,
     padding: 8,
     flexDirection: "row",
     alignItems: "center",

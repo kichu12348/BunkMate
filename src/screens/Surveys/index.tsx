@@ -11,16 +11,16 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useSurveysStore } from "../state/surveys";
-import { useThemedStyles, useTheme } from "../hooks/useTheme";
-import { ThemeColors } from "../types/theme";
-import { Survey } from "../api/surveys";
+import { useSurveysStore } from "../../state/surveys";
+import { useThemedStyles, useTheme } from "../../hooks/useTheme";
+import { ThemeColors } from "../../types/theme";
+import { Survey } from "../../api/surveys";
 import { formatDistanceToNow, parseISO, isPast, isFuture } from "date-fns";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { RootStackParamList } from "../navigation/RootNavigator";
-import { useToastStore } from "../state/toast";
-import { useThemeStore } from "../state/themeStore";
+import { RootStackParamList } from "../../navigation/RootNavigator";
+import { useToastStore } from "../../state/toast";
+import { useThemeStore } from "../../state/themeStore";
 
 type SurveysScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;

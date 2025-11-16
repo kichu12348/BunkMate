@@ -13,12 +13,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemedStyles } from "../hooks/useTheme";
-import { ThemeColors } from "../types/theme";
-import { useThemeStore } from "../state/themeStore";
-import { useChatStore } from "../state/chat";
-import { useWebSocket } from "../utils/websocket";
-import { Message } from "../types/api";
+import { useThemedStyles } from "../../hooks/useTheme";
+import { ThemeColors } from "../../types/theme";
+import { useThemeStore } from "../../state/themeStore";
+import { useChatStore } from "../../state/chat";
+import { useWebSocket } from "../../utils/websocket";
+import { Message } from "../../types/api";
 import Animated, {
   useAnimatedStyle,
   withTiming,
@@ -29,14 +29,14 @@ import Animated, {
 } from "react-native-reanimated";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/RootNavigator";
-import loadingError from "../assets/loading_error_gif.gif";
+import { RootStackParamList } from "../../navigation/RootNavigator";
+import loadingError from "../../assets/loading_error_gif.gif";
 
 type PublicForumNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "PublicForum"
 >;
-import AnimatedIconBackground from "../components/UI/ChatBackground";
+import AnimatedIconBackground from "../../components/UI/ChatBackground";
 
 const AnimatedIcon = Animated.createAnimatedComponent(Ionicons);
 

@@ -9,19 +9,21 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
-import { RootStackParamList } from "../navigation/RootNavigator";
-import { useAssignmentStore } from "../state/assignments";
+import { RootStackParamList } from "../../navigation/RootNavigator";
+import { useAssignmentStore } from "../../state/assignments";
 import { Ionicons } from "@expo/vector-icons";
-import { useThemeStore } from "../state/themeStore";
-import { useThemedStyles } from "../hooks/useTheme";
-import { ThemeColors } from "../types/theme";
-import { QA } from "../types/assignments";
+import { useThemeStore } from "../../state/themeStore";
+import { useThemedStyles } from "../../hooks/useTheme";
+import { ThemeColors } from "../../types/theme";
+import { QA } from "../../types/assignments";
 import Animated, {
   withTiming,
   useSharedValue,
   Easing,
   useAnimatedStyle,
+  SharedValue,
 } from "react-native-reanimated";
+import { CustomLoader } from "../../components/UI/RefreshLoader";
 
 export const AssignmentsDetailsScreen: React.FC = () => {
   const route = useRoute<RouteProp<RootStackParamList, "AssignmentsDetails">>();
@@ -39,6 +41,8 @@ export const AssignmentsDetailsScreen: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  const progressValue = useSharedValue(0);
+
   React.useEffect(() => {
     let mounted = true;
     const fetchData = async () => {
@@ -53,7 +57,7 @@ export const AssignmentsDetailsScreen: React.FC = () => {
           totalMaxMarks: data.totalMaxMarks || 0,
         });
       } catch (e: any) {
-        if (mounted) setError(e?.message || "Failed to load assignment");
+        if (mounted) setError("Failed to load assignment");
       } finally {
         mounted && setLoading(false);
       }
@@ -66,8 +70,6 @@ export const AssignmentsDetailsScreen: React.FC = () => {
 
   const progress =
     score.totalMaxMarks > 0 ? score.totalScore / score.totalMaxMarks : 0;
-
-  const progressValue = useSharedValue(0);
 
   React.useEffect(() => {
     progressValue.value = withTiming(progress, {
@@ -88,9 +90,7 @@ export const AssignmentsDetailsScreen: React.FC = () => {
     const itemMax = (item as any).maximum_mark ?? null; // using any in case type not updated
     return (
       <View style={styles.detailRow}>
-        <View style={styles.detailTextBlock}>
           <Text style={styles.itemTitle}>{questionLabel}</Text>
-        </View>
         {itemScore !== null && itemMax !== null && (
           <View style={styles.scoreBadge}>
             <Text style={styles.scoreBadgeText}>
@@ -124,7 +124,11 @@ export const AssignmentsDetailsScreen: React.FC = () => {
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator color={colors.primary} size="large" />
+          {/* <ActivityIndicator color={colors.primary} size="large" /> */}
+          <CustomLoader
+            pullProgress={{ value: 1 } as SharedValue<number>}
+            size={2}
+          />
           <Text style={styles.loadingText}>Loading details...</Text>
         </View>
       ) : error ? (
@@ -168,6 +172,10 @@ export const AssignmentsDetailsScreen: React.FC = () => {
                 color={colors.primary}
               />
               <Text style={styles.summaryTitle}>Performance</Text>
+              <Text 
+                style={[styles.summaryTitle, { marginLeft: "auto" }]}>
+                {Math.round(progress * 100)}%
+              </Text>
             </View>
             <View style={styles.progressBarTrack}>
               <Animated.View style={[styles.progressBarFill, animatedWidth]} />
@@ -204,6 +212,7 @@ export const AssignmentsDetailsScreen: React.FC = () => {
                 </Text>
               </View>
             }
+            scrollEnabled={list.length > 0}
             showsVerticalScrollIndicator={false}
           />
         </>
@@ -296,7 +305,8 @@ const createStyles = (colors: ThemeColors) =>
     },
     detailRow: {
       flexDirection: "row",
-      alignItems: "flex-start",
+      alignItems: "center",
+      justifyContent: "space-between",
       backgroundColor: colors.surface,
       marginBottom: 8,
       padding: 14,
@@ -308,17 +318,12 @@ const createStyles = (colors: ThemeColors) =>
       shadowRadius: 3,
       elevation: 1,
     },
-    detailTextBlock: { flex: 1, gap: 4 },
     itemTitle: {
       fontSize: 14,
       fontWeight: "600",
       color: colors.text,
       lineHeight: 18,
-    },
-    itemDescription: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      lineHeight: 16,
+      marginRight: "auto",
     },
     scoreBadge: {
       alignSelf: "flex-start",
@@ -385,11 +390,13 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: 24,
       paddingVertical: 12,
       borderRadius: 8,
-      backgroundColor: colors.primary,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      borderStyle: "dashed"
     },
     retryButtonText: {
-      color: colors.surface,
+      color: colors.primary,
       fontSize: 16,
-      fontWeight: "600",
+      fontWeight: "bold",
     },
   });

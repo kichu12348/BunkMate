@@ -23,12 +23,12 @@ import {
   startOfWeek,
   isSameMonth,
 } from "date-fns";
-import { useThemedStyles, useTheme } from "../hooks/useTheme";
-import { useAttendanceStore } from "../state/attendance";
-import { ThemeColors } from "../types/theme";
-import { normalizeAttendance } from "../utils/helpers";
-import { Subject } from "../types/api";
-import { TAB_BAR_HEIGHT } from "../constants/config";
+import { useThemedStyles, useTheme } from "../../hooks/useTheme";
+import { useAttendanceStore } from "../../state/attendance";
+import { ThemeColors } from "../../types/theme";
+import { normalizeAttendance } from "../../utils/helpers";
+import { Subject } from "../../types/api";
+import { TAB_BAR_HEIGHT } from "../../constants/config";
 
 const { width } = Dimensions.get("window");
 const CELL_SIZE = Math.floor((width * 0.9 - 40) / 7);

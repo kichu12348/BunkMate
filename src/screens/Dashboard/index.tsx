@@ -11,19 +11,19 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useAuthStore } from "../state/auth";
-import { useAttendanceStore } from "../state/attendance";
-import { useSettingsStore } from "../state/settings";
-import { useThemedStyles } from "../hooks/useTheme";
-import { AttendanceCard } from "../components/AttendanceCard";
-import { ThemeColors } from "../types/theme";
+import { useAuthStore } from "../../state/auth";
+import { useAttendanceStore } from "../../state/attendance";
+import { useSettingsStore } from "../../state/settings";
+import { useThemedStyles } from "../../hooks/useTheme";
+import { AttendanceCard } from "../../components/AttendanceCard";
+import { ThemeColors } from "../../types/theme";
 import {
   formatPercentage,
   getTimeAgo,
   calculateEnhancedAttendanceStats,
   getAttendanceStatus,
-} from "../utils/helpers";
-import { ATTENDANCE_THRESHOLDS } from "../constants/config";
+} from "../../utils/helpers";
+import { ATTENDANCE_THRESHOLDS } from "../../constants/config";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
@@ -34,14 +34,14 @@ import Animated, {
   interpolate,
   runOnJS,
 } from "react-native-reanimated";
-import { RootStackParamList } from "../navigation/RootNavigator";
-import { useThemeStore } from "../state/themeStore";
-import { useToastStore } from "../state/toast";
-import { TAB_BAR_HEIGHT } from "../constants/config";
-import AnimatedHeart from "../components/UI/AnimatedHeart";
-import { usePfpStore } from "../state/pfpStore";
-import CustomRefreshLoader from "../components/UI/RefreshLoader";
-import { useAssignmentStore } from "../state/assignments";
+import { RootStackParamList } from "../../navigation/RootNavigator";
+import { useThemeStore } from "../../state/themeStore";
+import { useToastStore } from "../../state/toast";
+import { TAB_BAR_HEIGHT } from "../../constants/config";
+import AnimatedHeart from "../../components/UI/AnimatedHeart";
+import { usePfpStore } from "../../state/pfpStore";
+import CustomRefreshLoader from "../../components/UI/RefreshLoader";
+import { useAssignmentStore } from "../../state/assignments";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -61,8 +61,9 @@ export const Dashboard: React.FC = () => {
   const showToast = useToastStore((state) => state.showToast);
   const pfp = usePfpStore((state) => state.uri);
 
-
-  const fetchAssignments = useAssignmentStore((state) => state.fetchAssignments);
+  const fetchAssignments = useAssignmentStore(
+    (state) => state.fetchAssignments
+  );
 
   useEffect(() => {
     fetchAssignments();
@@ -962,7 +963,7 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.primary,
     },
     primaryLight: {
-      color: colors.primary
+      color: colors.primary,
     },
     safeColor: {
       color: colors.success,

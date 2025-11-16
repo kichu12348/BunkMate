@@ -54,7 +54,6 @@ export default function App() {
         checkForUpdates(),
         initializeTheme(appearance),
         checkAuthStatus(),
-        initializePfp(),
       ]);
     } catch (error) {
       console.error("Initialization error:", error);
@@ -64,7 +63,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    initialize();
+    initialize().finally(initializePfp);
   }, []);
 
   useEffect(() => {

@@ -13,16 +13,16 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useThemedStyles } from "../hooks/useTheme";
-import { ThemeColors } from "../types/theme";
-import { RootStackParamList } from "../navigation/RootNavigator";
-import { surveysService } from "../api/surveys";
-import { SurveyStartData, QuestionChoice } from "../types/api";
+import { useThemedStyles } from "../../hooks/useTheme";
+import { ThemeColors } from "../../types/theme";
+import { RootStackParamList } from "../../navigation/RootNavigator";
+import { surveysService } from "../../api/surveys";
+import { SurveyStartData, QuestionChoice } from "../../types/api";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Dropdown } from "../components/Dropdown";
-import { useSurveysStore } from "../state/surveys";
-import { useToastStore } from "../state/toast";
-import { useThemeStore } from "../state/themeStore";
+import { Dropdown } from "../../components/Dropdown";
+import { useSurveysStore } from "../../state/surveys";
+import { useToastStore } from "../../state/toast";
+import { useThemeStore } from "../../state/themeStore";
 import Animated, {
   Easing,
   useAnimatedStyle,

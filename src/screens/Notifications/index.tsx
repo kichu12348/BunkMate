@@ -9,15 +9,15 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNotificationsStore } from "../state/notifications";
-import { useThemedStyles } from "../hooks/useTheme";
-import { ThemeColors } from "../types/theme";
-import { Notification } from "../api/notifications";
+import { useNotificationsStore } from "../../state/notifications";
+import { useThemedStyles } from "../../hooks/useTheme";
+import { ThemeColors } from "../../types/theme";
+import { Notification } from "../../api/notifications";
 import { formatDistanceToNow } from "date-fns";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useThemeStore } from "../state/themeStore";
-import { useToastStore } from "../state/toast";
+import { useThemeStore } from "../../state/themeStore";
+import { useToastStore } from "../../state/toast";
 
 interface NotificationItemProps {
   notification: Notification;
