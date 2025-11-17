@@ -145,8 +145,8 @@ export const useAuthStore = create<AuthState>((set) => ({
           user,
           name: `${first_name} ${last_name}`,
           isAuthenticated: true,
-          isLoading: false,
         });
+        set({ isLoading: false });
         useSettingsStore.setState({
           selectedYear: user.settings.default_academic_year,
           selectedSemester: user.settings.default_semester,

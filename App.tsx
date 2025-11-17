@@ -23,7 +23,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const { initializeTheme, colors, isDark } = useTheme();
-  const { isAuthenticated, checkAuthStatus } = useAuthStore();
+  const { isAuthenticated, checkAuthStatus, isLoading } = useAuthStore();
 
   const initializePfp = usePfpStore((state) => state.initialize);
 
@@ -31,7 +31,7 @@ export default function App() {
 
   const [fontsLoaded, error] = useFonts({
     "Fredoka-Regular": require("./src/assets/fonts/Fredoka-Regular.ttf"),
-    "Inter": require("./src/assets/fonts/Inter.ttf"),
+    Inter: require("./src/assets/fonts/Inter.ttf"),
   });
 
   const checkForUpdates = async () => {
@@ -68,8 +68,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if ((fontsLoaded || error) && isDone) SplashScreen.hideAsync();
-  }, [error, fontsLoaded, isDone]);
+    if ((fontsLoaded || error) && isDone && !isLoading) SplashScreen.hideAsync();
+  }, [error, fontsLoaded, isDone, isLoading]);
 
   // Set navigation bar color
   useEffect(() => {
