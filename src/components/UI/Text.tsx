@@ -7,7 +7,7 @@ interface TextProps extends RNTextProps {
 
 const Text: React.FC<TextProps> = ({ children, style, ...props }) => {
   return (
-    <RNText style={[style, { fontFamily: "Inter" }]} {...props}>
+    <RNText style={style} {...props}>
       {children}
     </RNText>
   );

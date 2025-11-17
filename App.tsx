@@ -18,18 +18,23 @@ import Toast from "./src/components/UI/toast";
 
 enableScreens();
 
+if (!__DEV__) {
+  SplashScreen.setOptions({
+    fade: true,
+    duration: 500,
+  });
+}
+
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const { initializeTheme, colors, isDark } = useTheme();
-  const { isAuthenticated, checkAuthStatus, isLoading } = useAuthStore();
+  const { isAuthenticated, checkAuthStatus } = useAuthStore();
 
   const initializePfp = usePfpStore((state) => state.initialize);
 
-  const [isDone, setIsDone] = React.useState(false);
-
-  const [fontsLoaded, error] = useFonts({
+  useFonts({
     "Fredoka-Regular": require("./src/assets/fonts/Fredoka-Regular.ttf"),
     Inter: require("./src/assets/fonts/Inter.ttf"),
   });
@@ -48,28 +53,21 @@ export default function App() {
   };
 
   const initialize = async () => {
-    if (isDone) return;
     try {
       const appearance = Appearance.getColorScheme() || "light";
       await Promise.all([
         checkForUpdates(),
         initializeTheme(appearance),
-        checkAuthStatus(),
+        checkAuthStatus(SplashScreen.hideAsync),
       ]);
     } catch (error) {
       console.error("Initialization error:", error);
-    } finally {
-      setIsDone(true);
     }
   };
 
   useEffect(() => {
     initialize().finally(initializePfp);
   }, []);
-
-  useEffect(() => {
-    if ((fontsLoaded || error) && isDone && !isLoading) SplashScreen.hideAsync();
-  }, [error, fontsLoaded, isDone, isLoading]);
 
   // Set navigation bar color
   useEffect(() => {

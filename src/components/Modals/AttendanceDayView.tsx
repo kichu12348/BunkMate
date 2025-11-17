@@ -4,13 +4,8 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Modal,
 } from "react-native";
-import Animated, {
-  Easing,
-  useSharedValue,
-  withTiming,
-  useAnimatedStyle,
-} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../hooks/useTheme";
@@ -27,7 +22,6 @@ import type {
 } from "../utils/types";
 
 const { width, height } = Dimensions.get("screen");
-
 
 // Main Component
 const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
@@ -46,10 +40,6 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
     new Map()
   );
   const [refreshKey, setRefreshKey] = useState(0);
-
-  // Animation values
-  const translateY = useSharedValue(height);
-  const scale = useSharedValue(0);
 
   // Store subscriptions
   const checkForConflicts = useAttendanceStore(
@@ -213,34 +203,11 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
 
     setEditData(editModalData);
     setShowEditModal(true);
-
-    // Animate modal
-    translateY.value = withTiming(0, {
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
-    });
-    scale.value = withTiming(1, {
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
-    });
   };
 
   const handleCloseEditModal = () => {
-    if (!showEditModal) return;
-
-    translateY.value = withTiming(height, {
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
-    });
-    scale.value = withTiming(0, {
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
-    });
-
-    setTimeout(() => {
-      setShowEditModal(false);
-      setEditData(null);
-    }, 300);
+    setShowEditModal(false);
+    setEditData(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -325,91 +292,92 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
     );
   };
 
-  const modalAnimStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateY: translateY.value },
-        { scale: scale.value },
-      ] as any,
-    };
-  });
-
-  if (!isVisible) return null;
-
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}
-      pointerEvents="box-none"
+    <Modal
+      visible={isVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
     >
       <View
         style={[
-          styles.blurContainer,
-          { backgroundColor: colors.background + "c0" },
+          styles.container,
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
         ]}
-      />
-      <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Ionicons name="close" size={28} color={colors.textSecondary} />
-        </TouchableOpacity>
+      >
+        <TouchableOpacity
+          style={[
+            styles.blurContainer,
+            { backgroundColor: colors.background + "c0" },
+          ]}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Ionicons name="close" size={28} color={colors.textSecondary} />
+          </TouchableOpacity>
 
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            Daily Attendance
-          </Text>
-          <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-            {formatDate(data?.day?.date || "")}
-          </Text>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View
-            style={[
-              styles.statCard,
-              { backgroundColor: colors.success + "15" },
-            ]}
-          >
-            <Ionicons
-              name="checkmark-circle"
-              size={20}
-              color={colors.success}
-            />
-            <Text style={[styles.statLabel, { color: colors.success }]}>
-              Present
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: colors.text }]}>
+              Daily Attendance
             </Text>
-            <Text style={[styles.statValue, { color: colors.success }]}>
-              {
-                Array.from(hourlyStatus.values()).filter((s) => s === "present")
-                  .length
-              }
+            <Text style={[styles.dateText, { color: colors.textSecondary }]}>
+              {formatDate(data?.day?.date || "")}
             </Text>
           </View>
-          <View
-            style={[styles.statCard, { backgroundColor: colors.error + "15" }]}
-          >
-            <Ionicons name="close-circle" size={20} color={colors.error} />
-            <Text style={[styles.statLabel, { color: colors.error }]}>
-              Absent
-            </Text>
-            <Text style={[styles.statValue, { color: colors.error }]}>
-              {
-                Array.from(hourlyStatus.values()).filter((s) => s === "absent")
-                  .length
-              }
-            </Text>
+
+          <View style={styles.statsContainer}>
+            <View
+              style={[
+                styles.statCard,
+                { backgroundColor: colors.success + "15" },
+              ]}
+            >
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color={colors.success}
+              />
+              <Text style={[styles.statLabel, { color: colors.success }]}>
+                Present
+              </Text>
+              <Text style={[styles.statValue, { color: colors.success }]}>
+                {
+                  Array.from(hourlyStatus.values()).filter((s) => s === "present")
+                    .length
+                }
+              </Text>
+            </View>
+            <View
+              style={[styles.statCard, { backgroundColor: colors.error + "15" }]}
+            >
+              <Ionicons name="close-circle" size={20} color={colors.error} />
+              <Text style={[styles.statLabel, { color: colors.error }]}>
+                Absent
+              </Text>
+              <Text style={[styles.statValue, { color: colors.error }]}>
+                {
+                  Array.from(hourlyStatus.values()).filter((s) => s === "absent")
+                    .length
+                }
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.sessionsContainer}>
+            <View style={styles.hoursRow}>{[1, 2, 3].map(renderHourCell)}</View>
+            <View style={styles.hoursRow}>{[4, 5, 6].map(renderHourCell)}</View>
           </View>
         </View>
 
-        <View style={styles.sessionsContainer}>
-          <View style={styles.hoursRow}>{[1, 2, 3].map(renderHourCell)}</View>
-          <View style={styles.hoursRow}>{[4, 5, 6].map(renderHourCell)}</View>
-        </View>
-      </View>
-
-      {showEditModal && (
-        <Animated.View style={[styles.editModalContainer, modalAnimStyle]}>
+        <Modal
+          visible={showEditModal}
+          transparent
+          animationType="slide"
+          onRequestClose={handleCloseEditModal}
+          hardwareAccelerated
+        >
           <AttendanceEditModal
             close={handleCloseEditModal}
             data={editData}
@@ -422,9 +390,9 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
             checkForConflicts={checkForConflicts}
             closeThis={onClose}
           />
-        </Animated.View>
-      )}
-    </View>
+        </Modal>
+      </View>
+    </Modal>
   );
 };
 

@@ -285,7 +285,7 @@ const AttendanceEditModal: React.FC<{
       style={[
         styles.editContainer,
         {
-          paddingTop: insets.top + 20,
+          paddingTop: insets.top,
           paddingBottom: insets.bottom,
           backgroundColor: `${colors.background}dd`,
         },
@@ -483,7 +483,6 @@ const styles = StyleSheet.create({
   },
   editHeader: {
     width: "100%",
-    padding: 16,
     paddingHorizontal: 24,
     flexDirection: "row",
     justifyContent: "flex-end",

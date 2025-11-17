@@ -145,13 +145,13 @@ export const useAuthStore = create<AuthState>((set) => ({
           user,
           name: `${first_name} ${last_name}`,
           isAuthenticated: true,
+          isLoading: false,
         });
-        set({ isLoading: false });
         useSettingsStore.setState({
           selectedYear: user.settings.default_academic_year,
           selectedSemester: user.settings.default_semester,
         });
-        await cb?.();
+        useAttendanceStore.getState().initFetchAttendance();
         logInsight(`${first_name || ""} ${last_name || ""}`.trim());
         useChatStore
           .getState()
@@ -170,6 +170,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
         error: "Failed to check authentication status",
       });
+    } finally {
+      if (cb) {
+        setTimeout(() => cb(), 300);
+      }
     }
   },
 

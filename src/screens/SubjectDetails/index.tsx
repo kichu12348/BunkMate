@@ -656,7 +656,10 @@ export const SubjectDetailsScreen: React.FC = () => {
           {/*Assignments Screen Button */}
           <View style={styles.section}>
             <TouchableOpacity
-              style={[styles.viewAssignmentsButton, { borderColor: colors.primary }]}
+              style={[
+                styles.viewAssignmentsButton,
+                { borderColor: colors.primary },
+              ]}
               onPress={() =>
                 navigation.navigate("Assignments", {
                   subjectId: subjectId,
@@ -672,7 +675,10 @@ export const SubjectDetailsScreen: React.FC = () => {
                 color={colors.primary}
               />
               <Text
-                style={[styles.viewAssignmentsButtonText, { color: colors.primary }]}
+                style={[
+                  styles.viewAssignmentsButtonText,
+                  { color: colors.primary },
+                ]}
               >
                 View Assignments
               </Text>
@@ -708,18 +714,14 @@ export const SubjectDetailsScreen: React.FC = () => {
         animationType="fade"
         onRequestClose={handleClose}
       >
-        {selectedDay && (
-          <AttendanceDayView
-            isVisible={true}
-            onClose={handleClose}
-            data={selectedDay}
-            subjectId={subjectId}
-            subjectName={subjectName}
-            onUpdate={() => {
-              refreshAttendance();
-            }}
-          />
-        )}
+        <AttendanceDayView
+          isVisible={true}
+          onClose={handleClose}
+          data={selectedDay}
+          subjectId={subjectId}
+          subjectName={subjectName}
+          onUpdate={refreshAttendance}
+        />
       </Modal>
     </View>
   );

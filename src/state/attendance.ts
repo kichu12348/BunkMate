@@ -72,8 +72,8 @@ interface AttendanceState {
   clearAttendanceData: () => void;
 }
 
-let requestId=0;
-let latestRequestId=0;
+let requestId = 0;
+let latestRequestId = 0;
 
 export const useAttendanceStore = create<AttendanceState>((set, get) => ({
   data: null,
@@ -161,7 +161,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
 
       // 4. Set the state correctly.
       set({
-        data: transformedData, 
+        data: transformedData,
         courseSchedule: mergedSchedule,
         isLoading: false,
         error: null,
@@ -676,5 +676,5 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       courseSchedule: null,
       hasInitFetched: false,
     });
-  }
+  },
 }));
