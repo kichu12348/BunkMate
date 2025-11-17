@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
-  Text,
   FlatList,
   StyleSheet,
   TouchableOpacity,
@@ -18,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useThemeStore } from "../../state/themeStore";
 import { useToastStore } from "../../state/toast";
+import Text from "../../components/UI/Text";
 
 interface NotificationItemProps {
   notification: Notification;

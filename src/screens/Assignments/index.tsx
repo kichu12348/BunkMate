@@ -1,6 +1,5 @@
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
@@ -16,6 +15,8 @@ import { useThemedStyles } from "../../hooks/useTheme";
 import { ThemeColors } from "../../types/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import Text from "../../components/UI/Text";
+
 
 export const AssignmentsScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, "Assignments">>();

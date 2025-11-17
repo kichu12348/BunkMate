@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   View,
-  Text,
   Modal,
   TouchableOpacity,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
 } from "react-native";
 import { useThemeStore } from "../state/themeStore";
 import { AntDesign } from "@expo/vector-icons";
+import Text from "./UI/Text";
 
 interface SubscriptionModalProps {
   visible: boolean;

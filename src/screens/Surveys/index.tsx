@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
-  Text,
   FlatList,
   StyleSheet,
   TouchableOpacity,
@@ -21,6 +20,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { RootStackParamList } from "../../navigation/RootNavigator";
 import { useToastStore } from "../../state/toast";
 import { useThemeStore } from "../../state/themeStore";
+import Text from "../../components/UI/Text";
 
 type SurveysScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;

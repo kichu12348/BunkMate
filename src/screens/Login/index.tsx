@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -19,6 +18,7 @@ import { APP_CONFIG } from "../../constants/config";
 import { useToastStore } from "../../state/toast";
 import { OptionsModal, ResetPasswordModal } from "../../components/Modals/Reset";
 import { useThemeStore } from "../../state/themeStore";
+import Text from "../../components/UI/Text";
 
 export const LoginScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);

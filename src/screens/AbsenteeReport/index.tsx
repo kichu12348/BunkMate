@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Modal,
@@ -29,6 +28,7 @@ import { ThemeColors } from "../../types/theme";
 import { normalizeAttendance } from "../../utils/helpers";
 import { Subject } from "../../types/api";
 import { TAB_BAR_HEIGHT } from "../../constants/config";
+import Text from "../../components/UI/Text";
 
 const { width } = Dimensions.get("window");
 const CELL_SIZE = Math.floor((width * 0.9 - 40) / 7);

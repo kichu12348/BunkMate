@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  Alert,
-  Modal,
 } from "react-native";
 import Animated, {
   Easing,
@@ -22,6 +19,7 @@ import { AttendanceDatabase } from "../../utils/attendanceDatabase";
 import { CourseSchedule } from "../../types/api";
 import { normalizeAttendance } from "../../utils/helpers";
 import AttendanceEditModal from "./components/AttendanceEdit";
+import Text from "../UI/Text";
 
 import type {
   AttendanceDayViewProps,

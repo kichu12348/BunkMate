@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Dimensions,
@@ -42,6 +41,7 @@ import AnimatedHeart from "../../components/UI/AnimatedHeart";
 import { usePfpStore } from "../../state/pfpStore";
 import CustomRefreshLoader from "../../components/UI/RefreshLoader";
 import { useAssignmentStore } from "../../state/assignments";
+import Text from "../../components/UI/Text";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -833,8 +833,9 @@ const createStyles = (colors: ThemeColors) =>
     },
     statsTitle: {
       fontSize: 18,
-      fontWeight: "600",
+      fontWeight: "700",
       color: colors.text,
+      fontFamily: "Inter",
     },
     statsContent: {
       alignItems: "center",

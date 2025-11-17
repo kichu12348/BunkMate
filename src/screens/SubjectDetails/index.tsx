@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -31,6 +30,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttendanceDayView from "../../components/Modals/AttendanceDayView";
 import { LinearGradient } from "expo-linear-gradient";
 import { normalizeAttendance } from "../../utils/helpers";
+import Text from "../../components/UI/Text";
 
 type SubjectDetailsScreenRouteProp = RouteProp<
   RootStackParamList,

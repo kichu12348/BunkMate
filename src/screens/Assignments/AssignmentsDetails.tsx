@@ -1,9 +1,7 @@
 import React from "react";
 import {
   View,
-  Text,
   StyleSheet,
-  ActivityIndicator,
   FlatList,
   TouchableOpacity,
 } from "react-native";
@@ -24,6 +22,7 @@ import Animated, {
   SharedValue,
 } from "react-native-reanimated";
 import { CustomLoader } from "../../components/UI/RefreshLoader";
+import Text from "../../components/UI/Text";
 
 export const AssignmentsDetailsScreen: React.FC = () => {
   const route = useRoute<RouteProp<RootStackParamList, "AssignmentsDetails">>();

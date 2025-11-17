@@ -1,11 +1,9 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import {
   View,
   TouchableOpacity,
-  Text,
   StyleSheet,
   ColorValue,
-  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
@@ -17,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../hooks/useTheme";
 import { TAB_BAR_HEIGHT, TIMING_CONFIG } from "../../constants/config";
+import Text from "./Text";
 
 // --- Types ---
 interface TabItem {
@@ -70,7 +69,7 @@ const getStyles = (insets: { bottom: number }) =>
     },
     label: {
       fontSize: 14,
-      fontWeight: "600",
+      fontWeight: "600"
     },
   });
 

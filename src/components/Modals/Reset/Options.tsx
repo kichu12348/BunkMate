@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
   Modal,
   TouchableOpacity,
   StyleSheet,
@@ -13,6 +12,7 @@ import { useThemeStore } from "../../../state/themeStore";
 import { authService } from "../../../api/auth";
 import { ResetOptionsResponse } from "../../../types/api";
 import { useToastStore } from "../../../state/toast";
+import Text from "../../UI/Text";
 
 interface OptionsModalProps {
   visible: boolean;

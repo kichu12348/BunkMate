@@ -1,10 +1,11 @@
 import React from "react";
 import { useToastStore } from "../../state/toast";
-import { Modal, StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { Modal, StyleSheet, View,TouchableOpacity } from "react-native";
 import type { ToastButton } from "../../types/toast";
 import { useThemedStyles } from "../../hooks/useTheme";
 import { ThemeColors } from "../../types/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Text from "./Text";
 
 export default function Toast() {
   const { title, message, isVisible, buttons, hideToast } = useToastStore();

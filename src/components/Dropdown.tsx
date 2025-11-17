@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
   TouchableOpacity,
   Modal,
   FlatList,
@@ -19,6 +18,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { TouchableOpacity as RNTouchableOpacity } from "react-native";
+import Text from "./UI/Text";
 
 const AnimatedTouchable = Animated.createAnimatedComponent(RNTouchableOpacity);
 

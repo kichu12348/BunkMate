@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, ReactElement } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -38,6 +37,7 @@ import { APP_CONFIG } from "../../constants/config";
 import { darkTheme, lightTheme } from "../../constants/colors";
 import { usePfp } from "../../utils/pfpUtil";
 import { usePfpStore } from "../../state/pfpStore";
+import Text from "../../components/UI/Text";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 const INSTAGRAM_URL = process.env.EXPO_PUBLIC_INSTAGRAM_URL;

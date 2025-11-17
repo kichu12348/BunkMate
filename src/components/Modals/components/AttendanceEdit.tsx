@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   View,
-  Text,
   TouchableOpacity,
   Alert,
   Modal,
@@ -13,6 +12,7 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
 import { useAttendanceStore } from "../../../state/attendance";
+import Text from "../../UI/Text";
 
 import type { EditModalDataProps } from "../../utils/types";
 

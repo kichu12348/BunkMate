@@ -1,11 +1,12 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AssignmentData } from "../types/assignments";
 import { useThemedStyles } from "../hooks/useTheme";
 import { ThemeColors } from "../types/theme";
 import { useThemeStore } from "../state/themeStore";
 import { formatDistanceToNow, parseISO } from "date-fns";
+import Text from "./UI/Text";
 
 interface AssignmentCardProps {
   assignment: AssignmentData;

@@ -31,6 +31,7 @@ export default function App() {
 
   const [fontsLoaded, error] = useFonts({
     "Fredoka-Regular": require("./src/assets/fonts/Fredoka-Regular.ttf"),
+    "Inter": require("./src/assets/fonts/Inter.ttf"),
   });
 
   const checkForUpdates = async () => {

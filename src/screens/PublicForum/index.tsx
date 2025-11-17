@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   FlatList,
@@ -31,6 +30,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/RootNavigator";
 import loadingError from "../../assets/loading_error_gif.gif";
+import Text from "../../components/UI/Text";
 
 type PublicForumNavigationProp = NativeStackNavigationProp<
   RootStackParamList,

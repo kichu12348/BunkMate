@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
   Modal,
   TouchableOpacity,
   StyleSheet,
@@ -16,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeStore } from "../../../state/themeStore";
 import { authService } from "../../../api/auth";
+import Text from "../../UI/Text";
 
 interface ResetPasswordModalProps {
   visible: boolean;

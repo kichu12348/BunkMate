@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SubjectAttendance } from "../types/api";
 import { useThemedStyles } from "../hooks/useTheme";
@@ -19,6 +19,7 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
+import Text from "./UI/Text";
 
 interface AttendanceCardProps {
   subject: SubjectAttendance;
