@@ -172,7 +172,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     } finally {
       if (cb) {
-        setTimeout(() => cb(), 300);
+        setTimeout(() => cb(), 200);
       }
     }
   },
