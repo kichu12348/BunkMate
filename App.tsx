@@ -1,42 +1,41 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { useAuthStore } from "./src/state/auth";
 import { useTheme } from "./src/hooks/useTheme";
-import { LoginScreen } from "./src/screens/Login";
+import AuthNavigator from "./src/screens/Login";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { enableScreens } from "react-native-screens";
-import { StatusBar, Appearance } from "react-native";
+import { StatusBar, Appearance } from "react-native"; // Import View
 import * as SystemUI from "expo-system-ui";
 import * as Update from "expo-updates";
 import { useFonts } from "expo-font";
-import { usePfpStore } from "./src/state/pfpStore";
 import Toast from "./src/components/UI/toast";
 //import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
 
 enableScreens();
 
-if (!__DEV__) {
-  SplashScreen.setOptions({
-    fade: true,
-    duration: 500,
-  });
-}
-
-// Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
+
+let isSplashScreenHidden = false;
+
+const hideSplashScreen = () => {
+  if (!isSplashScreenHidden) {
+    SplashScreen.hide();
+    isSplashScreenHidden = true;
+  }
+};
 
 export default function App() {
   const { initializeTheme, colors, isDark } = useTheme();
   const { isAuthenticated, checkAuthStatus } = useAuthStore();
 
-  const initializePfp = usePfpStore((state) => state.initialize);
+  const [appIsReady, setAppIsReady] = useState(false);
 
-  useFonts({
+  const [fontsLoaded, error] = useFonts({
     "Fredoka-Regular": require("./src/assets/fonts/Fredoka-Regular.ttf"),
-    Inter: require("./src/assets/fonts/Inter.ttf"),
   });
 
   const checkForUpdates = async () => {
@@ -52,33 +51,38 @@ export default function App() {
     }
   };
 
-  const initialize = async () => {
-    try {
-      const appearance = Appearance.getColorScheme() || "light";
-      await Promise.all([
-        checkForUpdates(),
-        initializeTheme(appearance),
-        checkAuthStatus(SplashScreen.hideAsync),
-      ]);
-    } catch (error) {
-      console.error("Initialization error:", error);
-    }
-  };
-
   useEffect(() => {
-    initialize().finally(initializePfp);
-  }, []);
-
-  // Set navigation bar color
-  useEffect(() => {
-    const setNavigationBarColor = async () => {
+    const initialize = async () => {
+      if (appIsReady) return;
       try {
-        SystemUI.setBackgroundColorAsync(colors.background);
+        await Promise.all([
+          checkForUpdates(),
+          initializeTheme(Appearance.getColorScheme() || "light"),
+          checkAuthStatus(),
+        ]);
       } catch (error) {
-        console.error("Error setting navigation bar color:", error);
+        console.error("Initialization error:", error);
+      } finally {
+        if (fontsLoaded || error) {
+          setAppIsReady(true);
+        }
       }
     };
-    setNavigationBarColor();
+
+    initialize();
+  }, [fontsLoaded, error]);
+
+  useEffect(() => {
+    if (colors.background) {
+      const setNavigationBarColor = async () => {
+        try {
+          SystemUI.setBackgroundColorAsync(colors.background);
+        } catch (error) {
+          console.error("Error setting navigation bar color:", error);
+        }
+      };
+      setNavigationBarColor();
+    }
   }, [colors.background]);
 
   return (
@@ -91,8 +95,9 @@ export default function App() {
         backgroundColor="transparent"
       />
       <SafeAreaProvider>
-        <NavigationContainer>
-          {isAuthenticated ? <RootNavigator /> : <LoginScreen />}
+        <NavigationContainer onReady={hideSplashScreen}>
+          {appIsReady &&
+            (isAuthenticated ? <RootNavigator /> : <AuthNavigator />)}
         </NavigationContainer>
         <Toast />
         {/* <NewUpdateAlertModal defaultVisible={false}/> */}

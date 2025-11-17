@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, use } from "react";
 import {
   View,
   StyleSheet,
@@ -59,7 +59,7 @@ export const Dashboard: React.FC = () => {
   const navigation = useNavigation<DashboardNavigationProp>();
   const name = useAuthStore((state) => state.name);
   const showToast = useToastStore((state) => state.showToast);
-  const pfp = usePfpStore((state) => state.uri);
+  const initPfp = usePfpStore((state) => state.initialize);
 
   const fetchAssignments = useAssignmentStore(
     (state) => state.fetchAssignments
@@ -69,11 +69,9 @@ export const Dashboard: React.FC = () => {
     fetchAssignments();
   }, [fetchAssignments]);
 
-  const [_, setPfpUri] = useState<string | null>(pfp);
-
   useEffect(() => {
-    setPfpUri(pfp);
-  }, [pfp]);
+    initPfp();
+  }, []);
 
   const {
     data: attendanceData,

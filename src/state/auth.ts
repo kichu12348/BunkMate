@@ -151,7 +151,6 @@ export const useAuthStore = create<AuthState>((set) => ({
           selectedYear: user.settings.default_academic_year,
           selectedSemester: user.settings.default_semester,
         });
-        useAttendanceStore.getState().initFetchAttendance();
         logInsight(`${first_name || ""} ${last_name || ""}`.trim());
         useChatStore
           .getState()
