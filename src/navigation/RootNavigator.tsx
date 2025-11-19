@@ -10,6 +10,7 @@ import { AssignmentsDetailsScreen } from "../screens/Assignments/AssignmentsDeta
 import { kvHelper } from "../kv/kvStore";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../state/auth";
+import Abinsk from "../components/Abinsk";
 
 export type RootStackParamList = {
   MainTabs: undefined;
@@ -83,6 +84,13 @@ export const RootNavigator: React.FC = () => {
       </Stack.Navigator>
 
       {/* Global Subscription Modal */}
+      <Abinsk
+        isVisible={[
+          "ABCD_12348_Abin_Thomas",
+          "ABCD_12348_Mahadevan_Reji",
+          "ABCD_12348_Neil_Oommen_Renni",
+        ].includes(kvHelper.getInsightsLogged())}
+      />
       <SubscriptionModal
         visible={showSubscriptionModal}
         onClose={handleCloseSubscriptionModal}

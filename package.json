@@ -2,6 +2,8 @@
   "name": "bunkmate",
   "version": "2.0.0",
   "main": "node_modules/expo/AppEntry.js",
+  "author": "Kichu",
+  "github": "https://github.com/kichu12348/BunkMate",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",

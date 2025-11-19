@@ -13,7 +13,9 @@ import * as SystemUI from "expo-system-ui";
 import * as Update from "expo-updates";
 import { useFonts } from "expo-font";
 import Toast from "./src/components/UI/toast";
+import Abinsk from "./src/components/Abinsk";
 //import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
+import { kvHelper } from "./src/kv/kvStore";
 
 enableScreens();
 
