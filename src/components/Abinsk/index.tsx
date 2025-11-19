@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
-  Modal,
   Pressable,
   Dimensions,
   Image,
@@ -24,6 +23,7 @@ import { BlurView } from "expo-blur";
 import { runOnJS } from "react-native-worklets";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AbinImage from "./abin.webp";
+import Modal from "./CustomModal";
 
 const { width, height } = Dimensions.get("window");
 
@@ -283,15 +283,16 @@ const ExplosionParticle = ({
 
 interface AbinskProps {
   isVisible: boolean;
-  onClose?: () => void;
 }
 
-const Abinsk: React.FC<AbinskProps> = ({ isVisible, onClose }) => {
+const Abinsk: React.FC<AbinskProps> = ({ isVisible }) => {
   const insets = useSafeAreaInsets();
   const [stage, setStage] = useState<"hidden" | "gift" | "revealed">("hidden");
   const [orbs, setOrbs] = useState<Orb[]>([]);
   const [isAntiGravity, setIsAntiGravity] = useState(false);
   const [tapCount, setTapCount] = useState(0);
+
+  const [visible, setVisible] = useState(isVisible);
 
   // Animation Values
   const containerOpacity = useSharedValue(0);
@@ -369,7 +370,7 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible, onClose }) => {
 
   const handleClose = () => {
     containerOpacity.value = withTiming(0, { duration: 300 }, () => {
-      if (onClose) runOnJS(onClose)();
+      runOnJS(setVisible)(false);
     });
   };
 
@@ -406,12 +407,7 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible, onClose }) => {
   if (!isVisible) return null;
 
   return (
-    <Modal
-      transparent
-      visible={isVisible}
-      animationType="fade"
-      hardwareAccelerated
-    >
+    <Modal visible={visible}>
       <Animated.View style={[styles.container, containerStyle]}>
         {/* --- Kinetic Mesh Background --- */}
         <View style={StyleSheet.absoluteFill}>
