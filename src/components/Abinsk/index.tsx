@@ -516,7 +516,7 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible, onClose }) => {
                   onPress={handleSecretTap}
                   style={[styles.textRow, { marginTop: 4 }]}
                 >
-                  {"ABINSK".split("").map((char, i) => (
+                  {"ABINSKKK".split("").map((char, i) => (
                     <FloatingLetter
                       key={`a-${i}`}
                       char={char}
