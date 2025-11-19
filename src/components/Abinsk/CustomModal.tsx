@@ -25,7 +25,7 @@ export default function Modal({
     } else {
       opacity.value = withTiming(0);
       translateY.value = withTiming(-100, {}, (fin) => {
-        runOnJS(setIsVisible)(false);
+        if (fin) runOnJS(setIsVisible)(false);
       });
     }
   }, [visible]);
