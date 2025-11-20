@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { useAuthStore } from "./src/state/auth";
-import { useTheme } from "./src/hooks/useTheme";
 import AuthNavigator from "./src/screens/Login";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import * as SplashScreen from "expo-splash-screen";
@@ -13,6 +12,7 @@ import * as SystemUI from "expo-system-ui";
 import * as Update from "expo-updates";
 import { useFonts } from "expo-font";
 import Toast from "./src/components/UI/toast";
+import { useThemeStore } from "./src/state/themeStore";
 //import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
 
 enableScreens();
@@ -29,7 +29,7 @@ const hideSplashScreen = () => {
 };
 
 export default function App() {
-  const { initializeTheme, colors, isDark } = useTheme();
+  const { colors, mode, initializeTheme } = useThemeStore();
   const { isAuthenticated, checkAuthStatus } = useAuthStore();
 
   const [appIsReady, setAppIsReady] = useState(false);
@@ -90,7 +90,7 @@ export default function App() {
       style={{ flex: 1, backgroundColor: colors.background }}
     >
       <StatusBar
-        barStyle={isDark ? "light-content" : "dark-content"}
+        barStyle={mode === "dark" ? "light-content" : "dark-content"}
         translucent
         backgroundColor="transparent"
       />

@@ -708,21 +708,15 @@ export const SubjectDetailsScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={handleClose}
-      >
-        <AttendanceDayView
-          isVisible={true}
-          onClose={handleClose}
-          data={selectedDay}
-          subjectId={subjectId}
-          subjectName={subjectName}
-          onUpdate={refreshAttendance}
-        />
-      </Modal>
+
+      <AttendanceDayView
+        isVisible={isModalVisible}
+        onClose={handleClose}
+        data={selectedDay}
+        subjectId={subjectId}
+        subjectName={subjectName}
+        onUpdate={refreshAttendance}
+      />
     </View>
   );
 };

@@ -254,6 +254,7 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
             record.hour === hour
         ) || null;
     }
+
     return (
       <TouchableOpacity
         style={[
@@ -298,6 +299,7 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
       transparent
       animationType="fade"
       onRequestClose={onClose}
+      hardwareAccelerated
     >
       <View
         style={[

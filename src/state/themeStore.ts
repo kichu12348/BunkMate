@@ -4,8 +4,8 @@ import { lightTheme, darkTheme } from '../constants/colors';
 import { kvHelper } from '../kv/kvStore';
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  mode: 'light',
-  colors: lightTheme,
+  mode: "dark",
+  colors: darkTheme,
 
   setMode: (mode: ThemeMode) => {
     const colors = mode === 'light' ? lightTheme : darkTheme;
@@ -28,7 +28,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
 
     try {
       const savedMode = kvHelper.getThemeMode();
-      if (savedMode) {
+      if (savedMode && savedMode !== get().mode) {
         set({ mode: savedMode, colors: savedMode === "light" ? lightTheme : darkTheme });
       }
       else{
