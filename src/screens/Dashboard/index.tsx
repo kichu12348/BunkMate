@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, use } from "react";
+import React, { useEffect, useState, useMemo, use, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -112,7 +112,14 @@ export const Dashboard: React.FC = () => {
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(true);
   const [shouldShowLoader, setShouldShowLoader] = useState(true);
+  const scrollViewRef = useRef<Animated.ScrollView>(null);
   const scaleAnim = useSharedValue(0.8);
+
+  const scrollToTop = () => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 0, animated: true });
+    }
+  };
 
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const stickyYRef = React.useRef(0);
@@ -131,6 +138,7 @@ export const Dashboard: React.FC = () => {
     if (year === selectedYear) return;
     try {
       await setAcademicYear(year);
+      scrollToTop();
       await fetchDebounced();
     } catch (e: any) {
       showToast({
@@ -146,6 +154,7 @@ export const Dashboard: React.FC = () => {
     if (semester === selectedSemester) return;
     try {
       await setSemester(semester);
+      scrollToTop();
       await fetchDebounced();
     } catch (e: any) {
       showToast({
@@ -417,6 +426,7 @@ export const Dashboard: React.FC = () => {
           stickyHeaderIndices={[1]}
           onScroll={scrollHandler}
           scrollEventThrottle={16}
+          ref={scrollViewRef}
         >
           {/* Overall Stats */}
           {enhancedOverallStats && (
