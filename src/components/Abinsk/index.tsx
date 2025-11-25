@@ -22,7 +22,7 @@ import Animated, {
 import { BlurView } from "expo-blur";
 import { runOnJS } from "react-native-worklets";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import AbinImage from "./abin.webp";
+import SendraImg from "./sendra.webp";
 import Modal from "./CustomModal";
 
 const { width, height } = Dimensions.get("window");
@@ -469,12 +469,23 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible }) => {
                     />
                   ))}
                 </View>
-                <View style={[styles.textRow, { marginTop: 4 }]}>
+                {/*<View style={[styles.textRow, { marginTop: 4 }]}>
                   {"BELATED".split("").map((char, i) => (
                     <FloatingLetter
                       key={`b-${i}`}
                       char={char}
                       index={i + 5}
+                      show={true}
+                      isAntiGravity={isAntiGravity}
+                    />
+                  ))}
+                </View>*/}
+                <View style={styles.textRow}>
+                  {"BIRTHDAY".split("").map((char, i) => (
+                    <FloatingLetter
+                      key={`b-${i}`}
+                      char={char}
+                      index={i + 12}
                       show={true}
                       isAntiGravity={isAntiGravity}
                     />
@@ -486,7 +497,7 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible }) => {
               <View style={styles.imageContainer}>
                 <Animated.View style={[styles.imageWrapper, imageStyle]}>
                   <Image
-                    source={AbinImage}
+                    source={SendraImg}
                     style={styles.image}
                     resizeMode="cover"
                   />
@@ -497,7 +508,7 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible }) => {
 
               {/* Bottom Section */}
               <View style={styles.bottomSection}>
-                <View style={styles.textRow}>
+                {/* <View style={styles.textRow}>
                   {"BIRTHDAY".split("").map((char, i) => (
                     <FloatingLetter
                       key={`bd-${i}`}
@@ -507,12 +518,12 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible }) => {
                       isAntiGravity={isAntiGravity}
                     />
                   ))}
-                </View>
+                </View> */}
                 <Pressable
                   onPress={handleSecretTap}
                   style={[styles.textRow, { marginTop: 4 }]}
                 >
-                  {"ABINSKKK".split("").map((char, i) => (
+                  {"SANDRAA".split("").map((char, i) => (
                     <FloatingLetter
                       key={`a-${i}`}
                       char={char}
