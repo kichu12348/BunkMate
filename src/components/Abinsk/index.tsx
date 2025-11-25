@@ -283,16 +283,29 @@ const ExplosionParticle = ({
 
 interface AbinskProps {
   isVisible: boolean;
+  expiryDate?: string;
 }
 
-const Abinsk: React.FC<AbinskProps> = ({ isVisible }) => {
+const Abinsk: React.FC<AbinskProps> = ({ isVisible, expiryDate }) => {
+  const isExpired = expiryDate ? new Date() > new Date(expiryDate) : false;
+
+  if (!isVisible || isExpired) return null;
+
   const insets = useSafeAreaInsets();
   const [stage, setStage] = useState<"hidden" | "gift" | "revealed">("hidden");
   const [orbs, setOrbs] = useState<Orb[]>([]);
   const [isAntiGravity, setIsAntiGravity] = useState(false);
-  const [tapCount, setTapCount] = useState(0);
+  const tapCountRef = React.useRef(0);
 
-  const [visible, setVisible] = useState(isVisible);
+  const setTapCount = (count: number | ((val: number) => number)) => {
+    if (typeof count === "number") {
+      tapCountRef.current = count;
+    } else if (typeof count === "function") {
+      tapCountRef.current = count(tapCountRef.current);
+    }
+  };
+
+  const [visible, setVisible] = useState(isVisible || false);
 
   // Animation Values
   const containerOpacity = useSharedValue(0);
@@ -404,8 +417,6 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible }) => {
     ] as any,
   }));
 
-  if (!isVisible) return null;
-
   return (
     <Modal visible={visible}>
       <Animated.View style={[styles.container, containerStyle]}>
@@ -494,7 +505,7 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible }) => {
               </View>
 
               {/* Main Image Section */}
-              <View style={styles.imageContainer}>
+              <Pressable style={styles.imageContainer} onPress={handleSecretTap}>
                 <Animated.View style={[styles.imageWrapper, imageStyle]}>
                   <Image
                     source={SendraImg}
@@ -504,7 +515,7 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible }) => {
                   {/* Glossy Overlay */}
                   <View style={styles.gloss} />
                 </Animated.View>
-              </View>
+              </Pressable>
 
               {/* Bottom Section */}
               <View style={styles.bottomSection}>

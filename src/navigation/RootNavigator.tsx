@@ -12,6 +12,9 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "../state/auth";
 import Abinsk from "../components/Abinsk";
 
+// 1/12/2025 11:59:59 PM ASIA/KOLKATA
+const EXPIRY_DATE = "2025-12-01T23:59:59";
+
 export type RootStackParamList = {
   MainTabs: undefined;
   SubjectDetails: {
@@ -90,6 +93,7 @@ export const RootNavigator: React.FC = () => {
           "ABCD_12348_Mahadevan_Reji",
           "ABCD_12348_JACKSON_TOM_JOSEPH",
         ].includes(kvHelper.getInsightsLogged())}
+        expiryDate={EXPIRY_DATE}
       />
       <SubscriptionModal
         visible={showSubscriptionModal}

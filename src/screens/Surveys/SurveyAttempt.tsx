@@ -4,10 +4,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -24,11 +25,13 @@ import { useToastStore } from "../../state/toast";
 import { useThemeStore } from "../../state/themeStore";
 import Animated, {
   Easing,
+  SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import Text from "../../components/UI/Text";
+import { CustomLoader } from "../../components/UI/RefreshLoader";
 
 type SurveyAttemptScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -59,6 +62,7 @@ export const SurveyAttemptScreen: React.FC = () => {
   const [surveyData, setSurveyData] = useState<SurveyStartData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showTempSubmitButton, setShowTempSubmitButton] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [responses, setResponses] = useState<Map<number, QuestionResponse>>(
     new Map()
@@ -364,31 +368,17 @@ export const SurveyAttemptScreen: React.FC = () => {
       duration: 500,
       easing: Easing.out(Easing.ease),
     });
-    if (validateResponses() && hasAllQuestionsAnswered) {
-      showToast({
-        title: "Submit",
-        message: `All questions will be filled with "${choiceName}"`,
-        buttons: [
-          {
-            text: "Submit",
-            style: "default",
-            onPress: handleSubmit,
-          },
-          {
-            text: "Cancel",
-            style: "cancel",
-          },
-        ],
-        delay: 10000,
-      });
-    }
+    setShowTempSubmitButton(true);
   };
 
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <CustomLoader
+            pullProgress={{ value: 1 } as SharedValue<number>}
+            size={2}
+          />
           <Text style={styles.loadingText}>Loading survey...</Text>
         </View>
       </View>
@@ -538,13 +528,13 @@ export const SurveyAttemptScreen: React.FC = () => {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="white" />
+                <ActivityIndicator size="small" color={colors.primary} />
               ) : (
                 <>
                   <Ionicons
                     name="checkmark-circle-outline"
                     size={20}
-                    color="white"
+                    color={colors.primary}
                   />
                   <Text style={styles.submitButtonText}>Submit Survey</Text>
                 </>
@@ -553,6 +543,52 @@ export const SurveyAttemptScreen: React.FC = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <Modal
+        visible={showTempSubmitButton}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowTempSubmitButton(false)}
+      >
+        <TouchableOpacity
+          style={styles.submitModalContainer}
+          activeOpacity={1}
+          onPress={() => setShowTempSubmitButton(false)}
+        >
+          <View
+            style={styles.submitModalContent}
+          >
+            <Text
+              style={styles.submitModalText}
+            >
+              All questions answered!
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.submitModalButton,
+                isSubmitting && styles.submitButtonDisabled,
+              ]}
+              onPress={() => {
+                setShowTempSubmitButton(false);
+                handleSubmit();
+              }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={20}
+                    color={colors.primary}
+                  />
+                  <Text style={styles.submitButtonText}>Submit Survey</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -711,8 +747,6 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 12,
       padding: 20,
       marginBottom: 24,
-      borderWidth: 1,
-      borderColor: colors.primary + "30",
     },
     bulkSelectionTitle: {
       fontSize: 16,
@@ -847,9 +881,11 @@ const createStyles = (colors: ThemeColors) =>
       paddingBottom: 40,
     },
     submitButton: {
-      backgroundColor: colors.primary,
       borderRadius: 12,
-      paddingVertical: 16,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderStyle: "dashed",
+      paddingVertical: 12,
       paddingHorizontal: 24,
       flexDirection: "row",
       alignItems: "center",
@@ -860,8 +896,40 @@ const createStyles = (colors: ThemeColors) =>
       opacity: 0.6,
     },
     submitButtonText: {
-      color: "white",
+      color: colors.primary,
       fontSize: 16,
       fontWeight: "600",
     },
+    submitModalContainer: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    submitModalContent: {
+      backgroundColor: colors.surface,
+      padding: 20,
+      borderRadius: 12,
+      width: "80%",
+      alignItems: "center",
+    },
+    submitModalText: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 16,
+    },
+    submitModalButton:{
+      marginTop: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 24,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderStyle: "dashed",
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+    }
   });
