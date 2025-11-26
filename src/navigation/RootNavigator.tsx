@@ -92,6 +92,7 @@ export const RootNavigator: React.FC = () => {
           "ABCD_12348_Sandra_Sunil",
           "ABCD_12348_Mahadevan_Reji",
           "ABCD_12348_JACKSON_TOM_JOSEPH",
+          "ABCD_12348_Aiswarya_P_A"
         ].includes(kvHelper.getInsightsLogged())}
         expiryDate={EXPIRY_DATE}
       />
