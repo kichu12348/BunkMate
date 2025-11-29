@@ -1,10 +1,5 @@
 import React, { useMemo } from "react";
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  ColorValue,
-} from "react-native";
+import { View, TouchableOpacity, StyleSheet, ColorValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import Animated, {
@@ -69,7 +64,7 @@ const getStyles = (insets: { bottom: number }) =>
     },
     label: {
       fontSize: 14,
-      fontWeight: "600"
+      fontWeight: "600",
     },
   });
 
@@ -78,14 +73,9 @@ const TextRevealTab: React.FC<TextRevealTabProps> = React.memo(
   ({ tab, isActive, onPress }) => {
     const theme = useTheme();
     const styles = useMemo(() => getStyles({ bottom: 0 }), [theme]);
-
     // Animate the background color of the tab container
     const animatedContainerStyle = useAnimatedStyle(() => {
       return {
-        borderColor: withTiming(
-          isActive ? theme.colors.primary : "transparent",
-          TIMING_CONFIG
-        ),
         borderWidth: withTiming(isActive ? 1.5 : 0, TIMING_CONFIG),
         backgroundColor: withTiming(
           isActive ? `${theme.colors.background}55` : "transparent",
@@ -103,7 +93,13 @@ const TextRevealTab: React.FC<TextRevealTabProps> = React.memo(
 
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
-        <Animated.View style={[styles.tabContainer, animatedContainerStyle]}>
+        <Animated.View
+          style={[
+            styles.tabContainer,
+            animatedContainerStyle,
+            isActive && { borderColor: theme.colors.primary },
+          ]}
+        >
           <Ionicons
             name={isActive ? tab.icon : tab.iconOutline}
             size={24}

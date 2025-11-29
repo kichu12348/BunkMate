@@ -22,7 +22,7 @@ export const usePfpStore = create<PfpState>((set, get) => ({
     const uri = kvHelper.getPfpUri();
     if (uri) {
       // Import the validation function dynamically to avoid circular imports
-      const { validatePfpUri } = await import("../utils/pfpUtil");
+      const { validatePfpUri } = require("../utils/pfpUtil");
       const isValid = await validatePfpUri(uri);
       if (isValid) {
         set({ uri });

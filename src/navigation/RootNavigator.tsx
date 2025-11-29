@@ -10,10 +10,10 @@ import { AssignmentsDetailsScreen } from "../screens/Assignments/AssignmentsDeta
 import { kvHelper } from "../kv/kvStore";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../state/auth";
-import Abinsk from "../components/Abinsk";
+//import Abinsk from "../components/Abinsk";
 
 // 1/12/2025 11:59:59 PM ASIA/KOLKATA
-const EXPIRY_DATE = "2025-12-01T23:59:59";
+//const EXPIRY_DATE = "2025-12-01T23:59:59";
 
 export type RootStackParamList = {
   MainTabs: undefined;
@@ -87,7 +87,7 @@ export const RootNavigator: React.FC = () => {
       </Stack.Navigator>
 
       {/* Global Subscription Modal */}
-      <Abinsk
+      {/*<Abinsk
         isVisible={[
           "ABCD_12348_Sandra_Sunil",
           "ABCD_12348_Mahadevan_Reji",
@@ -95,7 +95,7 @@ export const RootNavigator: React.FC = () => {
           "ABCD_12348_Aiswarya_P_A"
         ].includes(kvHelper.getInsightsLogged())}
         expiryDate={EXPIRY_DATE}
-      />
+      />*/}
       <SubscriptionModal
         visible={showSubscriptionModal}
         onClose={handleCloseSubscriptionModal}
