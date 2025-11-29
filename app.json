@@ -2,7 +2,7 @@
   "expo": {
     "name": "BunkMate",
     "slug": "BunkMate",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -13,7 +13,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0f172a"
+        "backgroundColor": "#0f1117"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.kichu12348.BunkMate"
@@ -26,7 +26,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0f172a",
+          "backgroundColor": "#0f1117",
           "image": "./assets/splash-icon-dark.png",
           "imageWidth": 200,
           "resizeMode": "contain"
