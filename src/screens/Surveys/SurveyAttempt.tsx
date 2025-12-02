@@ -45,7 +45,7 @@ type SurveyAttemptScreenNavigationProp = NativeStackNavigationProp<
 interface QuestionResponse {
   questionId: number;
   choiceId: number | null;
-  comment: string;
+  answer: string;
   courseTeacherId?: number;
 }
 
@@ -97,7 +97,7 @@ export const SurveyAttemptScreen: React.FC = () => {
         initialResponses.set(question.id, {
           questionId: question.id,
           choiceId: null,
-          comment: "",
+          answer: "",
         });
       });
       setResponses(initialResponses);
@@ -118,7 +118,7 @@ export const SurveyAttemptScreen: React.FC = () => {
     const currentResponse = updatedResponses.get(questionId) || {
       questionId,
       choiceId: null,
-      comment: "",
+      answer: "",
     };
 
     updatedResponses.set(questionId, {
@@ -137,20 +137,28 @@ export const SurveyAttemptScreen: React.FC = () => {
     );
   };
 
-  const handleCommentChange = (questionId: number, comment: string) => {
+  const handleCommentChange = (questionId: number, answer: string) => {
     const updatedResponses = new Map(responses);
     const currentResponse = updatedResponses.get(questionId) || {
       questionId,
       choiceId: null,
-      comment: "",
+      answer: "",
     };
 
     updatedResponses.set(questionId, {
       ...currentResponse,
-      comment,
+      answer,
     });
 
     setResponses(updatedResponses);
+
+    const answeredQuestions = Array.from(updatedResponses.values()).filter(
+      (response) => response.choiceId !== null || response.answer.trim() !== ""
+    ).length;
+    progressWidth.value = withTiming(
+      (answeredQuestions / surveyData!.questionsChoices.length) * 100,
+      { duration: 300, easing: Easing.out(Easing.ease) }
+    );
   };
 
   const validateResponses = (): boolean => {
@@ -158,10 +166,11 @@ export const SurveyAttemptScreen: React.FC = () => {
 
     for (const question of surveyData.questionsChoices) {
       const response = responses.get(question.id);
-
+      // if its type in question then check if the answer is ""
       if (
         question.answer_required &&
-        (!response || response.choiceId === null)
+        (!response ||
+          (response.choiceId === null && response.answer.trim() === ""))
       ) {
         showToast({
           title: "Incomplete Survey",
@@ -188,7 +197,7 @@ export const SurveyAttemptScreen: React.FC = () => {
           teacher_id: null,
           survey_question_id: response.questionId,
           survey_choice_id: response.choiceId,
-          answer: response.comment || "",
+          answer: response.answer || "",
         }));
 
       await surveysService.submitSurvey(surveyId, submissionData);
@@ -220,7 +229,8 @@ export const SurveyAttemptScreen: React.FC = () => {
   const renderQuestion = (question: QuestionChoice) => {
     const response = responses.get(question.id);
     const isRequired = question.answer_required === 1;
-    const allowDescriptive = question.allow_descriptive === 1;
+    const allowDescriptive =
+      question.allow_descriptive === 1 || question.choices.length === 0;
     return (
       <View key={question.id} style={styles.questionContainer}>
         <View style={styles.questionHeader}>
@@ -232,53 +242,53 @@ export const SurveyAttemptScreen: React.FC = () => {
         </View>
 
         <View style={styles.choicesContainer}>
-          {question.choices.map((choice) => {
-            const isSelected = response?.choiceId === choice.id;
+          {question.choices.length === 0
+            ? null
+            : question.choices.map((choice) => {
+                const isSelected = response?.choiceId === choice.id;
 
-            return (
-              <TouchableOpacity
-                key={choice.id}
-                style={[
-                  styles.choiceButton,
-                  isSelected && styles.selectedChoice,
-                ]}
-                onPress={() => handleChoiceSelect(question.id, choice.id)}
-              >
-                <View style={styles.choiceContent}>
-                  <View
+                return (
+                  <TouchableOpacity
+                    key={choice.id}
                     style={[
-                      styles.radioButton,
-                      isSelected && styles.selectedRadio,
+                      styles.choiceButton,
+                      isSelected && styles.selectedChoice,
                     ]}
+                    onPress={() => handleChoiceSelect(question.id, choice.id)}
                   >
-                    {isSelected && <View style={styles.radioInner} />}
-                  </View>
-                  <Text
-                    style={[
-                      styles.choiceText,
-                      isSelected && styles.selectedChoiceText,
-                    ]}
-                  >
-                    {choice.name}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+                    <View style={styles.choiceContent}>
+                      <View
+                        style={[
+                          styles.radioButton,
+                          isSelected && styles.selectedRadio,
+                        ]}
+                      >
+                        {isSelected && <View style={styles.radioInner} />}
+                      </View>
+                      <Text
+                        style={[
+                          styles.choiceText,
+                          isSelected && styles.selectedChoiceText,
+                        ]}
+                      >
+                        {choice.name}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
         </View>
 
         {allowDescriptive && (
           <View style={styles.commentContainer}>
-            <Text style={styles.commentLabel}>
-              Additional Comments (Optional)
-            </Text>
+            <Text style={styles.commentLabel}>Type in Your Answer</Text>
             <TextInput
               style={styles.commentInput}
               multiline
               numberOfLines={3}
               placeholder="Enter your comments here..."
               placeholderTextColor={colors.textSecondary}
-              value={response?.comment || ""}
+              value={response?.answer || ""}
               onChangeText={(text) => handleCommentChange(question.id, text)}
             />
           </View>
@@ -317,7 +327,7 @@ export const SurveyAttemptScreen: React.FC = () => {
     if (!surveyData) return 0;
 
     const answeredQuestions = Array.from(responses.values()).filter(
-      (response) => response.choiceId !== null
+      (response) => response.choiceId !== null || response.answer.trim() !== ""
     ).length;
 
     return (answeredQuestions / surveyData.questionsChoices.length) * 100;
@@ -343,27 +353,35 @@ export const SurveyAttemptScreen: React.FC = () => {
     const updatedResponses = new Map(responses);
 
     surveyData.questionsChoices.forEach((question) => {
-      const matchingChoice = question.choices.find(
-        (choice) => choice.name === choiceName
-      );
-      if (matchingChoice) {
-        const currentResponse = updatedResponses.get(question.id) || {
+      if (question.choices.length === 0) {
+        // if there are no choices its a type in question set the answer as the selected bulk choice
+        updatedResponses.set(question.id, {
           questionId: question.id,
           choiceId: null,
-          comment: "",
-        };
-
-        updatedResponses.set(question.id, {
-          ...currentResponse,
-          choiceId: matchingChoice.id,
+          answer: choiceName,
         });
+      } else {
+        const matchingChoice = question.choices.find(
+          (choice) => choice.name === choiceName
+        );
+
+        if (matchingChoice) {
+          const currentResponse = updatedResponses.get(question.id) || {
+            questionId: question.id,
+            choiceId: null,
+            answer: "",
+          };
+
+          updatedResponses.set(question.id, {
+            ...currentResponse,
+            choiceId: matchingChoice.id,
+          });
+        }
       }
     });
 
     setResponses(updatedResponses);
-    const hasAllQuestionsAnswered = Array.from(updatedResponses.values()).every(
-      (response) => response.choiceId !== null
-    );
+
     progressWidth.value = withTiming(100, {
       duration: 500,
       easing: Easing.out(Easing.ease),
@@ -554,14 +572,8 @@ export const SurveyAttemptScreen: React.FC = () => {
           activeOpacity={1}
           onPress={() => setShowTempSubmitButton(false)}
         >
-          <View
-            style={styles.submitModalContent}
-          >
-            <Text
-              style={styles.submitModalText}
-            >
-              All questions answered!
-            </Text>
+          <View style={styles.submitModalContent}>
+            <Text style={styles.submitModalText}>All questions answered!</Text>
             <TouchableOpacity
               style={[
                 styles.submitModalButton,
@@ -919,7 +931,7 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.text,
       marginBottom: 16,
     },
-    submitModalButton:{
+    submitModalButton: {
       marginTop: 12,
       paddingVertical: 10,
       paddingHorizontal: 24,
@@ -931,5 +943,5 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-    }
+    },
   });
