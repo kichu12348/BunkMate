@@ -78,8 +78,13 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
               color={activityColor}
             />
           </View>
-          <Text style={styles.assignmentName} numberOfLines={2}>
-            {assignment.assignmentName}
+          <Text
+            style={styles.assignmentName}
+            //clip after 20
+          >
+            {assignment.assignmentName?.length > 20
+              ? assignment.assignmentName.slice(0, 20) + "..."
+              : assignment.assignmentName}
           </Text>
         </View>
         <View

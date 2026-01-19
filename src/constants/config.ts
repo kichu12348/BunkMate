@@ -23,9 +23,10 @@ export const API_CONFIG = {
     MY_PROFILE: "/myprofile",
     EXAMS_AND_ASSIGNMENTS: {
       GET: "/exams",
-      GET_QUESTIONS:(id: string) => `/exams/${id}/examquestions`,
-      GET_ANSWERS:(id: string) => `/exams/${id}/institutionuser/examanswers`,
-      GET_Q_GROUPS:(id: string) => `/examorquestiongroups?exam_id=${id}`,
+      GET_QUESTIONS: (id: string) =>
+        `/exams/${id}/examquestions?from_view_score=true`,
+      GET_ANSWERS: (id: string) => `/exams/${id}/institutionuser/examanswers`,
+      GET_Q_GROUPS: (id: string) => `/examorquestiongroups?exam_id=${id}`,
     },
     SET: {
       DEFAULT_YEAR: "/user/setting/default_academic_year",
@@ -80,7 +81,7 @@ export const CHAT_CONFIG = {
   GET_MESSAGES: (
     offset: number,
     limit: number,
-    API_BASE_URL: string
+    API_BASE_URL: string,
   ): string => {
     return `${API_BASE_URL}/get-messages/${offset}/${limit}`;
   },

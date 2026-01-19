@@ -4,6 +4,10 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Modal,
+  Pressable,
+  Dimensions,
+  ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
@@ -16,13 +20,17 @@ import { ThemeColors } from "../../types/theme";
 import { QA } from "../../types/assignments";
 import Animated, {
   withTiming,
+  withSpring,
   useSharedValue,
   Easing,
   useAnimatedStyle,
   SharedValue,
+  runOnJS,
 } from "react-native-reanimated";
 import { CustomLoader } from "../../components/UI/RefreshLoader";
 import Text from "../../components/UI/Text";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export const AssignmentsDetailsScreen: React.FC = () => {
   const route = useRoute<RouteProp<RootStackParamList, "AssignmentsDetails">>();
@@ -30,7 +38,7 @@ export const AssignmentsDetailsScreen: React.FC = () => {
   const { assignmentId, assignmentName } = route.params;
   const insets = useSafeAreaInsets();
   const fetchSpecificAssignment = useAssignmentStore(
-    (state) => state.fetchSpecificAssignment
+    (state) => state.fetchSpecificAssignment,
   );
   const styles = useThemedStyles(createStyles);
   const colors = useThemeStore((state) => state.colors);
@@ -40,7 +48,78 @@ export const AssignmentsDetailsScreen: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Popup state for long-press question details
+  const [selectedItem, setSelectedItem] = React.useState<{
+    item: QA;
+    index: number;
+  } | null>(null);
+  const [showPopup, setShowPopup] = React.useState(false);
+
+  const selectColor = (score: number, maxMarks: number) => {
+    const percentage = score / maxMarks;
+    if (percentage >= 0.8) {
+      return [colors.primary, colors.primary + "20"];
+    } else if (percentage >= 0.6) {
+      return [colors.warning, colors.warning + "20"];
+    } else {
+      return [colors.error, colors.error + "20"];
+    }
+  };
+
+  // Animation values for popup
+  const overlayOpacity = useSharedValue(0);
+  const popupScale = useSharedValue(0.8);
+  const popupOpacity = useSharedValue(0);
+
   const progressValue = useSharedValue(0);
+
+  const openPopup = React.useCallback(
+    (item: QA, index: number) => {
+      setSelectedItem({ item, index });
+      setShowPopup(true);
+      overlayOpacity.value = withTiming(1, {
+        duration: 150,
+        easing: Easing.out(Easing.ease),
+      });
+      popupScale.value = withTiming(1, {
+        duration: 150,
+        easing: Easing.out(Easing.ease),
+      });
+      popupOpacity.value = withTiming(1, {
+        duration: 150,
+        easing: Easing.out(Easing.ease),
+      });
+    },
+    [overlayOpacity, popupScale, popupOpacity],
+  );
+
+  const closePopup = React.useCallback(() => {
+    overlayOpacity.value = withTiming(0, {
+      duration: 120,
+      easing: Easing.in(Easing.ease),
+    });
+    popupScale.value = withTiming(0.9, {
+      duration: 120,
+      easing: Easing.in(Easing.ease),
+    });
+    popupOpacity.value = withTiming(
+      0,
+      { duration: 120, easing: Easing.in(Easing.ease) },
+      () => {
+        runOnJS(setShowPopup)(false);
+        runOnJS(setSelectedItem)(null);
+      },
+    );
+  }, [overlayOpacity, popupScale, popupOpacity]);
+
+  const overlayAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.value,
+  }));
+
+  const popupAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: popupScale.value }],
+    opacity: popupOpacity.value,
+  }));
 
   React.useEffect(() => {
     let mounted = true;
@@ -87,17 +166,42 @@ export const AssignmentsDetailsScreen: React.FC = () => {
     const questionLabel = `Q${index + 1}`;
     const itemScore = item.score ?? null;
     const itemMax = (item as any).maximum_mark ?? null; // using any in case type not updated
+    const questionText = item.question || item.text || "";
+
+    const [textColor, badgeColor] = selectColor(
+      Number(itemScore),
+      Number(itemMax),
+    );
+
     return (
-      <View style={styles.detailRow}>
-        <Text style={styles.itemTitle}>{questionLabel}</Text>
+      <Pressable
+        onLongPress={() => openPopup(item, index)}
+        delayLongPress={300}
+        style={({ pressed }) => [
+          styles.detailRow,
+          pressed && styles.detailRowPressed,
+        ]}
+      >
+        <View style={styles.itemContent}>
+          <Text style={styles.itemTitle}>{questionLabel}</Text>
+          {questionText ? (
+            <Text
+              style={styles.questionPreview}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {questionText}
+            </Text>
+          ) : null}
+        </View>
         {itemScore !== null && itemMax !== null && (
-          <View style={styles.scoreBadge}>
-            <Text style={styles.scoreBadgeText}>
+          <View style={[styles.scoreBadge, { backgroundColor: badgeColor }]}>
+            <Text style={[styles.scoreBadgeText, { color: textColor }]}>
               {Number(itemScore)}/{Number(itemMax)}
             </Text>
           </View>
         )}
-      </View>
+      </Pressable>
     );
   };
 
@@ -116,7 +220,13 @@ export const AssignmentsDetailsScreen: React.FC = () => {
             <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerTexts}>
-            <Text style={styles.headerTitle}>{assignmentName}</Text>
+            <Text
+              style={styles.headerTitle}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {assignmentName}
+            </Text>
           </View>
         </View>
       </View>
@@ -153,7 +263,7 @@ export const AssignmentsDetailsScreen: React.FC = () => {
                   });
                 })
                 .catch((e: any) =>
-                  setError(e?.message || "Failed to load assignment")
+                  setError(e?.message || "Failed to load assignment"),
                 )
                 .finally(() => setLoading(false));
             }}
@@ -215,6 +325,86 @@ export const AssignmentsDetailsScreen: React.FC = () => {
           />
         </>
       )}
+
+      {/* Long-press popup modal */}
+      <Modal
+        visible={showPopup}
+        transparent
+        animationType="none"
+        onRequestClose={closePopup}
+        statusBarTranslucent
+      >
+        <Pressable style={styles.modalContainer} onPress={closePopup}>
+          <Animated.View style={[styles.overlay, overlayAnimatedStyle]} />
+          <Animated.View style={[styles.popupCard, popupAnimatedStyle]}>
+            <Pressable onPress={(e) => e.stopPropagation()}>
+              {selectedItem && (
+                <>
+                  <View style={styles.popupHeader}>
+                    <View style={styles.popupLabelRow}>
+                      <Text style={styles.popupLabel}>
+                        Q{selectedItem.index + 1}
+                      </Text>
+                      {selectedItem.item.score !== null &&
+                        selectedItem.item.maximum_mark !== null &&
+                        (() => {
+                          const itemScore = Number(selectedItem.item.score);
+                          const itemMax = Number(
+                            selectedItem.item.maximum_mark,
+                          );
+
+                          const [textColor, badgeColor] = selectColor(
+                            itemScore,
+                            itemMax,
+                          );
+                          return (
+                            <View
+                              style={[
+                                styles.popupScoreBadge,
+                                { backgroundColor: badgeColor },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.popupScoreBadgeText,
+                                  { color: textColor },
+                                ]}
+                              >
+                                {itemScore}/{itemMax}
+                              </Text>
+                            </View>
+                          );
+                        })()}
+                    </View>
+                    <TouchableOpacity
+                      onPress={closePopup}
+                      style={styles.closeButton}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons
+                        name="close"
+                        size={24}
+                        color={colors.textSecondary}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView
+                    style={styles.popupScrollContent}
+                    showsVerticalScrollIndicator={true}
+                    bounces={false}
+                  >
+                    <Text style={styles.popupQuestionText}>
+                      {selectedItem.item.question ||
+                        selectedItem.item.text ||
+                        "No question content available"}
+                    </Text>
+                  </ScrollView>
+                </>
+              )}
+            </Pressable>
+          </Animated.View>
+        </Pressable>
+      </Modal>
     </View>
   );
 };
@@ -396,5 +586,83 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.primary,
       fontSize: 16,
       fontWeight: "bold",
+    },
+    // Long-press item styles
+    detailRowPressed: {
+      opacity: 0.7,
+      transform: [{ scale: 0.98 }],
+    },
+    itemContent: {
+      flex: 1,
+      gap: 4,
+    },
+    questionPreview: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      lineHeight: 18,
+    },
+    // Modal styles
+    modalContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    overlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(0, 0, 0, 0.6)",
+    },
+    popupCard: {
+      width: SCREEN_WIDTH - 40,
+      maxHeight: "70%",
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: 20,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.4,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+    popupHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border || colors.textSecondary + "30",
+    },
+    popupLabelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    popupLabel: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.text,
+    },
+    popupScoreBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 12,
+    },
+    popupScoreBadgeText: {
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    closeButton: {
+      width: 36,
+      height: 36,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    popupScrollContent: {
+      maxHeight: 400,
+    },
+    popupQuestionText: {
+      fontSize: 15,
+      color: colors.text,
+      lineHeight: 24,
     },
   });

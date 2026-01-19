@@ -21,10 +21,11 @@ export interface QuestionGroup {
 export interface Question {
   id: number;
   number: string;
+  question: { type: string; value: string }[];
   text: string | null;
   maximum_mark: string;
-  orquestion_group_id:number | null;
-  question_note:string | null;
+  orquestion_group_id: number | null;
+  question_note: string | null;
 }
 
 export interface Answer {
@@ -36,6 +37,7 @@ export interface Answer {
 export interface QA {
   id: number;
   number: string;
+  question: string;
   text: string | null;
   maximum_mark: string;
   answer: string | null;

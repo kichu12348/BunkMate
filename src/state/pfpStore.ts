@@ -30,7 +30,7 @@ export const usePfpStore = create<PfpState>((set, get) => ({
         // Clear invalid URI
         kvHelper.clearPfpUri();
         set({ uri: null });
-        console.log("Profile picture file no longer exists, clearing URI");
+        //  console.log("Profile picture file no longer exists, clearing URI");
       }
     } else {
       set({ uri });

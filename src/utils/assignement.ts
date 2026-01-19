@@ -8,7 +8,7 @@ import {
 } from "../types/assignments";
 
 export function formatAssignmentData(
-  data: SubjectAssignments[]
+  data: SubjectAssignments[],
 ): Map<string, AssignmentData[]> {
   if (!data || data.length === 0) return new Map<string, AssignmentData[]>();
 
@@ -38,7 +38,7 @@ export function formatAssignmentData(
 export function mergeQuestionsAndAnswers(
   questions: Question[],
   answers: Answer[],
-  questionGroups: QuestionGroup[]
+  questionGroups: QuestionGroup[],
 ): {
   list: QA[];
   totalScore: number;
@@ -47,7 +47,7 @@ export function mergeQuestionsAndAnswers(
   const answerMap = new Map(answers.map((a) => [a.examquestion_id, a]));
   const groupMap = new Map(questionGroups.map((g) => [g.id, []]));
   const bestOfMap = new Map(
-    questionGroups.map((g) => [g.id, Number(g.best_of_questions)])
+    questionGroups.map((g) => [g.id, Number(g.best_of_questions)]),
   );
 
   let totalScore = 0;
@@ -55,10 +55,12 @@ export function mergeQuestionsAndAnswers(
 
   questions.forEach((q) => {
     const a = answerMap.get(q.id);
+    const question = q.question?.length > 0 ? q.question[0] : null;
 
     const data = {
       id: q.id,
       number: q.number,
+      question: question?.type === "text" ? question.value : null,
       text: q.text,
       maximum_mark: q.maximum_mark,
       answer: a?.answer ?? null,
@@ -69,10 +71,9 @@ export function mergeQuestionsAndAnswers(
     if (group) {
       group.push(data);
       groupMap.set(q.orquestion_group_id!, group);
-    }
-    else if (q.orquestion_group_id === null) {
-        groupMap.set(q.id, [data]);
-        bestOfMap.set(q.id, 1);
+    } else if (q.orquestion_group_id === null) {
+      groupMap.set(q.id, [data]);
+      bestOfMap.set(q.id, 1);
     }
   });
 
