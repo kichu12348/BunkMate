@@ -39,7 +39,7 @@ interface AttendanceState {
     month: number,
     day: number,
     hour: number,
-    attendance: "present" | "absent" | "none"
+    attendance: "present" | "absent" | "none",
   ) => Promise<void>;
   markManualAttendance: (params: {
     subjectId: string;
@@ -66,7 +66,7 @@ interface AttendanceState {
       day: number;
       hour: number;
     },
-    resolution: "accept_teacher" | "keep_user"
+    resolution: "accept_teacher" | "keep_user",
   ) => Promise<void>;
 
   clearAttendanceData: () => void;
@@ -112,7 +112,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
               apiRecord.year === manualRecord.year &&
               apiRecord.month === manualRecord.month &&
               apiRecord.day === manualRecord.day &&
-              apiRecord.hour === manualRecord.hour
+              apiRecord.hour === manualRecord.hour,
           );
 
           if (apiRecordIndex > -1) {
@@ -125,6 +125,10 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
             const mergedRecord = {
               ...teacherRecord,
               ...manualRecord,
+              is_entered_by_professor: Math.max(
+                teacherRecord.is_entered_by_professor || 0,
+                manualRecord.is_entered_by_professor || 0,
+              ),
             };
 
             // Explicitly detect the conflict.
@@ -240,7 +244,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
           month,
           day,
           hour,
-          allSubjectIds
+          allSubjectIds,
         );
 
       return hasConflict;
@@ -256,7 +260,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
     month: number,
     day: number,
     hour: number,
-    attendance: "present" | "absent" | "none"
+    attendance: "present" | "absent" | "none",
   ) => {
     try {
       // Get all subject IDs for conflict checking
@@ -271,7 +275,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
         year,
         month,
         day,
-        hour
+        hour,
       );
 
       let attendanceRecord: CourseSchedule;
@@ -284,14 +288,14 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
             attendance === "present"
               ? "present"
               : attendance === "absent"
-              ? "absent"
-              : null,
+                ? "absent"
+                : null,
           final_attendance:
             attendance === "present"
               ? "present"
               : attendance === "absent"
-              ? "absent"
-              : null,
+                ? "absent"
+                : null,
           is_entered_by_student: 1,
           is_user_override: 1,
           updated_at: Date.now(),
@@ -318,12 +322,12 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
             day,
             hour,
             allSubjectIds,
-            subjectId.toString()
+            subjectId.toString(),
           );
 
         if (hasConflict) {
           throw new Error(
-            `Time slot conflict: Subject ${conflictingSubject} already has attendance for this time slot`
+            `Time slot conflict: Subject ${conflictingSubject} already has attendance for this time slot`,
           );
         }
 
@@ -339,15 +343,15 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
             attendance === "present"
               ? "present"
               : attendance === "absent"
-              ? "absent"
-              : null,
+                ? "absent"
+                : null,
           teacher_attendance: null,
           final_attendance:
             attendance === "present"
               ? "present"
               : attendance === "absent"
-              ? "absent"
-              : null,
+                ? "absent"
+                : null,
           is_entered_by_student: 1,
           is_entered_by_professor: 0,
           is_conflict: 0,
@@ -365,7 +369,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
           item.year === year &&
           item.month === month &&
           item.day === day &&
-          item.hour === hour
+          item.hour === hour,
       );
 
       let updatedData: CourseSchedule[];
@@ -389,7 +393,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
         month,
         day,
         hour,
-        attendanceRecord
+        attendanceRecord,
       ).catch((error) => {
         console.error("Background database save failed:", error);
       });
@@ -416,12 +420,12 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
           day,
           hour,
           allSubjectIds,
-          subjectId
+          subjectId,
         );
 
       if (hasConflict) {
         throw new Error(
-          `Time slot conflict: Attendance is already marked for another subject at this time.`
+          `Time slot conflict: Attendance is already marked for another subject at this time.`,
         );
       }
 
@@ -431,7 +435,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
         year,
         month,
         day,
-        hour
+        hour,
       );
       const recordToSave: CourseSchedule = {
         ...(existingRecord || {
@@ -461,7 +465,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
         month,
         day,
         hour,
-        recordToSave
+        recordToSave,
       );
 
       // Step 2: Fetch the record back from the DB to ensure we have the definitive version
@@ -470,7 +474,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
         year,
         month,
         day,
-        hour
+        hour,
       );
       if (!savedRecord) {
         throw new Error("Failed to save and retrieve the updated record.");
@@ -486,7 +490,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
             r.year === year &&
             r.month === month &&
             r.day === day &&
-            r.hour === hour
+            r.hour === hour,
         );
 
         if (recordIndex > -1) {
@@ -512,7 +516,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
         year,
         month,
         day,
-        hour
+        hour,
       );
 
       // This section is the fix: perform an immutable update on the in-memory state.
@@ -643,7 +647,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
           conflict.year,
           conflict.month,
           conflict.day,
-          conflict.hour
+          conflict.hour,
         );
       }
       // else { // 'keep_user'

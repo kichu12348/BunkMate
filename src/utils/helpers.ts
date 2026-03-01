@@ -1,19 +1,19 @@
 import { ATTENDANCE_THRESHOLDS } from "../constants/config";
 export const formatPercentage = (
   value: number,
-  decimals: number = 1
+  decimals: number = 1,
 ): string => {
   return `${value.toFixed(decimals)}%`;
 };
 export const getAttendanceStatus = (
-  percentage: number
+  percentage: number,
 ): "safe" | "warning" | "danger" => {
   if (percentage < ATTENDANCE_THRESHOLDS.DANGER) return "danger";
   if (percentage < ATTENDANCE_THRESHOLDS.WARNING) return "warning";
   return "safe";
 };
 export const getStatusColor = (
-  status: "safe" | "warning" | "danger"
+  status: "safe" | "warning" | "danger",
 ): string => {
   switch (status) {
     case "safe":
@@ -32,12 +32,12 @@ export const getStatusColor = (
 export const calculateClassesToAttend = (
   currentPercentage: number,
   totalClasses: number,
-  targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER
+  targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER,
 ): number => {
   if (currentPercentage >= targetPercentage) return 0;
   const attendedClasses = Math.round((currentPercentage / 100) * totalClasses);
   const requiredAttendedClasses = Math.ceil(
-    (targetPercentage / 100) * totalClasses
+    (targetPercentage / 100) * totalClasses,
   );
   return Math.max(0, requiredAttendedClasses - attendedClasses);
 };
@@ -45,7 +45,7 @@ export const calculateClassesToAttend = (
 export const calculateClassesCanMiss = (
   currentPercentage: number,
   totalClasses: number,
-  targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER
+  targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER,
 ): number => {
   if (currentPercentage <= targetPercentage) return 0;
   const attendedClasses = Math.round((currentPercentage / 100) * totalClasses);
@@ -173,7 +173,7 @@ export const getDefaultSemester = (): string => {
  */
 export const calculateEnhancedAttendanceStats = (
   apiSubject: any,
-  courseScheduleRecords: any[] = []
+  courseScheduleRecords: any[] = [],
 ): {
   totalClasses: number;
   attendedClasses: number;
@@ -221,8 +221,8 @@ export const calculateEnhancedAttendanceStats = (
 
       if (attendanceToUse) {
         const normalizedAttendance = attendanceToUse.toLowerCase();
-        // Check if this is a new class (not already counted in API data)
         const isNewClass = !record.is_entered_by_professor;
+
         if (isNewClass) {
           totalClasses++;
           if (
@@ -230,6 +230,20 @@ export const calculateEnhancedAttendanceStats = (
             normalizedAttendance === "p"
           ) {
             attendedClasses++;
+          }
+        } else {
+          // If it's NOT a new class, we need to check if the user overrode the teacher's attendance
+          const teacherNorm = record.teacher_attendance?.toLowerCase();
+
+          if (teacherNorm === "absent" && normalizedAttendance === "present") {
+            // Teacher marked absent, but final resolution is present -> +1 attended
+            attendedClasses++;
+          } else if (
+            teacherNorm === "present" &&
+            normalizedAttendance === "absent"
+          ) {
+            // Teacher marked present, but final resolution is absent -> -1 attended
+            attendedClasses--;
           }
         }
       }
@@ -258,7 +272,7 @@ export const calculateEnhancedClassesToAttend = (
     attendedClasses: number;
     percentage: number;
   },
-  targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER
+  targetPercentage: number = ATTENDANCE_THRESHOLDS.DANGER,
 ): number => {
   const targetRatio = targetPercentage / 100;
   if (currentStats.percentage >= targetPercentage) return 0;
@@ -268,9 +282,9 @@ export const calculateEnhancedClassesToAttend = (
   // Formula derived from: (attended + x) / (total + x) >= targetRatio
   // x >= (targetRatio * total - attended) / (1 - targetRatio)
   const classesNeeded = Math.ceil(
-    (targetRatio * totalClasses - attendedClasses) / (1 - targetRatio)
+    (targetRatio * totalClasses - attendedClasses) / (1 - targetRatio),
   );
-  
+
   return Math.max(0, classesNeeded);
 };
 
@@ -284,17 +298,17 @@ export const calculateEnhancedClassesCanMiss = (
     attendedClasses: number;
     percentage: number;
   },
-  targetPercentage: number = ATTENDANCE_THRESHOLDS.SAFE
+  targetPercentage: number = ATTENDANCE_THRESHOLDS.SAFE,
 ): number => {
   const targetRatio = targetPercentage / 100;
   if (currentStats.percentage < targetPercentage) return 0;
-  
+
   const { totalClasses, attendedClasses } = currentStats;
 
   // Formula derived from: attended / (total + x) >= targetRatio
   // x <= (attended - targetRatio * total) / targetRatio
   const classesCanMiss = Math.floor(
-    (attendedClasses - targetRatio * totalClasses) / targetRatio
+    (attendedClasses - targetRatio * totalClasses) / targetRatio,
   );
 
   return Math.max(0, classesCanMiss);
@@ -306,7 +320,7 @@ export const calculateEnhancedClassesCanMiss = (
  * @returns 'present', 'absent', or 'none'.
  */
 export const normalizeAttendance = (
-  status: string | null | undefined
+  status: string | null | undefined,
 ): "present" | "absent" | "none" => {
   if (!status) return "none";
 

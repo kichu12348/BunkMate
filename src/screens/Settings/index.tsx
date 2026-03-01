@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useState, ReactElement } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  ReactElement,
+  //useRef,
+} from "react";
 import {
   View,
   StyleSheet,
@@ -7,6 +13,7 @@ import {
   ActivityIndicator,
   Linking,
   Image,
+  // TextInput,
 } from "react-native";
 import {
   Entypo,
@@ -38,10 +45,14 @@ import { darkTheme, lightTheme } from "../../constants/colors";
 import { usePfp } from "../../utils/pfpUtil";
 import { usePfpStore } from "../../state/pfpStore";
 import Text from "../../components/UI/Text";
+//import Slider from "../../components/UI/Slider";
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
+const OVERVIEW_URL = process.env.EXPO_PUBLIC_OVERVIEW_URL;
 const INSTAGRAM_URL = process.env.EXPO_PUBLIC_INSTAGRAM_URL;
 const INSTAGRAM_COLOR = "#d82d7e";
+
+//const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 interface SettingsScreenProps {
   onClose?: () => void;
@@ -86,6 +97,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const progress = useSharedValue(1);
 
   const [pfpLoadingError, setPfpLoadingError] = useState(false);
+  // const [sliderVal, setSliderVal] = useState(75);
+
+  //const textRef = useRef<TextInput>(null);
 
   useEffect(() => {
     // When colors object changes (theme toggled), update from/to and animate
@@ -109,7 +123,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1],
-      [bgFrom.value, bgTo.value]
+      [bgFrom.value, bgTo.value],
     ),
   }));
 
@@ -117,7 +131,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1],
-      [surfaceFrom.value, surfaceTo.value]
+      [surfaceFrom.value, surfaceTo.value],
     ),
   }));
 
@@ -157,7 +171,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const fetchAttendanceDebounced = useMemo(
     () => debounced(fetchAttendance, 500),
-    []
+    [],
   );
 
   const handleYearChange = async (year: string) => {
@@ -241,6 +255,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     const coffeeUrl = process.env.EXPO_PUBLIC_COFFEE_URL;
     Linking.openURL(coffeeUrl);
   };
+
+  // const handleSliderValueChange = (val: number) => {
+  //   if (textRef.current) {
+  //     textRef.current.setNativeProps({
+  //       text: val?.toString() || "0",
+  //     });
+  //   }
+  // };
 
   const SettingItem = ({
     Icon,
@@ -481,6 +503,55 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               showArrow={false}
             />
           </AnimatedCard>
+          {/* <AnimatedCard>
+            <View style={{ padding: 16, gap: 12 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    color: colors.text,
+                  }}
+                >
+                  Target Attendance %
+                </Text>
+                <View
+                  style={{
+                    backgroundColor: colors.primary + "15",
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 8,
+                  }}
+                >
+                  <AnimatedTextInput
+                    ref={textRef}
+                    value={sliderVal.toString()}
+                    editable={false}
+                    style={styles.textInput}
+                  />
+                </View>
+              </View>
+
+              <View style={{ alignItems: "center", paddingVertical: 12 }}>
+                <Slider
+                  setValue={setSliderVal}
+                  handleValueChange={handleSliderValueChange}
+                  value={sliderVal}
+                  minimumValue={0}
+                  maximumValue={100}
+                  height={8}
+                  width={300}
+                  thumbSize={24}
+                />
+              </View>
+            </View>
+          </AnimatedCard> */}
         </View>
         {/* About & Support */}
         <View style={styles.section}>
@@ -502,6 +573,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               subtitle={APP_CONFIG.DESCRIPTION}
               titleFontFamily
               showArrow={false}
+              onPress={() => Linking.openURL(OVERVIEW_URL)}
             />
             <View style={styles.itemSeparator} />
             <SettingItem
@@ -810,6 +882,13 @@ const createStyles = (colors: ThemeColors) =>
       marginLeft: 74,
     },
 
+    textInput: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: colors.primary,
+      minWidth: 30,
+      textAlign: "center",
+    },
     // Theme Icon
     themeIconContainer: {
       position: "relative",
