@@ -37,13 +37,13 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState<EditModalDataProps | null>(null);
   const [hourlyStatus, setHourlyStatus] = useState<Map<number, string>>(
-    new Map()
+    new Map(),
   );
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Store subscriptions
   const checkForConflicts = useAttendanceStore(
-    (state) => state.checkForConflicts
+    (state) => state.checkForConflicts,
   );
   const courseSchedule = useAttendanceStore((state) => state.courseSchedule);
 
@@ -145,7 +145,7 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
             record.year === year &&
             record.month === month &&
             record.day === day &&
-            record.hour === hour
+            record.hour === hour,
         ) || null;
     }
 
@@ -157,7 +157,7 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
         year,
         month,
         day,
-        hour
+        hour,
       );
     }
 
@@ -228,10 +228,10 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
     const statusColor = isPresent
       ? colors.success
       : isAbsent
-      ? colors.error
-      : isConflict
-      ? colors.warning
-      : colors.textSecondary;
+        ? colors.error
+        : isConflict
+          ? colors.warning
+          : colors.textSecondary;
 
     const entry = data?.entries?.find((e) => e.hour === hour);
 
@@ -251,7 +251,7 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
             record.year === year &&
             record.month === month &&
             record.day === day &&
-            record.hour === hour
+            record.hour === hour,
         ) || null;
     }
 
@@ -267,6 +267,7 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
         key={hour}
         activeOpacity={0.8}
         onPress={() => handleOpenEditModal(hour)}
+        //disabled={true}
       >
         <Text style={[styles.hourText, { color: statusColor }]}>
           Hour {hour}
@@ -315,7 +316,9 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
           activeOpacity={1}
           onPress={onClose}
         />
-        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+        <View
+          style={[styles.modalContent, { backgroundColor: colors.surface }]}
+        >
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Ionicons name="close" size={28} color={colors.textSecondary} />
           </TouchableOpacity>
@@ -346,13 +349,17 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
               </Text>
               <Text style={[styles.statValue, { color: colors.success }]}>
                 {
-                  Array.from(hourlyStatus.values()).filter((s) => s === "present")
-                    .length
+                  Array.from(hourlyStatus.values()).filter(
+                    (s) => s === "present",
+                  ).length
                 }
               </Text>
             </View>
             <View
-              style={[styles.statCard, { backgroundColor: colors.error + "15" }]}
+              style={[
+                styles.statCard,
+                { backgroundColor: colors.error + "15" },
+              ]}
             >
               <Ionicons name="close-circle" size={20} color={colors.error} />
               <Text style={[styles.statLabel, { color: colors.error }]}>
@@ -360,8 +367,9 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
               </Text>
               <Text style={[styles.statValue, { color: colors.error }]}>
                 {
-                  Array.from(hourlyStatus.values()).filter((s) => s === "absent")
-                    .length
+                  Array.from(hourlyStatus.values()).filter(
+                    (s) => s === "absent",
+                  ).length
                 }
               </Text>
             </View>

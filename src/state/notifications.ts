@@ -11,9 +11,6 @@ interface NotificationsState {
 
   // Actions
   fetchNotifications: (refresh?: boolean) => Promise<void>;
-  markAsRead: (notificationId: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
-  deleteNotification: (notificationId: string) => Promise<void>;
   loadMore: () => Promise<void>;
   setError: (error: string | null) => void;
   clearNotifications: () => void;
@@ -59,12 +56,6 @@ export const useNotificationsStore = create<NotificationsState>()(
       }
     },
 
-    markAsRead: async (notificationId: string) => {},
-
-    markAllAsRead: async () => {},
-
-    deleteNotification: async (notificationId: string) => {},
-
     loadMore: async () => {
       const state = get();
       if (!state.hasMore || state.isLoading) return;
@@ -85,5 +76,5 @@ export const useNotificationsStore = create<NotificationsState>()(
         error: null,
       });
     },
-  })
+  }),
 );

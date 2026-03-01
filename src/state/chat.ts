@@ -40,5 +40,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
   },
 
-  clearMessages: () => set(() => ({ messages: [] })),
+  clearMessages: () => {
+    set(() => ({ messages: [] }));
+    keySet.clear();
+  },
 }));

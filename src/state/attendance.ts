@@ -437,20 +437,32 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
         day,
         hour,
       );
+
+      const memoryRecord = get()
+        .courseSchedule?.get(subjectId)
+        ?.find(
+          (r) =>
+            r.year === year &&
+            r.month === month &&
+            r.day === day &&
+            r.hour === hour,
+        );
+
       const recordToSave: CourseSchedule = {
-        ...(existingRecord || {
-          id: 0, // DB will auto-increment
-          subject_id: subjectId,
-          year,
-          month,
-          day,
-          hour,
-          is_entered_by_student: 1,
-          created_at: Date.now(),
-          teacher_attendance: null,
-          is_conflict: 0,
-          is_entered_by_professor: 0,
-        }),
+        ...(existingRecord ||
+          memoryRecord || {
+            id: 0, // DB will auto-increment
+            subject_id: subjectId,
+            year,
+            month,
+            day,
+            hour,
+            is_entered_by_student: 1,
+            created_at: Date.now(),
+            teacher_attendance: null,
+            is_conflict: 0,
+            is_entered_by_professor: 0,
+          }),
         user_attendance: attendance,
         final_attendance: attendance,
         is_user_override: 1,
@@ -549,6 +561,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
                   is_conflict: 0,
                   is_user_override: 0,
                   is_entered_by_student: 0,
+                  is_entered_by_professor: 1,
                   final_attendance: record.teacher_attendance,
                   last_user_update: null,
                 };
