@@ -9,7 +9,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios"
   },
-    "dependencies": {
+  "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@react-navigation/bottom-tabs": "^7.4.2",
     "@react-navigation/native": "^7.1.14",
