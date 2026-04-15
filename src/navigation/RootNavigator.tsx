@@ -6,6 +6,7 @@ import { SurveyAttemptScreen } from "../screens/Surveys/SurveyAttempt";
 import { PublicForum } from "../screens/PublicForum";
 import { SubscriptionModal } from "../components/SubscriptionModal";
 import { AssignmentsScreen } from "../screens/Assignments";
+import { DutyLeaveScreen } from "../screens/DutyLeave";
 import { AssignmentsDetailsScreen } from "../screens/Assignments/AssignmentsDetails";
 import { kvHelper } from "../kv/kvStore";
 import { useState, useEffect } from "react";
@@ -29,6 +30,7 @@ export type RootStackParamList = {
     surveyName: string;
   };
   PublicForum: undefined;
+  DutyLeave: undefined;
   Assignments: {
     subjectId: string;
     subjectName: string;
@@ -79,6 +81,7 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen name="SubjectDetails" component={SubjectDetailsScreen} />
         <Stack.Screen name="SurveyAttempt" component={SurveyAttemptScreen} />
         <Stack.Screen name="PublicForum" component={PublicForum} />
+        <Stack.Screen name="DutyLeave" component={DutyLeaveScreen} />
         <Stack.Screen name="Assignments" component={AssignmentsScreen} />
         <Stack.Screen
           name="AssignmentsDetails"

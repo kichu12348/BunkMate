@@ -4,6 +4,7 @@ import { API_CONFIG, INSIGHTS_LOGGED_CODE } from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
 
 export async function logInsight(title: string) {
+  if (!API_URL) return;
   try {
     const insightsLogged = kvHelper.getInsightsLogged();
     if (insightsLogged && insightsLogged.startsWith(INSIGHTS_LOGGED_CODE)) return;

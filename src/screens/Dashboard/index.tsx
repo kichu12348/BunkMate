@@ -62,7 +62,7 @@ export const Dashboard: React.FC = () => {
   const initPfp = usePfpStore((state) => state.initialize);
 
   const fetchAssignments = useAssignmentStore(
-    (state) => state.fetchAssignments
+    (state) => state.fetchAssignments,
   );
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export const Dashboard: React.FC = () => {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const stickyYRef = React.useRef(0);
   const [activeFilter, setActiveFilter] = useState<"year" | "semester" | null>(
-    null
+    null,
   );
   const [activeDisplayFilter, setActiveDisplayFilter] =
     useState<DisplayFilter>("all");
@@ -184,7 +184,7 @@ export const Dashboard: React.FC = () => {
         courseSchedule.get(subject.subject.id.toString()) || [];
       const enhancedStats = calculateEnhancedAttendanceStats(
         subject,
-        userRecords
+        userRecords,
       );
 
       return {
@@ -213,11 +213,11 @@ export const Dashboard: React.FC = () => {
 
     const totalClasses = enhancedSubjects.reduce(
       (sum, subject) => sum + subject.enhanced.totalClasses,
-      0
+      0,
     );
     const attendedClasses = enhancedSubjects.reduce(
       (sum, subject) => sum + subject.enhanced.attendedClasses,
-      0
+      0,
     );
     const percentage =
       totalClasses > 0 ? (attendedClasses / totalClasses) * 100 : 0;
@@ -257,7 +257,7 @@ export const Dashboard: React.FC = () => {
   const handleSubjectPress = (
     subject: any,
     canMiss: number,
-    classesToAttend: number
+    classesToAttend: number,
   ) => {
     navigation.navigate("SubjectDetails", {
       subjectId: subject.subject.id.toString(),
@@ -304,13 +304,13 @@ export const Dashboard: React.FC = () => {
   };
   // Categorize subjects based on enhanced status
   const dangerSubjects = enhancedSubjects.filter(
-    (s) => s.enhanced.status === "danger"
+    (s) => s.enhanced.status === "danger",
   );
   const warningSubjects = enhancedSubjects.filter(
-    (s) => s.enhanced.status === "warning"
+    (s) => s.enhanced.status === "warning",
   );
   const safeSubjects = enhancedSubjects.filter(
-    (s) => s.enhanced.status === "safe"
+    (s) => s.enhanced.status === "safe",
   );
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleAnim.value }],
@@ -336,7 +336,7 @@ export const Dashboard: React.FC = () => {
       scrollPastSticky,
       [0, animationRange],
       [0, 1],
-      Extrapolation.CLAMP
+      Extrapolation.CLAMP,
     );
     const animatedHeight = interpolate(progress, [0, 1], [filterInfoHeight, 0]);
     const animatedMargin = interpolate(progress, [0, 1], [16, 0]);
@@ -428,61 +428,68 @@ export const Dashboard: React.FC = () => {
           scrollEventThrottle={16}
           ref={scrollViewRef}
         >
-          {/* Overall Stats */}
-          {enhancedOverallStats && (
-            <Animated.View style={[styles.statsCardContainer, animatedStyle]}>
-              <View style={styles.statsGradientBanner}>
-                <Text style={styles.statsTitle}>Overall Attendance</Text>
-                <Ionicons
-                  name={getOverallStatusIcon()}
-                  size={24}
-                  color={styles.textSecondary.color}
-                />
-              </View>
-
-              <View style={styles.statsCard}>
-                <View style={styles.statsContent}>
-                  <Text
-                    style={[styles.overallPercentage, getOverallStatusColor()]}
-                  >
-                    {formatPercentage(enhancedOverallStats.percentage)}
-                  </Text>
-                  <Text style={styles.totalSubjects}>
-                    {enhancedOverallStats.totalSubjects} subjects
-                  </Text>
-
-                  {lastUpdated && (
-                    <Text style={styles.lastUpdated}>
-                      Last updated: {getTimeAgo(lastUpdated)}
-                    </Text>
-                  )}
+          <View>
+            {/* Overall Stats */}
+            {enhancedOverallStats && (
+              <Animated.View style={[styles.statsCardContainer, animatedStyle]}>
+                <View style={styles.statsGradientBanner}>
+                  <Text style={styles.statsTitle}>Overall Attendance</Text>
+                  <Ionicons
+                    name={getOverallStatusIcon()}
+                    size={24}
+                    color={styles.textSecondary.color}
+                  />
                 </View>
 
-                <View style={styles.statusCounts}>
-                  <View style={styles.statusCountItem}>
-                    <Text style={[styles.statusCount, styles.dangerText]}>
-                      {dangerSubjects.length}
+                <View style={styles.statsCard}>
+                  <View style={styles.statsContent}>
+                    <Text
+                      style={[
+                        styles.overallPercentage,
+                        getOverallStatusColor(),
+                      ]}
+                    >
+                      {formatPercentage(enhancedOverallStats.percentage)}
                     </Text>
-                    <Text style={styles.statusLabel}>Critical</Text>
+                    <Text style={styles.totalSubjects}>
+                      {enhancedOverallStats.totalSubjects} subjects
+                    </Text>
+
+                    {lastUpdated && (
+                      <Text style={styles.lastUpdated}>
+                        Last updated: {getTimeAgo(lastUpdated)}
+                      </Text>
+                    )}
                   </View>
 
-                  <View style={styles.statusCountItem}>
-                    <Text style={[styles.statusCount, styles.warningText]}>
-                      {warningSubjects.length}
-                    </Text>
-                    <Text style={styles.statusLabel}>Warning</Text>
-                  </View>
+                  <View style={styles.statusCounts}>
+                    <View style={styles.statusCountItem}>
+                      <Text style={[styles.statusCount, styles.dangerText]}>
+                        {dangerSubjects.length}
+                      </Text>
+                      <Text style={styles.statusLabel}>Critical</Text>
+                    </View>
 
-                  <View style={styles.statusCountItem}>
-                    <Text style={[styles.statusCount, styles.safeText]}>
-                      {safeSubjects.length}
-                    </Text>
-                    <Text style={styles.statusLabel}>Safe</Text>
+                    <View style={styles.statusCountItem}>
+                      <Text style={[styles.statusCount, styles.warningText]}>
+                        {warningSubjects.length}
+                      </Text>
+                      <Text style={styles.statusLabel}>Warning</Text>
+                    </View>
+
+                    <View style={styles.statusCountItem}>
+                      <Text style={[styles.statusCount, styles.safeText]}>
+                        {safeSubjects.length}
+                      </Text>
+                      <Text style={styles.statusLabel}>Safe</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </Animated.View>
-          )}
+              </Animated.View>
+            )}
+
+          </View>
+
           <View
             style={styles.stickyHeaderContainer}
             onLayout={(e) => {

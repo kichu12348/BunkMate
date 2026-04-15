@@ -912,11 +912,6 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
       justifyContent: "center",
       marginTop: 8,
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 4,
     },
     primaryButtonDisabled: {
       opacity: 0.6,
