@@ -1,23 +1,24 @@
-import * as FileSystem from "expo-file-system/legacy";
+import { File } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { usePfpStore } from "../state/pfpStore";
 import { useToastStore } from "../state/toast";
+import { saveToLocal } from "./fsUtils";
 
-export const validatePfpUri = async (uri: string): Promise<boolean> => {
+export const validatePfpUri = (uri: string): boolean => {
   try {
-    const fileInfo = await FileSystem.getInfoAsync(uri);
-    return fileInfo.exists;
+    const file = new File(uri);
+    return file.exists;
   } catch (error) {
     console.log("Error validating profile picture URI:", error);
     return false;
   }
 };
 
-export const getCurrentValidPfpUri = async (): Promise<string | null> => {
+export const getCurrentValidPfpUri = (): string | null => {
   const currentUri = usePfpStore.getState().uri;
   if (!currentUri) return null;
-  
-  const isValid = await validatePfpUri(currentUri);
+
+  const isValid = validatePfpUri(currentUri);
   if (isValid) {
     return currentUri;
   } else {
@@ -25,8 +26,6 @@ export const getCurrentValidPfpUri = async (): Promise<string | null> => {
     return null;
   }
 };
-
-
 
 export const usePfp = (cb?: () => void) => {
   const showToast = useToastStore.getState().showToast;
@@ -59,51 +58,21 @@ export const usePfp = (cb?: () => void) => {
     return asset.uri;
   };
 
-  const saveToLocal = async (imageUri: string) => {
+  return async () => {
     try {
-      const timestamp = Date.now();
-      const fileExtension = imageUri.split('.').pop() || 'jpg';
-      const fileName = `profile_${timestamp}.${fileExtension}`;
-      const pfpDir = `${FileSystem.documentDirectory}pfp/`;
-      const fileUri = `${pfpDir}${fileName}`;
-      
-      await FileSystem.makeDirectoryAsync(pfpDir, {
-        intermediates: true,
-      });
-      await FileSystem.copyAsync({ from: imageUri, to: fileUri });
-      return fileUri;
-    } catch (error) {
+      const imageUri = await pickImage();
+      if (!imageUri) return;
+      const fileName = `pfp_img.${imageUri.split(".").pop()}`;
+      const localUri = saveToLocal(imageUri, "pfp", fileName);
+
+      usePfpStore.getState().setUri(localUri);
+      cb?.();
+    } catch (err) {
       showToast({
         title: "Error",
         message: "Failed to save image locally",
         delay: 5000,
       });
-      console.log("saveToLocal error:", error);
-      return null;
     }
-  };
-
-  return async () => {
-    const currentUri = usePfpStore.getState().uri;
-    const imageUri = await pickImage();
-    if (currentUri) {
-      try {
-        const pfpDir = `${FileSystem.documentDirectory}pfp/`;
-        const dirInfo = await FileSystem.getInfoAsync(pfpDir);
-        if (dirInfo.exists && dirInfo.isDirectory) {
-          const files = await FileSystem.readDirectoryAsync(pfpDir);
-          await Promise.all(files.map(file => FileSystem.deleteAsync(`${pfpDir}${file}`)));
-        }
-      } catch (error) {
-        console.log("Error cleaning up old profile picture:", error);
-      }
-    }
-    
-    if (!imageUri) return;
-    const localUri = await saveToLocal(imageUri);
-    if (!localUri) return;
-  
-    usePfpStore.getState().setUri(localUri);
-    cb?.();
   };
 };

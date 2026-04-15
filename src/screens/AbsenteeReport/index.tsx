@@ -305,22 +305,24 @@ export const AbsenteeReportScreen: React.FC = () => {
       <TouchableOpacity
         style={styles.dutyLeaveButton}
         onPress={() => navigation.navigate("DutyLeave")}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
       >
         <View style={styles.dutyLeaveButtonIcon}>
-          <Ionicons name="calendar" size={22} color={colors.primary} />
+          <Ionicons
+            name="document-attach-outline"
+            size={22}
+            color={colors.primary}
+          />
         </View>
         <View style={styles.dutyLeaveButtonContent}>
-          <Text style={styles.dutyLeaveButtonTitle}>Duty Leave</Text>
+          <Text style={styles.dutyLeaveButtonTitle}>Duty Leaves</Text>
           <Text style={styles.dutyLeaveButtonSubtitle}>
-            Add and manage your duty leave(s).
+            Manage your duty leave requests
           </Text>
         </View>
-        <Ionicons
-          name="chevron-forward"
-          size={20}
-          color={colors.textSecondary}
-        />
+        <View style={styles.dutyLeaveButtonAction}>
+          <Ionicons name="chevron-forward" size={20} color={colors.text} />
+        </View>
       </TouchableOpacity>
 
       <View style={styles.dateSelector}>
@@ -551,39 +553,36 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.surface,
-      borderRadius: 14,
-      padding: 14,
+      borderRadius: 20,
+      padding: 16,
       marginHorizontal: 20,
-      marginBottom: 12,
+      marginBottom: 20,
       borderWidth: 1,
-      borderColor: colors.primary + "25",
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 3,
-      elevation: 1,
+      borderColor: colors.primary + "20",
     },
     dutyLeaveButtonIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 12,
-      backgroundColor: colors.primary + "14",
       alignItems: "center",
       justifyContent: "center",
-      marginRight: 12,
+      marginRight: 16,
     },
     dutyLeaveButtonContent: {
       flex: 1,
     },
     dutyLeaveButtonTitle: {
-      fontSize: 15,
-      fontWeight: "600",
+      fontSize: 16,
+      fontWeight: "700",
       color: colors.text,
+      marginBottom: 4,
     },
     dutyLeaveButtonSubtitle: {
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textSecondary,
-      marginTop: 2,
+      fontWeight: "500",
+    },
+    dutyLeaveButtonAction: {
+      alignItems: "center",
+      justifyContent: "center",
+      marginLeft: 12,
     },
     dateSelector: {
       paddingHorizontal: 20,

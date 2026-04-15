@@ -1,7 +1,7 @@
 import { database } from "../db/database";
 import { DutyLeave } from "../types/dutyLeave";
-import * as FileSystem from "expo-file-system/legacy";
 import { parseISO } from "date-fns";
+import { deleteFromLocal, saveToLocal } from "./fsUtils";
 
 const DUTY_LEAVE_PREFIX = "duty_leave_";
 
@@ -57,7 +57,9 @@ export class DutyLeaveDatabase {
 
               if (
                 normalizedHours.length !== leave.hours.length ||
-                normalizedHours.some((hour, index) => hour !== leave.hours[index])
+                normalizedHours.some(
+                  (hour, index) => hour !== leave.hours[index],
+                )
               ) {
                 leave.hours = normalizedHours;
                 shouldPersistNormalizedLeave = true;
@@ -118,38 +120,18 @@ export class DutyLeaveDatabase {
     }
   }
 
-  static async saveDocument(
-    sourceUri: string,
-    fileName: string,
-  ): Promise<string> {
+  static async saveDocument(sourceUri: string, fileName: string) {
     try {
-      const dir = `${FileSystem.documentDirectory}duty_leave_docs/`;
-      const dirInfo = await FileSystem.getInfoAsync(dir);
-      if (!dirInfo.exists) {
-        await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
-      }
-
-      const uniqueName = `${Date.now()}_${fileName}`;
-      const destUri = `${dir}${uniqueName}`;
-
-      await FileSystem.copyAsync({
-        from: sourceUri,
-        to: destUri,
-      });
-
-      return destUri;
+      return saveToLocal(sourceUri, "duty_leave_docs", fileName);
     } catch (error) {
       console.error("Error saving document:", error);
-      throw error;
+      return null;
     }
   }
 
   static async deleteDocument(uri: string): Promise<void> {
     try {
-      const fileInfo = await FileSystem.getInfoAsync(uri);
-      if (fileInfo.exists) {
-        await FileSystem.deleteAsync(uri, { idempotent: true });
-      }
+      deleteFromLocal(uri);
     } catch (error) {
       console.warn("Failed to delete document file:", error);
     }

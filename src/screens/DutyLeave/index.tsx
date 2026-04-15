@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 
@@ -29,7 +29,6 @@ import {
   isToday,
   startOfWeek,
   endOfWeek,
-  isSameMonth,
   parseISO,
 } from "date-fns";
 import * as ImagePicker from "expo-image-picker";
@@ -46,7 +45,7 @@ import {
   normalizeAttendance,
 } from "../../utils/helpers";
 import Text from "../../components/UI/Text";
-import Animated, { FadeIn, SlideInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 const { width } = Dimensions.get("window");
 const CELL_SIZE = Math.floor((width * 0.9 - 40) / 7);
@@ -62,67 +61,50 @@ const AttendanceImpactCard: React.FC<{
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
 
-  return (
-    <Animated.View
-      entering={FadeIn.duration(500)}
-      style={[styles.impactCard, { paddingBottom: 12 }]}
-    >
-      <View style={styles.impactHeader}>
-        <Ionicons name="analytics-outline" size={20} color={colors.primary} />
-        <Text style={styles.impactTitle}>Subject-Wise Expected Impact</Text>
-      </View>
+  const validImpacts = impacts.filter(
+    (impact) =>
+      impact.projectedPercentage - impact.currentPercentage > 0 ||
+      impact.matchingAbsentCount > 0,
+  );
 
-      <View style={{ marginTop: 8 }}>
-        {impacts.map((impact) => {
-          const diff = impact.projectedPercentage - impact.currentPercentage;
-          if (diff <= 0 && impact.matchingAbsentCount === 0) return null;
-          return (
-            <View key={impact.subjectName} style={styles.subjectImpactRow}>
-              <Text style={styles.subjectImpactName} numberOfLines={1}>
-                {impact.subjectName}
-              </Text>
-              {impact.matchingAbsentCount > 0 ? (
-                <View style={styles.subjectImpactStats}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-                    {formatPercentage(impact.currentPercentage)}
-                  </Text>
-                  <Ionicons
-                    name="arrow-forward"
-                    size={14}
-                    color={colors.textSecondary}
-                    style={{ marginHorizontal: 4 }}
-                  />
-                  <Text
-                    style={{
-                      color: colors.success,
-                      fontWeight: "600",
-                      fontSize: 13,
-                    }}
-                  >
-                    {formatPercentage(impact.projectedPercentage)}
-                  </Text>
-                </View>
-              ) : (
-                <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                  No Impact
-                </Text>
-              )}
-            </View>
-          );
-        })}
-        {impacts.every((i) => i.matchingAbsentCount === 0) && (
-          <Text
-            style={{
-              color: colors.textSecondary,
-              fontSize: 13,
-              textAlign: "center",
-              marginTop: 8,
-            }}
-          >
+  return (
+    <Animated.View entering={FadeIn.duration(500)} style={styles.impactCard}>
+      <View style={styles.impactHeader}>
+        <Ionicons name="trending-up" size={16} color={colors.primary} />
+        <Text style={styles.impactTitle}>Expected Impact</Text>
+      </View>
+      <FlatList
+        data={validImpacts}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.impactScrollContent}
+        ListEmptyComponent={
+          <Text style={styles.impactEmptyText}>
             No absent periods covered by duty leave yet.
           </Text>
+        }
+        renderItem={({ item: impact }) => (
+          <View key={impact.subjectName} style={styles.impactChip}>
+            <Text style={styles.impactChipSubject} numberOfLines={1}>
+              {impact.subjectName}
+            </Text>
+            <View style={styles.impactChipStats}>
+              <Text style={styles.impactChipOld}>
+                {formatPercentage(impact.currentPercentage)}
+              </Text>
+              <Ionicons
+                name="arrow-forward"
+                size={12}
+                color={colors.textSecondary}
+                style={{ marginHorizontal: 2 }}
+              />
+              <Text style={styles.impactChipNew}>
+                {formatPercentage(impact.projectedPercentage)}
+              </Text>
+            </View>
+          </View>
         )}
-      </View>
+      />
     </Animated.View>
   );
 };
@@ -133,7 +115,8 @@ const DutyLeaveCard: React.FC<{
   onUpdate: (id: string, updates: Partial<DutyLeave>) => void;
   onEdit: (leave: DutyLeave) => void;
   hasCoverage?: boolean;
-}> = ({ leave, onDelete, onUpdate, onEdit, hasCoverage = true }) => {
+  topInset: number;
+}> = ({ leave, onDelete, onUpdate, onEdit, hasCoverage = true, topInset }) => {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
   const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
@@ -168,99 +151,115 @@ const DutyLeaveCard: React.FC<{
   };
 
   const cardContent = (
-    <Animated.View
-      entering={SlideInDown.duration(300).springify()}
-      style={styles.leaveCard}
-    >
-      <View style={styles.leaveCardHeader}>
-        <View style={styles.leaveCardDateBadge}>
-          <Text style={styles.leaveCardDay}>
-            {format(parseISO(leave.date), "dd")}
-          </Text>
-          <Text style={styles.leaveCardMonth}>
-            {format(parseISO(leave.date), "MMM")}
-          </Text>
+    <View style={styles.leaveCard}>
+      <View style={styles.leaveCardTop}>
+        <View style={styles.leaveCardHeaderLeft}>
+          <View style={styles.leaveDateBadge}>
+            <Text style={styles.leaveDay}>
+              {format(parseISO(leave.date), "dd")}
+            </Text>
+            <Text style={styles.leaveMonth}>
+              {format(parseISO(leave.date), "MMM")}
+            </Text>
+          </View>
+          <View style={styles.leaveMainInfo}>
+            <Text style={styles.leaveReason} numberOfLines={2}>
+              {leave.reason}
+            </Text>
+            <Text style={styles.leaveDateFull}>
+              {format(parseISO(leave.date), "EEEE, do MMMM yyyy")}
+            </Text>
+          </View>
         </View>
+      </View>
 
-        <View style={styles.leaveCardContent}>
-          <Text style={styles.leaveCardDateFull}>
-            {format(parseISO(leave.date), "EEEE, do MMMM yyyy")}
-          </Text>
-          <Text style={styles.leaveCardReason} numberOfLines={2}>
-            {leave.reason}
-          </Text>
-          <Text style={styles.leaveCardHours}>
-            {leave.hours === "full_day"
-              ? "Full Day"
-              : `Hours: ${[...leave.hours].sort().join(", ")}`}
-          </Text>
+      <View style={styles.leaveCardMiddle}>
+        <View style={styles.leaveTags}>
+          <View style={styles.tag}>
+            <Ionicons
+              name="time-outline"
+              size={14}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.tagText}>
+              {leave.hours === "full_day"
+                ? "Full Day"
+                : `Hours: ${[...leave.hours].sort().join(", ")}`}
+            </Text>
+          </View>
+
           {leave.documentUri && (
             <TouchableOpacity
-              style={styles.leaveCardDocBadge}
+              style={[styles.tag, styles.docTag]}
               onPress={handleOpenDocument}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name={
-                  leave.documentType === "pdf"
-                    ? "document-text"
-                    : "image-outline"
-                }
-                size={14}
-                color={colors.primary}
+              <Image
+                source={{ uri: leave.documentUri }}
+                style={styles.tagImage}
               />
-              <Text style={styles.leaveCardDocText} numberOfLines={1}>
-                {leave.documentName || "Document attached"}
+              <Text style={[styles.tagText, { color: colors.primary }]}>
+                Attachment
               </Text>
-              <Ionicons name="open-outline" size={12} color={colors.primary} />
             </TouchableOpacity>
-          )}
-          {hasCoverage === false && (
-            <View style={styles.leaveCardWarning}>
-              <Ionicons
-                name="warning-outline"
-                size={14}
-                color={colors.warning}
-              />
-              <Text style={styles.leaveCardWarningText}>
-                No absent periods covered by this leave.
-              </Text>
-            </View>
           )}
         </View>
 
-        <View style={styles.leaveCardActions}>
-          <TouchableOpacity
-            onPress={() => onUpdate(leave.id, { approved: !leave.approved })}
-            style={[
-              styles.leaveCardApproveBtn,
-              leave.approved && styles.leaveCardApproved,
-            ]}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons
-              name={leave.approved ? "checkmark-circle" : "ellipse-outline"}
-              size={22}
-              color={leave.approved ? colors.success : colors.textSecondary}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => onEdit(leave)}
-            style={styles.leaveCardDeleteBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="create-outline" size={18} color={colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleDelete}
-            style={styles.leaveCardDeleteBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="trash-outline" size={18} color={colors.danger} />
-          </TouchableOpacity>
-        </View>
+        {hasCoverage === false && (
+          <View style={styles.warningBox}>
+            <Ionicons name="warning-outline" size={14} color={colors.warning} />
+            <Text style={styles.warningText}>
+              No absent periods covered by this leave.
+            </Text>
+          </View>
+        )}
       </View>
-    </Animated.View>
+
+      <View style={styles.leaveCardBottom}>
+        <TouchableOpacity
+          onPress={() => onUpdate(leave.id, { approved: !leave.approved })}
+          style={[
+            styles.actionBtn,
+            styles.approveBtn,
+            leave.approved && styles.approveBtnActive,
+          ]}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name={leave.approved ? "checkmark-circle" : "ellipse-outline"}
+            size={16}
+            color={leave.approved ? colors.success : colors.textSecondary}
+          />
+          <Text
+            style={[
+              styles.actionBtnText,
+              { color: leave.approved ? colors.success : colors.textSecondary },
+            ]}
+          >
+            {leave.approved ? "Approved" : "Approve"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => onEdit(leave)}
+          style={styles.actionBtn}
+          activeOpacity={0.3}
+        >
+          <AntDesign name="edit" size={16} color={colors.textSecondary} />
+          <Text style={styles.actionBtnText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleDelete}
+          style={styles.actionBtn}
+          activeOpacity={0.3}
+        >
+          <Ionicons name="trash-outline" size={16} color={colors.danger} />
+          <Text style={[styles.actionBtnText, { color: colors.danger }]}>
+            Delete
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 
   return (
@@ -276,15 +275,22 @@ const DutyLeaveCard: React.FC<{
         statusBarTranslucent
       >
         <View style={styles.imagePreviewOverlay}>
-          <View style={styles.imagePreviewHeader}>
+          <View
+            style={[
+              styles.imagePreviewHeader,
+              // {
+              //   paddingTop: topInset + 16,
+              // },
+            ]}
+          >
             <Text style={styles.imagePreviewTitle} numberOfLines={1}>
               {leave.documentName || "Image"}
             </Text>
             <TouchableOpacity
               onPress={() => setImagePreviewVisible(false)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              activeOpacity={0.7}
             >
-              <Ionicons name="close-circle" size={30} color="#fff" />
+              <Ionicons name="close" size={30} color="#fff" />
             </TouchableOpacity>
           </View>
           {leave.documentUri && (
@@ -497,8 +503,7 @@ const AddDutyLeaveModal: React.FC<{
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
-        const fileName =
-          asset.uri.split("/").pop() || `photo_${Date.now()}.jpg`;
+        const fileName = asset.uri.split("/").pop();
         setDocumentUri(asset.uri);
         setDocumentName(fileName);
         setDocumentType("image");
@@ -523,10 +528,11 @@ const AddDutyLeaveModal: React.FC<{
         }
 
         if (documentUri && documentName) {
-          savedDocUri = await DutyLeaveDatabase.saveDocument(
+          const uri = await DutyLeaveDatabase.saveDocument(
             documentUri,
             documentName,
           );
+          if (uri) savedDocUri = uri;
         }
       }
 
@@ -579,7 +585,7 @@ const AddDutyLeaveModal: React.FC<{
                 </Text>
                 <TouchableOpacity onPress={handleClose} activeOpacity={0.7}>
                   <Ionicons
-                    name="close-circle"
+                    name="close"
                     size={28}
                     color={colors.textSecondary}
                   />
@@ -708,14 +714,9 @@ const AddDutyLeaveModal: React.FC<{
 
                 {documentUri ? (
                   <View style={styles.documentPreview}>
-                    <Ionicons
-                      name={
-                        documentType === "pdf"
-                          ? "document-text"
-                          : "image-outline"
-                      }
-                      size={24}
-                      color={colors.primary}
+                    <Image
+                      source={{ uri: documentUri }}
+                      style={styles.tagImage}
                     />
                     <Text style={styles.documentPreviewName} numberOfLines={1}>
                       {documentName}
@@ -764,10 +765,14 @@ const AddDutyLeaveModal: React.FC<{
                 activeOpacity={0.8}
               >
                 {isSaving ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={colors.text} />
                 ) : (
                   <>
-                    <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={20}
+                      color={colors.text}
+                    />
                     <Text style={styles.saveButtonText}>
                       {editingLeave ? "Update Duty Leave" : "Save Duty Leave"}
                     </Text>
@@ -777,14 +782,13 @@ const AddDutyLeaveModal: React.FC<{
             </View>
           </View>
         </KeyboardAvoidingView>
+        <CalendarModal
+          visible={calendarVisible}
+          onClose={() => setCalendarVisible(false)}
+          onDateSelect={setSelectedDate}
+          selectedDate={selectedDate}
+        />
       </Modal>
-
-      <CalendarModal
-        visible={calendarVisible}
-        onClose={() => setCalendarVisible(false)}
-        onDateSelect={setSelectedDate}
-        selectedDate={selectedDate}
-      />
     </>
   );
 };
@@ -799,7 +803,6 @@ export const DutyLeaveScreen: React.FC = () => {
 
   const {
     dutyLeaves,
-    isLoading,
     fetchDutyLeaves,
     addDutyLeave,
     deleteDutyLeave,
@@ -862,19 +865,17 @@ export const DutyLeaveScreen: React.FC = () => {
           const leavesForDate = dutyLeavesByDate.get(dateStr);
           if (leavesForDate) {
             const entryHour = Number(entry.hour);
-            const coveringLeave = leavesForDate.find(
-              (leave) => {
-                if (leave.hours === "full_day") {
-                  return true;
-                }
+            const coveringLeave = leavesForDate.find((leave) => {
+              if (leave.hours === "full_day") {
+                return true;
+              }
 
-                if (!Array.isArray(leave.hours) || !Number.isFinite(entryHour)) {
-                  return false;
-                }
+              if (!Array.isArray(leave.hours) || !Number.isFinite(entryHour)) {
+                return false;
+              }
 
-                return leave.hours.some((hour) => Number(hour) === entryHour);
-              },
-            );
+              return leave.hours.some((hour) => Number(hour) === entryHour);
+            });
 
             if (coveringLeave) {
               matchingAbsentCount++;
@@ -952,10 +953,9 @@ export const DutyLeaveScreen: React.FC = () => {
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Duty Leave</Text>
-        <View style={{ width: 40 }} />
       </View>
 
       {attendanceData && dutyLeaves.length > 0 && subjectImpacts.length > 0 && (
@@ -973,6 +973,7 @@ export const DutyLeaveScreen: React.FC = () => {
             onUpdate={updateDutyLeave}
             onEdit={handleEditDutyLeave}
             hasCoverage={leaveCoverageMap[item.id] !== false}
+            topInset={insets.top}
           />
         )}
         keyExtractor={(item) => item.id}
@@ -1002,7 +1003,7 @@ export const DutyLeaveScreen: React.FC = () => {
         onPress={() => setAddModalVisible(true)}
         activeOpacity={0.8}
       >
-        <Ionicons name="add" size={28} color="#fff" />
+        <Ionicons name="add" size={28} color={colors.primary} />
       </TouchableOpacity>
 
       {/* Add Modal */}
@@ -1028,94 +1029,82 @@ const createStyles = (colors: ThemeColors) =>
     header: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 14,
+      justifyContent: "flex-start",
+      gap: 12,
+      paddingHorizontal: 20,
+      paddingVertical: 16,
     },
     backButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: colors.surface,
     },
     headerTitle: {
-      fontSize: 20,
+      fontSize: 24,
       fontWeight: "bold",
       color: colors.text,
+      marginBottom: 4,
     },
 
     impactCard: {
       backgroundColor: colors.surface,
       borderRadius: 16,
-      padding: 16,
-      marginVertical: 12,
+      marginVertical: 8,
+      paddingVertical: 12,
       borderWidth: 1,
       borderColor: colors.border + "40",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
     },
     impactHeader: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
-      marginBottom: 16,
+      gap: 6,
+      paddingHorizontal: 16,
+      marginBottom: 10,
     },
     impactTitle: {
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.text,
     },
-    impactStatsRow: {
+    impactScrollContent: {
+      paddingHorizontal: 16,
+      gap: 10,
+    },
+    impactChip: {
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.border + "40",
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      minWidth: 110,
+    },
+    impactChipSubject: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 6,
+      maxWidth: 140,
+    },
+    impactChipStats: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-around",
     },
-    impactStatItem: {
-      alignItems: "center",
-      gap: 4,
-    },
-    impactStatLabel: {
+    impactChipOld: {
       fontSize: 12,
       color: colors.textSecondary,
       fontWeight: "500",
     },
-    impactStatValue: {
-      fontSize: 24,
-      fontWeight: "800",
-    },
-    impactFooter: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      marginTop: 12,
-      paddingTop: 12,
-      borderTopWidth: 1,
-      borderTopColor: colors.border + "40",
-    },
-    impactFooterText: {
+    impactChipNew: {
       fontSize: 12,
-      fontWeight: "500",
-    },
-    impactBadge: {
-      position: "absolute",
-      top: 14,
-      right: 14,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      backgroundColor: colors.success + "18",
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 12,
-    },
-    impactBadgeText: {
-      fontSize: 13,
+      color: colors.success,
       fontWeight: "700",
+    },
+    impactEmptyText: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      textAlign: "center",
+      paddingHorizontal: 16,
+      marginTop: 2,
     },
 
     sectionHeader: {
@@ -1139,77 +1128,163 @@ const createStyles = (colors: ThemeColors) =>
 
     leaveCard: {
       backgroundColor: colors.surface,
-      borderRadius: 14,
-      padding: 14,
-      marginBottom: 10,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 12,
       borderWidth: 1,
       borderColor: colors.border + "40",
       shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 3,
-      elevation: 1,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 4,
+      elevation: 2,
     },
-    leaveCardHeader: {
+    leaveCardTop: {
       flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      marginBottom: 12,
     },
-    leaveCardDateBadge: {
-      width: 48,
-      height: 52,
+    leaveCardHeaderLeft: {
+      flexDirection: "row",
+      flex: 1,
+      gap: 12,
+      marginRight: 8,
+    },
+    leaveDateBadge: {
+      width: 46,
+      height: 46,
       borderRadius: 12,
-      backgroundColor: colors.primary + "14",
-      borderWidth: 1,
-      borderColor: colors.primary + "30",
+      backgroundColor: colors.primary + "15",
       alignItems: "center",
       justifyContent: "center",
     },
-    leaveCardDay: {
-      fontSize: 18,
+    leaveDay: {
+      fontSize: 16,
       fontWeight: "800",
       color: colors.primary,
-      lineHeight: 22,
+      lineHeight: 20,
     },
-    leaveCardMonth: {
+    leaveMonth: {
       fontSize: 11,
       fontWeight: "600",
       color: colors.primary,
       textTransform: "uppercase",
     },
-    leaveCardContent: {
+    leaveMainInfo: {
       flex: 1,
-      gap: 3,
+      justifyContent: "center",
     },
-    leaveCardDateFull: {
-      fontSize: 13,
+    leaveReason: {
+      fontSize: 16,
       fontWeight: "600",
       color: colors.text,
+      marginBottom: 2,
+      lineHeight: 22,
     },
-    leaveCardReason: {
-      fontSize: 13,
+    leaveDateFull: {
+      fontSize: 12,
       color: colors.textSecondary,
-      lineHeight: 18,
     },
-    leaveCardDocBadge: {
+    statusBadge: {
       flexDirection: "row",
       alignItems: "center",
       gap: 4,
-      marginTop: 4,
-      backgroundColor: colors.primary + "10",
       paddingHorizontal: 8,
-      paddingVertical: 3,
+      paddingVertical: 5,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderStyle: "dashed",
+    },
+    statusApproved: {
+      borderColor: colors.success,
+    },
+    statusPending: {
+      borderColor: colors.warning,
+    },
+    statusText: {
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    leaveCardMiddle: {
+      gap: 8,
+      marginBottom: 12,
+    },
+    leaveTags: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    tag: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      backgroundColor: colors.border + "50",
+      paddingHorizontal: 10,
+      paddingVertical: 6,
       borderRadius: 8,
-      alignSelf: "flex-start",
     },
-    leaveCardDocText: {
-      fontSize: 11,
+    docTag: {
+      backgroundColor: colors.primary + "10",
+    },
+    tagText: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.textSecondary,
+    },
+    tagImage: {
+      width: 20,
+      height: 20,
+      borderRadius: 5,
+    },
+    warningBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: colors.warning + "15",
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      borderRadius: 8,
+      marginTop: 4,
+    },
+    warningText: {
+      fontSize: 12,
+      color: colors.warning,
       fontWeight: "500",
-      color: colors.primary,
-      maxWidth: 120,
+      flex: 1,
     },
-    leaveCardDeleteBtn: {
-      padding: 8,
+    leaveCardBottom: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.border + "50",
+      gap: 16,
+    },
+    actionBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingVertical: 4,
+    },
+    approveBtn: {
+      marginRight: "auto",
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderStyle: "dashed",
+      backgroundColor: colors.surface,
+    },
+    approveBtnActive: {
+      borderColor: colors.success,
+      borderStyle: "solid",
+    },
+    actionBtnText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.textSecondary,
     },
 
     emptyContainer: {
@@ -1239,14 +1314,12 @@ const createStyles = (colors: ThemeColors) =>
       width: 56,
       height: 56,
       borderRadius: 28,
-      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+      backgroundColor: colors.background + "aa",
+      borderWidth: 1.5,
+      borderStyle: "dashed",
       alignItems: "center",
       justifyContent: "center",
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 6,
     },
 
     modalOverlay: {
@@ -1419,60 +1492,6 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.primary,
     },
 
-    leaveCardHours: {
-      fontSize: 12,
-      color: colors.primary,
-      marginTop: 4,
-      fontWeight: "500",
-    },
-    leaveCardActions: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-    },
-    leaveCardApproveBtn: {
-      padding: 8,
-      borderRadius: 12,
-      backgroundColor: colors.border,
-    },
-    leaveCardApproved: {
-      backgroundColor: colors.success + "15",
-    },
-    leaveCardWarning: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: 6,
-      marginTop: 8,
-      backgroundColor: colors.warning + "15",
-      padding: 8,
-      borderRadius: 8,
-    },
-    leaveCardWarningText: {
-      fontSize: 12,
-      color: colors.warning,
-      flex: 1,
-    },
-
-    subjectImpactRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      paddingVertical: 6,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    subjectImpactName: {
-      flex: 1,
-      fontSize: 13,
-      fontWeight: "500",
-      color: colors.text,
-      marginRight: 8,
-    },
-    subjectImpactStats: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-
     calendarModalContent: {
       width: "90%",
       backgroundColor: colors.surface,
@@ -1549,13 +1568,13 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.text,
     },
     selectedDayText: {
-      color: "#fff",
+      color: colors.text,
       fontWeight: "700",
     },
 
     imagePreviewOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.95)",
+      backgroundColor: colors.background,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -1564,15 +1583,12 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
       justifyContent: "space-between",
       width: "100%",
+      gap: 12,
       paddingHorizontal: 20,
-      paddingTop: 50,
-      paddingBottom: 16,
-      position: "absolute",
-      top: 0,
-      zIndex: 10,
+      paddingVertical: 16,
     },
     imagePreviewTitle: {
-      color: "#fff",
+      color: colors.text,
       fontSize: 16,
       fontWeight: "600",
       flex: 1,
