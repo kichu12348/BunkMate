@@ -36,3 +36,8 @@ export async function getAccount(id: number) {
   const db = database.getDatabase();
   return db.getFirstAsync<Account>("SELECT * FROM accounts WHERE id = ?", [id]);
 }
+
+export async function deleteAllAccounts() {
+  const db = database.getDatabase();
+  db.runAsync(`TRUNCATE TABLE accounts`);
+}

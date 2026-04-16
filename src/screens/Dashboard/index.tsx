@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, use, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -487,7 +487,6 @@ export const Dashboard: React.FC = () => {
                 </View>
               </Animated.View>
             )}
-
           </View>
 
           <View

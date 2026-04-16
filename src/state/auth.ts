@@ -6,6 +6,7 @@ import { logInsight } from "../api/insights";
 import { useSettingsStore } from "./settings";
 import { useAttendanceStore } from "./attendance";
 import { useChatStore } from "./chat";
+import useAccountStore from "./accounts";
 
 interface AuthState {
   user: User | null;
@@ -27,6 +28,7 @@ interface AuthState {
   fetchCurrentUser: () => Promise<void>;
   clearError: () => void;
   resetLoginFlow: () => void;
+  clearData: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -77,15 +79,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
 
     try {
-      await authService.login(credentials);
+      const res = await authService.login(credentials);
 
       // After successful login, fetch user data
       const { user, first_name, last_name } =
         await authService.getCurrentUser();
 
+      const name = `${first_name || ""} ${last_name || ""}`.trim();
+
       set({
         user,
-        name: `${first_name || ""} ${last_name || ""}`.trim(),
+        name,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -94,10 +98,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         selectedYear: user.settings.default_academic_year,
         selectedSemester: user.settings.default_semester,
       });
-      logInsight(`${first_name || ""} ${last_name || ""}`.trim());
-      useChatStore
-        .getState()
-        .initialize(`${first_name || ""} ${last_name || ""}`.trim());
+      useAccountStore.getState().addAccount(name, res.access_token);
+      logInsight(name);
+      useChatStore.getState().initialize(name);
     } catch (error: any) {
       set({
         user: null,
@@ -204,4 +207,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       verifiedUsername: null,
       error: null,
     }),
+  clearData: () => {
+    set({
+      user: null,
+      name: null,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+      isUsernameVerified: false,
+      verifiedUsername: null,
+    });
+  },
 }));

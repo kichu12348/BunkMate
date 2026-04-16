@@ -3,6 +3,7 @@ import React, {
   useMemo,
   useState,
   ReactElement,
+  useRef,
   //useRef,
 } from "react";
 import {
@@ -29,7 +30,12 @@ import { Dropdown } from "../../components/Dropdown";
 import { ThemeColors } from "../../types/theme";
 import { useAuthStore } from "../../state/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import {
+  BottomTabNavigationProp,
+  useBottomTabBarHeight,
+} from "@react-navigation/bottom-tabs";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
 import Switch from "../../components/UI/Switch";
 import { useToastStore } from "../../state/toast";
 import { useThemeStore } from "../../state/themeStore";
@@ -46,7 +52,11 @@ import { darkTheme, lightTheme } from "../../constants/colors";
 import { usePfp } from "../../utils/pfpUtil";
 import { usePfpStore } from "../../state/pfpStore";
 import Text from "../../components/UI/Text";
+import { RootStackParamList } from "../../navigation/RootNavigator";
+import { TabParamList } from "../../navigation/TabNavigator";
 //import Slider from "../../components/UI/Slider";
+
+type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;
 const OVERVIEW_URL = process.env.EXPO_PUBLIC_OVERVIEW_URL;
@@ -55,8 +65,11 @@ const INSTAGRAM_COLOR = "#d82d7e";
 
 //const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
+type SettingsNavigationProp = BottomTabNavigationProp<TabParamList, "Settings">;
+
 interface SettingsScreenProps {
   onClose?: () => void;
+  navigation: SettingsNavigationProp;
 }
 
 function debounced(func: Function, delay: number) {
@@ -67,7 +80,10 @@ function debounced(func: Function, delay: number) {
   };
 }
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({
+  onClose,
+  navigation: tabNavigation,
+}) => {
   const styles = useThemedStyles(createStyles);
   const { isDark, toggleMode } = useTheme();
   const colors = useThemeStore((state) => state.colors);
@@ -85,6 +101,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const fetchAttendance = useAttendanceStore((s) => s.fetchAttendance);
   const { logout, user } = useAuthStore();
+  const userRef = useRef(user);
   const showToast = useToastStore((state) => state.showToast);
   const insets = useSafeAreaInsets();
   const bottomBarHeight = useBottomTabBarHeight();
@@ -98,9 +115,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const progress = useSharedValue(1);
 
   const [pfpLoadingError, setPfpLoadingError] = useState(false);
+
+  const navigation = useNavigation<RootNavigationProp>();
   // const [sliderVal, setSliderVal] = useState(75);
 
   //const textRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (userRef.current.username !== user.username) {
+      userRef.current = user;
+      tabNavigation.navigate("Dashboard");
+    }
+  }, [user.username]);
 
   useEffect(() => {
     // When colors object changes (theme toggled), update from/to and animate
@@ -255,6 +281,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const handleCoffee = () => {
     const coffeeUrl = process.env.EXPO_PUBLIC_COFFEE_URL;
     Linking.openURL(coffeeUrl);
+  };
+
+  const handleSwitchAccount = () => {
+    navigation.navigate("SwitchAccounts");
   };
 
   // const handleSliderValueChange = (val: number) => {
@@ -645,7 +675,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               }
               title="Switch Account"
               subtitle="Switch to another account"
-              onPress={() => {}}
+              onPress={handleSwitchAccount}
               rightElement={
                 <AntDesign name="swap" size={22} color={colors.primary} />
               }

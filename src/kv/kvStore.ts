@@ -68,6 +68,7 @@ export const kvHelper = {
   // Auth tokens
   setAuthToken(token: string): void {
     tokenStore.set(AUTH_ACCESS_TOKEN, token);
+    localToken = token;
   },
 
   setInsightsLogged(code: string): void {
@@ -81,6 +82,10 @@ export const kvHelper = {
   // removeInsightsLogged(): void {
   //   insightsStore.delete(INSIGHTS_LOGGED);
   // },
+
+  updateLocalToken(token: string): void {
+    localToken = token;
+  },
 
   getAuthToken(): string | null {
     if (localToken) return localToken;

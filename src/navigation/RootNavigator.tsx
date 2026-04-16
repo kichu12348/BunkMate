@@ -8,6 +8,8 @@ import { SubscriptionModal } from "../components/SubscriptionModal";
 import { AssignmentsScreen } from "../screens/Assignments";
 import { DutyLeaveScreen } from "../screens/DutyLeave";
 import { AssignmentsDetailsScreen } from "../screens/Assignments/AssignmentsDetails";
+import { SwitchAccountsScreen } from "../screens/SwitchAccounts";
+import { LoginScreen } from "../screens/Login/Login";
 import { kvHelper } from "../kv/kvStore";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../state/auth";
@@ -40,6 +42,8 @@ export type RootStackParamList = {
     assignmentId: string;
     assignmentName: string;
   };
+  SwitchAccounts: undefined;
+  Login: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -47,7 +51,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export const RootNavigator: React.FC = () => {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const hasShownSubscriptionModal = useAuthStore(
-    (s) => s.hasShownSubscriptionModal
+    (s) => s.hasShownSubscriptionModal,
   );
 
   useEffect(() => {
@@ -87,6 +91,8 @@ export const RootNavigator: React.FC = () => {
           name="AssignmentsDetails"
           component={AssignmentsDetailsScreen}
         />
+        <Stack.Screen name="SwitchAccounts" component={SwitchAccountsScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
       </Stack.Navigator>
 
       {/* Global Subscription Modal */}

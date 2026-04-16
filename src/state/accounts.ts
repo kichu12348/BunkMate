@@ -4,13 +4,34 @@ import {
   insertAccount,
   deleteAccount,
   getAccount,
+  deleteAllAccounts,
 } from "../db/accountsDb";
 import type { Account } from "../db/accountsDb";
 import { kvHelper } from "../kv/kvStore";
+import { useAuthStore } from "./auth";
+import { useAttendanceStore } from "./attendance";
+import { useNotificationsStore } from "./notifications";
+import { useSurveysStore } from "./surveys";
+
+async function reInitAllStores() {
+  const { checkAuthStatus, clearData } = useAuthStore.getState();
+  clearData();
+  await checkAuthStatus();
+  const { fetchAttendance, clearAttendanceData } =
+    useAttendanceStore.getState();
+  clearAttendanceData();
+  await fetchAttendance();
+  const { clearNotifications } = useNotificationsStore.getState();
+  clearNotifications();
+  const { clearSurveys, fetchSurveys } = useSurveysStore.getState();
+  clearSurveys();
+  await fetchSurveys();
+}
 
 interface AccountsState {
   accounts: Account[];
   currentAccountId: number | null;
+  initialised: boolean;
   loading: boolean;
   error: string | null;
   loadAccounts: () => Promise<void>;
@@ -18,18 +39,22 @@ interface AccountsState {
   addAccount: (name: string, token: string) => Promise<void>;
   removeAccount: (id: number) => Promise<void>;
   updateAccount: (id: number, name: string, token: string) => Promise<void>;
+  switchAccount: (id: number) => Promise<void>;
   getCurrentAccount: () => Promise<Account | null>;
+  logout: () => Promise<void>;
 }
 
 const useAccountStore = create<AccountsState>((set, get) => ({
   accounts: [],
   loading: false,
+  initialised: false,
   error: null,
   currentAccountId: null,
   initAccounts: async () => {
+    if (get().initialised) return;
     const id = kvHelper.getAccounts();
     const accounts = await getAllAccounts();
-    set({ currentAccountId: id, accounts });
+    set({ currentAccountId: id, accounts, initialised: true });
   },
   loadAccounts: async () => {
     set({ loading: true, error: null });
@@ -44,7 +69,12 @@ const useAccountStore = create<AccountsState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const account = await insertAccount(name, token);
-      set({ accounts: [...get().accounts, account], loading: false });
+      kvHelper.setAccounts(account.id);
+      set({
+        accounts: [...get().accounts, account],
+        loading: false,
+        currentAccountId: account.id,
+      });
     } catch (error) {
       set({ error: error.message, loading: false });
     }
@@ -81,12 +111,49 @@ const useAccountStore = create<AccountsState>((set, get) => ({
       set({ error: error.message, loading: false });
     }
   },
+  switchAccount: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const account = await getAccount(id);
+      if (!account) {
+        set({ error: "Account not found", loading: false });
+        return;
+      }
+      kvHelper.setAccounts(account.id);
+      kvHelper.setAuthToken(account.token);
+      await reInitAllStores();
+      set({
+        currentAccountId: account.id,
+        loading: false,
+      });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
+  },
   getCurrentAccount: async () => {
     const id = kvHelper.getAccounts();
     if (!id) {
       return null;
     }
     return getAccount(id);
+  },
+  logout: async () => {
+    try {
+      if (get().currentAccountId) {
+        await deleteAccount(get().currentAccountId);
+      }
+      set({ accounts: [], loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
+  },
+  removeAllAccounts: async () => {
+    try {
+      await deleteAllAccounts();
+      set({ accounts: [], loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
   },
 }));
 
