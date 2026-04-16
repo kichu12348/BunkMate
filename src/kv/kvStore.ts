@@ -5,6 +5,7 @@ import {
   PFP_URL,
   SUBSCRIPTION_MODAL_SHOWN,
   THEME_MODE,
+  ACCOUNTS_KEY,
 } from "../constants/config";
 
 class KVStore {
@@ -15,7 +16,7 @@ class KVStore {
       typeof value !== "string"
     ) {
       console.warn(
-        `Attempted to set undefined or null string value for key: ${key}`
+        `Attempted to set undefined or null string value for key: ${key}`,
       );
       return;
     }
@@ -127,5 +128,17 @@ export const kvHelper = {
 
   resetSubscriptionModal(): void {
     settingsStore.delete(SUBSCRIPTION_MODAL_SHOWN);
+  },
+
+  setAccounts(id: number): void {
+    settingsStore.set(ACCOUNTS_KEY, id.toString());
+  },
+
+  getAccounts(): number | null {
+    return Number(settingsStore.get<string>(ACCOUNTS_KEY));
+  },
+
+  clearAccounts(): void {
+    settingsStore.delete(ACCOUNTS_KEY);
   },
 };

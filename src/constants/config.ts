@@ -76,6 +76,7 @@ export const INSIGHTS_LOGGED = "insights_logged";
 export const INSIGHTS_LOGGED_CODE = "ABCD_12348_";
 export const PFP_URL = "pfp_url";
 export const WEBSOCKET_TIMEOUT = 3000;
+export const ACCOUNTS_KEY = "accounts";
 
 export const CHAT_CONFIG = {
   GET_MESSAGES: (

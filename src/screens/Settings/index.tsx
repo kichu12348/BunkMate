@@ -16,6 +16,7 @@ import {
   // TextInput,
 } from "react-native";
 import {
+  AntDesign,
   Entypo,
   Feather,
   Ionicons,
@@ -633,6 +634,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             <Text style={styles.sectionTitle}>Account</Text>
           </View>
 
+          <AnimatedCard style={styles.primCard}>
+            <SettingItem
+              Icon={
+                <AntDesign
+                  name="user-switch"
+                  size={22}
+                  color={colors.primary}
+                />
+              }
+              title="Switch Account"
+              subtitle="Switch to another account"
+              onPress={() => {}}
+              rightElement={
+                <AntDesign name="swap" size={22} color={colors.primary} />
+              }
+            />
+          </AnimatedCard>
+
           <AnimatedCard style={styles.dangerCard}>
             <SettingItem
               Icon={
@@ -815,6 +834,10 @@ const createStyles = (colors: ThemeColors) =>
       borderColor: colors.danger + "30",
     },
 
+    primCard: {
+      borderWidth: 1,
+      borderColor: colors.primary + "30",
+    },
     // Dropdown Container
     dropdownContainer: {
       marginBottom: 8,

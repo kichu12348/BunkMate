@@ -29,6 +29,14 @@ export class Database {
     keys.forEach((row: { key: string }) => {
       this.keySet.add(row.key);
     });
+
+    this.db.execSync(`
+        CREATE TABLE IF NOT EXISTS accounts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          token TEXT NOT NULL
+        )
+      `);
   }
 
   public getDatabase(): SQLite.SQLiteDatabase {
@@ -51,7 +59,7 @@ export class Database {
       `
       INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)
     `,
-      [key, value]
+      [key, value],
     );
     this.keySet.add(key);
   }
@@ -64,7 +72,7 @@ export class Database {
       `
       SELECT value FROM kv_store WHERE key = ?
     `,
-      [key]
+      [key],
     );
     return result ? result.value : null;
   }
@@ -77,7 +85,7 @@ export class Database {
       `
       DELETE FROM kv_store WHERE key = ?
     `,
-      [key]
+      [key],
     );
     this.keySet.delete(key);
   }
