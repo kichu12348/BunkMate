@@ -3,7 +3,6 @@ import { Message } from "../types/api";
 import { WEBSOCKET_TIMEOUT } from "../constants/config";
 import { useEffect, useRef, useCallback } from "react";
 
-let isConnected = false;
 const wsUrl = API_BASE_URL?.replace("http", "ws") + "/ws";
 
 export const useWebSocket = (
@@ -11,6 +10,7 @@ export const useWebSocket = (
   onconnect?: (isConnected: boolean) => void,
 ) => {
   const socket = useRef<WebSocket | null>(null);
+  const isConnected = useRef<boolean>(false);
   const timeoutHandle = useRef<NodeJS.Timeout | null>(null);
 
   const memoizedOnMessage = useCallback(onmessage, [onmessage]);
@@ -23,8 +23,8 @@ export const useWebSocket = (
     socket.current = new WebSocket(wsUrl!);
     socket.current.addEventListener("open", () => {
       clearTimeout(timeoutHandle.current!);
-      if (!isConnected) {
-        isConnected = true;
+      if (!isConnected.current) {
+        isConnected.current = true;
         memoizedOnConnect(true);
       }
     });
@@ -36,15 +36,15 @@ export const useWebSocket = (
 
     socket.current.addEventListener("close", () => {
       timeoutHandle.current = setTimeout(connect, WEBSOCKET_TIMEOUT);
-      if (isConnected) {
-        isConnected = false;
+      if (isConnected.current) {
+        isConnected.current = false;
         memoizedOnConnect(false);
       }
     });
     socket.current.addEventListener("error", () => {
       socket.current?.close();
-      if (isConnected) {
-        isConnected = false;
+      if (isConnected.current) {
+        isConnected.current = false;
         memoizedOnConnect(false);
       }
     });
@@ -55,6 +55,7 @@ export const useWebSocket = (
     return () => {
       clearTimeout(timeoutHandle.current!);
       socket.current?.close();
+      isConnected.current = false;
     };
   }, []);
 
