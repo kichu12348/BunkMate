@@ -14,7 +14,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../state/auth";
 import { useThemedStyles } from "../../hooks/useTheme";
 import { ThemeColors } from "../../types/theme";
-import { APP_CONFIG } from "../../constants/config";
 import { useToastStore } from "../../state/toast";
 import {
   OptionsModal,
@@ -22,9 +21,18 @@ import {
 } from "../../components/Modals/Reset";
 import { useThemeStore } from "../../state/themeStore";
 import Text from "../../components/UI/Text";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useAccountStore from "../../state/accounts";
+import { RootStackParamList } from "../../navigation/RootNavigator";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-export const LoginScreen: React.FC = () => {
+type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+export const LoginNewAccount: React.FC = ({
+  navigation,
+}: {
+  navigation: RootNavigationProp;
+}) => {
   const styles = useThemedStyles(createStyles);
   const {
     login,
@@ -42,6 +50,8 @@ export const LoginScreen: React.FC = () => {
   const colors = useThemeStore((state) => state.colors);
 
   const showToast = useToastStore((state) => state.showToast);
+
+  const insets = useSafeAreaInsets();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -106,6 +116,7 @@ export const LoginScreen: React.FC = () => {
         },
         addAccount,
       );
+      // navigation.goBack();
     } catch (error: any) {
       showToast({
         title: "Login Failed",
@@ -161,172 +172,175 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
+    <View style={[styles.main, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+          style={styles.backButton}
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Add New Account</Text>
+      </View>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>{APP_CONFIG.NAME}</Text>
-          <Text style={styles.subtitle}>{APP_CONFIG.DESCRIPTION}</Text>
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Ionicons
-              name="person-outline"
-              size={20}
-              color={styles.inputIcon.color}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Username/Email/Phone"
-              placeholderTextColor={styles.inputPlaceholder.color}
-              value={isUsernameVerified ? verifiedUsername : username}
-              onChangeText={handleUsernameChange}
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading && !isUsernameVerified}
-            />
-            {isUsernameVerified && (
-              <TouchableOpacity
-                onPress={handleBackToUsername}
-                style={styles.editButton}
-              >
-                <Ionicons
-                  name="pencil-outline"
-                  size={18}
-                  color={styles.inputIcon.color}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {!isUsernameVerified && (
-            <>
-              <TouchableOpacity
-                style={[
-                  styles.continueButton,
-                  isLoading && styles.continueButtonDisabled,
-                  !isUsernameVerified && { marginTop: 8 },
-                ]}
-                onPress={handleUsernameSubmit}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator size="small" color={colors.secondary} />
-                ) : (
-                  <Text style={styles.continueButtonText}>Continue</Text>
-                )}
-              </TouchableOpacity>
-            </>
-          )}
-
-          {isUsernameVerified && (
-            <>
-              <View style={styles.inputContainer}>
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={20}
-                  color={styles.inputIcon.color}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Password"
-                  placeholderTextColor={styles.inputPlaceholder.color}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!isLoading}
-                  autoFocus={true}
-                />
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="person-outline"
+                size={20}
+                color={styles.inputIcon.color}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Username/Email/Phone"
+                placeholderTextColor={styles.inputPlaceholder.color}
+                value={isUsernameVerified ? verifiedUsername : username}
+                onChangeText={handleUsernameChange}
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isLoading && !isUsernameVerified}
+              />
+              {isUsernameVerified && (
                 <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.passwordToggle}
+                  onPress={handleBackToUsername}
+                  style={styles.editButton}
                 >
                   <Ionicons
-                    name={showPassword ? "eye-off-outline" : "eye-outline"}
-                    size={20}
+                    name="pencil-outline"
+                    size={18}
                     color={styles.inputIcon.color}
                   />
                 </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.loginButton,
-                  isLoading && styles.loginButtonDisabled,
-                ]}
-                onPress={handleLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
-                ) : (
-                  <Text style={styles.loginButtonText}>Login</Text>
-                )}
-              </TouchableOpacity>
-              <View style={styles.forgotPasswordContainer}>
-                <TouchableOpacity
-                  style={styles.forgotPasswordButton}
-                  onPress={handleForgotPassword}
-                >
-                  <Text style={styles.forgotPasswordText}>
-                    Forgot Password ?
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-
-          {error && (
-            <View style={styles.errorContainer}>
-              <Ionicons
-                name="alert-circle-outline"
-                size={16}
-                color={styles.errorText.color}
-              />
-              <Text style={styles.errorText}>{error}</Text>
+              )}
             </View>
-          )}
-        </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Developed for students to track attendance and maintain ≥75% per
-            subject
-          </Text>
-        </View>
-      </ScrollView>
+            {!isUsernameVerified && (
+              <>
+                <TouchableOpacity
+                  style={[
+                    styles.continueButton,
+                    isLoading && styles.continueButtonDisabled,
+                    !isUsernameVerified && { marginTop: 8 },
+                  ]}
+                  onPress={handleUsernameSubmit}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color={colors.secondary} />
+                  ) : (
+                    <Text style={styles.continueButtonText}>Continue</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
 
-      <OptionsModal
-        visible={showOptionsModal}
-        onClose={() => setShowOptionsModal(false)}
-        onOptionSelected={handleOptionSelected}
-        username={verifiedUsername}
-      />
+            {isUsernameVerified && (
+              <>
+                <View style={styles.inputContainer}>
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={20}
+                    color={styles.inputIcon.color}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    placeholderTextColor={styles.inputPlaceholder.color}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isLoading}
+                    autoFocus={true}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.passwordToggle}
+                  >
+                    <Ionicons
+                      name={showPassword ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color={styles.inputIcon.color}
+                    />
+                  </TouchableOpacity>
+                </View>
 
-      <ResetPasswordModal
-        visible={showResetModal}
-        onClose={() => setShowResetModal(false)}
-        username={verifiedUsername}
-        option={resetOption}
-        onSuccess={handleResetSuccess}
-      />
-    </KeyboardAvoidingView>
+                <TouchableOpacity
+                  style={[
+                    styles.loginButton,
+                    isLoading && styles.loginButtonDisabled,
+                  ]}
+                  onPress={handleLogin}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Text style={styles.loginButtonText}>Switch</Text>
+                  )}
+                </TouchableOpacity>
+                <View style={styles.forgotPasswordContainer}>
+                  <TouchableOpacity
+                    style={styles.forgotPasswordButton}
+                    onPress={handleForgotPassword}
+                  >
+                    <Text style={styles.forgotPasswordText}>
+                      Forgot Password ?
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            {error && (
+              <View style={styles.errorContainer}>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={16}
+                  color={styles.errorText.color}
+                />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        <OptionsModal
+          visible={showOptionsModal}
+          onClose={() => setShowOptionsModal(false)}
+          onOptionSelected={handleOptionSelected}
+          username={verifiedUsername}
+        />
+
+        <ResetPasswordModal
+          visible={showResetModal}
+          onClose={() => setShowResetModal(false)}
+          username={verifiedUsername}
+          option={resetOption}
+          onSuccess={handleResetSuccess}
+        />
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    container: {
+    main: {
       flex: 1,
       backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
     },
     scrollContainer: {
       flexGrow: 1,
@@ -334,15 +348,21 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: 24,
     },
     header: {
+      flexDirection: "row",
       alignItems: "center",
-      marginBottom: 48,
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      gap: 12,
     },
-    title: {
-      fontSize: 32,
-      fontFamily: "Fredoka-Regular",
-      color: colors.primary,
-      marginBottom: 8,
-      letterSpacing: 2,
+    backButton: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: colors.text,
+      letterSpacing: 0.4,
     },
     subtitle: {
       fontSize: 16,

@@ -20,6 +20,8 @@ import useAccountStore from "../../state/accounts";
 import type { Account } from "../../db/accountsDb";
 import { useToastStore } from "../../state/toast";
 import Text from "../../components/UI/Text";
+import { CustomLoader } from "../../components/UI/RefreshLoader";
+import { SharedValue } from "react-native-reanimated";
 
 type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -38,12 +40,21 @@ export function SwitchAccountsScreen({
     removeAccount,
     currentAccountId,
     switchAccount,
+    isSwitching,
   } = useAccountStore();
   const { showToast } = useToastStore();
 
   const handleSwitching = async (id: number) => {
     await switchAccount(id);
-    navigation.goBack();
+    // Only go back if the switch succeeded (no error in store)
+    const { error } = useAccountStore.getState();
+    if (error) {
+      showToast({
+        title: "Switch Failed",
+        message: error,
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
+    }
   };
 
   useEffect(() => {
@@ -66,7 +77,7 @@ export function SwitchAccountsScreen({
   };
 
   const handleSwitchAccount = (id: number, name: string) => {
-    if (id === currentAccountId) return;
+    if (id === currentAccountId || isSwitching) return;
     showToast({
       title: "Switch Account",
       message: `Switch to "${name}"?`,
@@ -170,7 +181,7 @@ export function SwitchAccountsScreen({
             style={styles.addAccountItem}
             activeOpacity={0.7}
             onPress={() => {
-              navigation.navigate("Login");
+              navigation.navigate("LoginNewAccount");
             }}
           >
             <View style={styles.addIconContainer}>
@@ -193,14 +204,9 @@ export function SwitchAccountsScreen({
 
       {/* Info Note */}
       <View style={styles.infoBox}>
-        <Ionicons
-          name="information-circle-outline"
-          size={18}
-          color={colors.primary}
-        />
+        <Ionicons name="warning-outline" size={18} color={colors.warning} />
         <Text style={styles.infoText}>
-          Switching accounts will reload the app with the selected account's
-          data.
+          Please Report Any Errors to the Developer through the Forum
         </Text>
       </View>
 
@@ -258,7 +264,7 @@ export function SwitchAccountsScreen({
         <Text style={styles.headerTitle}>Switch Accounts</Text>
       </View>
 
-      <FlatList<Account>
+      <FlatList
         data={accounts}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
@@ -270,6 +276,22 @@ export function SwitchAccountsScreen({
         ]}
         ListHeaderComponentStyle={styles.listHeaderStyle}
       />
+
+      {/* Switching overlay */}
+      {isSwitching && (
+        <View style={styles.switchingOverlay}>
+          <View style={styles.switchingCard}>
+            <CustomLoader
+              size={2}
+              pullProgress={{ value: 1 } as SharedValue<number>}
+            />
+            <Text style={styles.switchingTitle}>Switching Account</Text>
+            <Text style={styles.switchingSubtitle}>
+              Please wait while we load your account…
+            </Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -504,20 +526,59 @@ const createStyles = (colors: ThemeColors) =>
     // Info note
     infoBox: {
       flexDirection: "row",
-      alignItems: "flex-start",
+      alignItems: "center",
+      justifyContent: "center",
       gap: 10,
       marginHorizontal: 20,
       marginBottom: 16,
-      backgroundColor: colors.primary + "10",
+      backgroundColor: colors.warning + "10",
       borderRadius: 12,
       padding: 14,
       borderWidth: 1,
-      borderColor: colors.primary + "20",
+      borderColor: colors.warning,
     },
     infoText: {
       flex: 1,
       fontSize: 13,
+      color: colors.text,
+      lineHeight: 20,
+    },
+
+    // Switching overlay
+    switchingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: colors.overlay,
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 100,
+    },
+    switchingCard: {
+      backgroundColor: colors.background,
+      borderRadius: 20,
+      paddingVertical: 36,
+      paddingHorizontal: 40,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 12,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      borderStyle: "dashed",
+      minWidth: 240,
+    },
+    switchingIconWrap: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    switchingTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.text,
+      letterSpacing: 0.3,
+    },
+    switchingSubtitle: {
+      fontSize: 13,
       color: colors.textSecondary,
+      textAlign: "center",
       lineHeight: 20,
     },
   });

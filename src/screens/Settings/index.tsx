@@ -54,6 +54,7 @@ import { usePfpStore } from "../../state/pfpStore";
 import Text from "../../components/UI/Text";
 import { RootStackParamList } from "../../navigation/RootNavigator";
 import { TabParamList } from "../../navigation/TabNavigator";
+import useAccountStore from "../../state/accounts";
 //import Slider from "../../components/UI/Slider";
 
 type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -103,6 +104,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const { logout, user } = useAuthStore();
   const userRef = useRef(user);
   const showToast = useToastStore((state) => state.showToast);
+  const logoutAcc = useAccountStore((s) => s.logout);
   const insets = useSafeAreaInsets();
   const bottomBarHeight = useBottomTabBarHeight();
   const pfpUri = usePfpStore((s) => s.uri);
@@ -247,6 +249,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           style: "destructive",
           onPress: () => {
             logout();
+            logoutAcc();
             onClose?.();
           },
         },
@@ -673,7 +676,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   color={colors.primary}
                 />
               }
-              title="Switch Account"
+              title="Switch Account (beta)"
               subtitle="Switch to another account"
               onPress={handleSwitchAccount}
               rightElement={

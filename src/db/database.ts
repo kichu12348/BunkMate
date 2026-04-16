@@ -34,6 +34,7 @@ export class Database {
         CREATE TABLE IF NOT EXISTS accounts (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
+          username TEXT NOT NULL UNIQUE,
           token TEXT NOT NULL
         )
       `);

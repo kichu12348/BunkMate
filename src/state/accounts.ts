@@ -5,6 +5,7 @@ import {
   deleteAccount,
   getAccount,
   deleteAllAccounts,
+  getAccountByUsername,
 } from "../db/accountsDb";
 import type { Account } from "../db/accountsDb";
 import { kvHelper } from "../kv/kvStore";
@@ -20,12 +21,12 @@ async function reInitAllStores() {
   const { fetchAttendance, clearAttendanceData } =
     useAttendanceStore.getState();
   clearAttendanceData();
-  await fetchAttendance();
+  fetchAttendance();
   const { clearNotifications } = useNotificationsStore.getState();
   clearNotifications();
   const { clearSurveys, fetchSurveys } = useSurveysStore.getState();
   clearSurveys();
-  await fetchSurveys();
+  fetchSurveys();
 }
 
 interface AccountsState {
@@ -33,26 +34,36 @@ interface AccountsState {
   currentAccountId: number | null;
   initialised: boolean;
   loading: boolean;
+  isSwitching: boolean;
   error: string | null;
   loadAccounts: () => Promise<void>;
   initAccounts: () => Promise<void>;
-  addAccount: (name: string, token: string) => Promise<void>;
+  addAccount: (name: string, username: string, token: string) => Promise<void>;
   removeAccount: (id: number) => Promise<void>;
   updateAccount: (id: number, name: string, token: string) => Promise<void>;
   switchAccount: (id: number) => Promise<void>;
   getCurrentAccount: () => Promise<Account | null>;
   logout: () => Promise<void>;
+  removeAllAccounts: () => Promise<void>;
+  backwardCompact: (
+    name: string,
+    username: string,
+    token: string,
+  ) => Promise<void>;
 }
 
 const useAccountStore = create<AccountsState>((set, get) => ({
   accounts: [],
   loading: false,
+  isSwitching: false,
   initialised: false,
   error: null,
   currentAccountId: null,
   initAccounts: async () => {
     if (get().initialised) return;
-    const id = kvHelper.getAccounts();
+    const rawId = kvHelper.getAccounts();
+
+    const id = rawId ? rawId : null;
     const accounts = await getAllAccounts();
     set({ currentAccountId: id, accounts, initialised: true });
   },
@@ -65,10 +76,15 @@ const useAccountStore = create<AccountsState>((set, get) => ({
       set({ error: error.message, loading: false });
     }
   },
-  addAccount: async (name, token) => {
+  addAccount: async (name, username, token) => {
     set({ loading: true, error: null });
     try {
-      const account = await insertAccount(name, token);
+      const existingAccount = await getAccountByUsername(username);
+      if (existingAccount) {
+        set({ error: "Account already exists", loading: false });
+        return;
+      }
+      const account = await insertAccount(name, username, token);
       kvHelper.setAccounts(account.id);
       set({
         accounts: [...get().accounts, account],
@@ -94,16 +110,14 @@ const useAccountStore = create<AccountsState>((set, get) => ({
   updateAccount: async (id, name, token) => {
     set({ loading: true, error: null });
     try {
-      const account = await getAccount(id);
-      if (!account) {
+      const existing = await getAccount(id);
+      if (!existing) {
         set({ error: "Account not found", loading: false });
         return;
       }
-      account.name = name;
-      account.token = token;
       set({
         accounts: get().accounts.map((account) =>
-          account.id === id ? account : account,
+          account.id === id ? { ...account, name, token } : account,
         ),
         loading: false,
       });
@@ -112,11 +126,11 @@ const useAccountStore = create<AccountsState>((set, get) => ({
     }
   },
   switchAccount: async (id) => {
-    set({ loading: true, error: null });
+    set({ isSwitching: true, error: null });
     try {
       const account = await getAccount(id);
       if (!account) {
-        set({ error: "Account not found", loading: false });
+        set({ error: "Account not found", isSwitching: false });
         return;
       }
       kvHelper.setAccounts(account.id);
@@ -124,10 +138,10 @@ const useAccountStore = create<AccountsState>((set, get) => ({
       await reInitAllStores();
       set({
         currentAccountId: account.id,
-        loading: false,
+        isSwitching: false,
       });
     } catch (error) {
-      set({ error: error.message, loading: false });
+      set({ error: error.message, isSwitching: false });
     }
   },
   getCurrentAccount: async () => {
@@ -139,10 +153,12 @@ const useAccountStore = create<AccountsState>((set, get) => ({
   },
   logout: async () => {
     try {
-      if (get().currentAccountId) {
-        await deleteAccount(get().currentAccountId);
+      const { currentAccountId, removeAccount } = get();
+      if (currentAccountId) {
+        kvHelper.clearAccounts();
+        await removeAccount(currentAccountId);
       }
-      set({ accounts: [], loading: false });
+      set({ currentAccountId: null });
     } catch (error) {
       set({ error: error.message, loading: false });
     }
@@ -151,6 +167,29 @@ const useAccountStore = create<AccountsState>((set, get) => ({
     try {
       await deleteAllAccounts();
       set({ accounts: [], loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
+  },
+  backwardCompact: async (name, username, token) => {
+    if (!name || !username || !token) {
+      return;
+    }
+    try {
+      const existingAccount = await getAccountByUsername(username);
+      if (existingAccount) {
+        return;
+      }
+      const account = await insertAccount(name, username, token);
+      kvHelper.setAccounts(account.id);
+      set({
+        accounts: [
+          ...get().accounts.filter((account) => account.id !== account.id),
+          account,
+        ],
+        loading: false,
+        currentAccountId: account.id,
+      });
     } catch (error) {
       set({ error: error.message, loading: false });
     }

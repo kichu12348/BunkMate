@@ -13,6 +13,7 @@ import * as Update from "expo-updates";
 import { useFonts } from "expo-font";
 import Toast from "./src/components/UI/toast";
 import { useThemeStore } from "./src/state/themeStore";
+import useAccountStore from "./src/state/accounts";
 //import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
 
 enableScreens();
@@ -31,6 +32,7 @@ const hideSplashScreen = () => {
 export default function App() {
   const { colors, mode, initializeTheme } = useThemeStore();
   const { isAuthenticated, checkAuthStatus } = useAuthStore();
+  const backwardCompact = useAccountStore((s) => s.backwardCompact);
 
   const [appIsReady, setAppIsReady] = useState(false);
 
@@ -58,7 +60,7 @@ export default function App() {
         await Promise.all([
           checkForUpdates(),
           initializeTheme(Appearance.getColorScheme() || "light"),
-          checkAuthStatus(),
+          checkAuthStatus(undefined, backwardCompact),
         ]);
       } catch (error) {
         console.error("Initialization error:", error);

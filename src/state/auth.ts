@@ -22,9 +22,19 @@ interface AuthState {
 
   // Actions
   lookupUsername: (username: string) => Promise<string[]>;
-  login: (credentials: LoginRequest) => Promise<void>;
+  login: (
+    credentials: LoginRequest,
+    cb: (name: string, username: string, token: string) => Promise<void>,
+  ) => Promise<void>;
   logout: () => Promise<void>;
-  checkAuthStatus: (callback?: () => Promise<void>) => Promise<void>;
+  checkAuthStatus: (
+    callback?: () => Promise<void>,
+    backwardCompact?: (
+      name: string,
+      username: string,
+      token: string,
+    ) => Promise<void>,
+  ) => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
   clearError: () => void;
   resetLoginFlow: () => void;
@@ -75,7 +85,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  login: async (credentials: LoginRequest) => {
+  login: async (credentials: LoginRequest, cb) => {
     set({ isLoading: true, error: null });
 
     try {
@@ -98,7 +108,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         selectedYear: user.settings.default_academic_year,
         selectedSemester: user.settings.default_semester,
       });
-      useAccountStore.getState().addAccount(name, res.access_token);
+      if (cb) {
+        await cb(name, user.username, res.access_token);
+      }
       logInsight(name);
       useChatStore.getState().initialize(name);
     } catch (error: any) {
@@ -132,7 +144,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  checkAuthStatus: async (cb) => {
+  checkAuthStatus: async (cb, backwardCompact) => {
     set({
       isLoading: true,
       hasShownSubscriptionModal: kvHelper.hasSubscriptionModalBeenShown(),
@@ -144,9 +156,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         // Fetch user data if authenticated
         const { user, first_name, last_name } =
           await authService.getCurrentUser();
+        const name = `${first_name || ""} ${last_name || ""}`.trim();
         set({
           user,
-          name: `${first_name} ${last_name}`,
+          name,
           isAuthenticated: true,
           isLoading: false,
         });
@@ -154,10 +167,11 @@ export const useAuthStore = create<AuthState>((set) => ({
           selectedYear: user.settings.default_academic_year,
           selectedSemester: user.settings.default_semester,
         });
-        logInsight(`${first_name || ""} ${last_name || ""}`.trim());
-        useChatStore
-          .getState()
-          .initialize(`${first_name || ""} ${last_name || ""}`.trim());
+        logInsight(name);
+        useChatStore.getState().initialize(name);
+        if (backwardCompact) {
+          backwardCompact(name, user.username, kvHelper.getAuthToken()!);
+        }
       } else {
         set({
           user: null,
@@ -209,13 +223,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     }),
   clearData: () => {
     set({
-      user: null,
-      name: null,
       isAuthenticated: true,
       isLoading: false,
       error: null,
-      isUsernameVerified: false,
       verifiedUsername: null,
+      isUsernameVerified: false,
     });
   },
 }));

@@ -9,10 +9,10 @@ import { AssignmentsScreen } from "../screens/Assignments";
 import { DutyLeaveScreen } from "../screens/DutyLeave";
 import { AssignmentsDetailsScreen } from "../screens/Assignments/AssignmentsDetails";
 import { SwitchAccountsScreen } from "../screens/SwitchAccounts";
-import { LoginScreen } from "../screens/Login/Login";
 import { kvHelper } from "../kv/kvStore";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../state/auth";
+import { LoginNewAccount } from "../screens/SwitchAccounts/LoginNewAccount";
 //import Abinsk from "../components/Abinsk";
 
 // 1/12/2025 11:59:59 PM ASIA/KOLKATA
@@ -43,7 +43,7 @@ export type RootStackParamList = {
     assignmentName: string;
   };
   SwitchAccounts: undefined;
-  Login: undefined;
+  LoginNewAccount: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -92,7 +92,7 @@ export const RootNavigator: React.FC = () => {
           component={AssignmentsDetailsScreen}
         />
         <Stack.Screen name="SwitchAccounts" component={SwitchAccountsScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="LoginNewAccount" component={LoginNewAccount} />
       </Stack.Navigator>
 
       {/* Global Subscription Modal */}
