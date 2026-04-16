@@ -45,7 +45,12 @@ import {
   normalizeAttendance,
 } from "../../utils/helpers";
 import Text from "../../components/UI/Text";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeOutUp,
+  LinearTransition,
+} from "react-native-reanimated";
 
 const { width } = Dimensions.get("window");
 const CELL_SIZE = Math.floor((width * 0.9 - 40) / 7);
@@ -68,16 +73,21 @@ const AttendanceImpactCard: React.FC<{
   );
 
   return (
-    <Animated.View entering={FadeIn.duration(500)} style={styles.impactCard}>
+    <Animated.View
+      entering={FadeInDown.duration(300)}
+      style={styles.impactCard}
+      exiting={FadeOutUp.duration(300)}
+    >
       <View style={styles.impactHeader}>
         <Ionicons name="trending-up" size={16} color={colors.primary} />
         <Text style={styles.impactTitle}>Expected Impact</Text>
       </View>
-      <FlatList
+      <Animated.FlatList
         data={validImpacts}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.impactScrollContent}
+        itemLayoutAnimation={LinearTransition}
         ListEmptyComponent={
           <Text style={styles.impactEmptyText}>
             No absent periods covered by duty leave yet.
@@ -964,7 +974,7 @@ export const DutyLeaveScreen: React.FC = () => {
         </View>
       )}
 
-      <FlatList
+      <Animated.FlatList
         data={dutyLeaves}
         renderItem={({ item }) => (
           <DutyLeaveCard
@@ -978,6 +988,7 @@ export const DutyLeaveScreen: React.FC = () => {
         )}
         keyExtractor={(item) => item.id}
         extraData={leaveCoverageMap}
+        itemLayoutAnimation={LinearTransition}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: insets.bottom + 100,

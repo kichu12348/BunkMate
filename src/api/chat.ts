@@ -13,3 +13,21 @@ export const getMessages = async (
   );
   return response.data;
 };
+
+export const getGifs = async () => {
+  const baseUrl = CHAT_CONFIG.TENOR_API_URL;
+  const apiKey = CHAT_CONFIG.TENOR_API_KEY;
+
+  const url = `${baseUrl}/featured?key=${apiKey}&limit=30`;
+  const response = await axios.get(url);
+  return response.data;
+};
+
+export const getGifsByQuery = async (query: string) => {
+  const baseUrl = CHAT_CONFIG.TENOR_API_URL;
+  const apiKey = CHAT_CONFIG.TENOR_API_KEY;
+
+  const url = `${baseUrl}/search?q=${encodeURIComponent(query)}&key=${apiKey}&limit=30`;
+  const response = await axios.get(url);
+  return response.data;
+};

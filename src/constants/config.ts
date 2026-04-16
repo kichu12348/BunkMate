@@ -85,4 +85,6 @@ export const CHAT_CONFIG = {
   ): string => {
     return `${API_BASE_URL}/get-messages/${offset}/${limit}`;
   },
+  TENOR_API_KEY: process.env.EXPO_PUBLIC_TENOR_API_KEY!,
+  TENOR_API_URL: process.env.EXPO_PUBLIC_TENOR_API_URL!,
 };
