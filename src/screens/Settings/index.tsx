@@ -676,7 +676,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   color={colors.primary}
                 />
               }
-              title="Switch Account (beta)"
+              title="Switch Account"
               subtitle="Switch to another account"
               onPress={handleSwitchAccount}
               rightElement={

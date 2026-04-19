@@ -656,7 +656,7 @@ export const PublicForum: React.FC = () => {
                       deactiveButton();
                     }
                   }}
-                  placeholder="Type a message... (or *img:url* )"
+                  placeholder="Type a message..."
                   placeholderTextColor={colors.textSecondary}
                   editable={isConnected}
                   multiline

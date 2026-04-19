@@ -103,6 +103,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true,
         isLoading: false,
         error: null,
+        isUsernameVerified: false,
+        verifiedUsername: null,
       });
       useSettingsStore.setState({
         selectedYear: user.settings.default_academic_year,
@@ -130,7 +132,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     try {
       await authService.logout();
-    } catch (error) {
+    } catch (error: any) {
       console.warn("Logout error:", error);
     } finally {
       set({

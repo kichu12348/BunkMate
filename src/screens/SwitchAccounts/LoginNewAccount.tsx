@@ -25,13 +25,26 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useAccountStore from "../../state/accounts";
 import { RootStackParamList } from "../../navigation/RootNavigator";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useAttendanceStore } from "../../state/attendance";
+import { useNotificationsStore } from "../../state/notifications";
+import { useSurveysStore } from "../../state/surveys";
+
+async function reInitAllStores() {
+  const { fetchAttendance, clearAttendanceData } =
+    useAttendanceStore.getState();
+  clearAttendanceData();
+  fetchAttendance();
+  const { clearNotifications } = useNotificationsStore.getState();
+  clearNotifications();
+  const { clearSurveys, fetchSurveys } = useSurveysStore.getState();
+  clearSurveys();
+  fetchSurveys();
+}
 
 type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export const LoginNewAccount: React.FC = ({
+export const LoginNewAccount: React.FC<{ navigation: RootNavigationProp }> = ({
   navigation,
-}: {
-  navigation: RootNavigationProp;
 }) => {
   const styles = useThemedStyles(createStyles);
   const {
@@ -45,7 +58,7 @@ export const LoginNewAccount: React.FC = ({
     clearError,
   } = useAuthStore();
 
-  const addAccount = useAccountStore((state) => state.addAccount);
+  const { addAccount, checkAccountExists, switchAccount } = useAccountStore();
 
   const colors = useThemeStore((state) => state.colors);
 
@@ -96,6 +109,35 @@ export const LoginNewAccount: React.FC = ({
     }
   };
 
+  const handleLoginFlow = async ({
+    username,
+    password,
+  }: {
+    username: string;
+    password: string;
+  }) => {
+    try {
+      const acc = await checkAccountExists(username);
+      if (acc) {
+        await switchAccount(acc.id, (switched) => {
+          if (!switched) navigation.popToTop();
+          resetLoginFlow();
+        });
+        return;
+      }
+      await login(
+        {
+          username,
+          password,
+          stay_logged_in: true,
+        },
+        addAccount,
+      ).then(() => reInitAllStores());
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const handleLogin = async () => {
     Keyboard.dismiss();
     if (!password.trim()) {
@@ -108,15 +150,10 @@ export const LoginNewAccount: React.FC = ({
     }
 
     try {
-      await login(
-        {
-          username: verifiedUsername || username.trim(),
-          password: password.trim(),
-          stay_logged_in: true,
-        },
-        addAccount,
-      );
-      // navigation.goBack();
+      await handleLoginFlow({
+        username: verifiedUsername || username.trim(),
+        password: password.trim(),
+      });
     } catch (error: any) {
       showToast({
         title: "Login Failed",
@@ -161,8 +198,8 @@ export const LoginNewAccount: React.FC = ({
 
   const handleResetSuccess = async (username: string, password: string) => {
     try {
-      await login({ username, password, stay_logged_in: true }, addAccount);
-    } catch (err) {
+      await handleLoginFlow({ username, password });
+    } catch (err: any) {
       showToast({
         title: "Login Failed",
         message: err.message || "Invalid credentials",
@@ -202,7 +239,7 @@ export const LoginNewAccount: React.FC = ({
                 style={styles.input}
                 placeholder="Username/Email/Phone"
                 placeholderTextColor={styles.inputPlaceholder.color}
-                value={isUsernameVerified ? verifiedUsername : username}
+                value={isUsernameVerified ? verifiedUsername || "" : username}
                 onChangeText={handleUsernameChange}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -318,13 +355,13 @@ export const LoginNewAccount: React.FC = ({
           visible={showOptionsModal}
           onClose={() => setShowOptionsModal(false)}
           onOptionSelected={handleOptionSelected}
-          username={verifiedUsername}
+          username={verifiedUsername || ""}
         />
 
         <ResetPasswordModal
           visible={showResetModal}
           onClose={() => setShowResetModal(false)}
-          username={verifiedUsername}
+          username={verifiedUsername || ""}
           option={resetOption}
           onSuccess={handleResetSuccess}
         />

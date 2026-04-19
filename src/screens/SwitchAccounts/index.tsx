@@ -206,7 +206,8 @@ export function SwitchAccountsScreen({
       <View style={styles.infoBox}>
         <Ionicons name="warning-outline" size={18} color={colors.warning} />
         <Text style={styles.infoText}>
-          Please Report Any Errors to the Developer through the Forum
+          Please Report Any Errors to the Developer through the Forum or through
+          Github Issues.
         </Text>
       </View>
 

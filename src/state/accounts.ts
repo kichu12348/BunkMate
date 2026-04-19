@@ -39,9 +39,13 @@ interface AccountsState {
   loadAccounts: () => Promise<void>;
   initAccounts: () => Promise<void>;
   addAccount: (name: string, username: string, token: string) => Promise<void>;
+  checkAccountExists: (username: string) => Promise<Account | null>;
   removeAccount: (id: number) => Promise<void>;
   updateAccount: (id: number, name: string, token: string) => Promise<void>;
-  switchAccount: (id: number) => Promise<void>;
+  switchAccount: (
+    id: number,
+    cb?: (switched: boolean) => void,
+  ) => Promise<void>;
   getCurrentAccount: () => Promise<Account | null>;
   logout: () => Promise<void>;
   removeAllAccounts: () => Promise<void>;
@@ -72,7 +76,7 @@ const useAccountStore = create<AccountsState>((set, get) => ({
     try {
       const accounts = await getAllAccounts();
       set({ accounts, loading: false });
-    } catch (error) {
+    } catch (error: any) {
       set({ error: error.message, loading: false });
     }
   },
@@ -91,8 +95,17 @@ const useAccountStore = create<AccountsState>((set, get) => ({
         loading: false,
         currentAccountId: account.id,
       });
-    } catch (error) {
+    } catch (error: any) {
       set({ error: error.message, loading: false });
+    }
+  },
+  checkAccountExists: async (username) => {
+    try {
+      const account = await getAccountByUsername(username);
+      return account;
+    } catch (error: any) {
+      set({ error: error.message });
+      return null;
     }
   },
   removeAccount: async (id) => {
@@ -103,7 +116,7 @@ const useAccountStore = create<AccountsState>((set, get) => ({
         accounts: get().accounts.filter((account) => account.id !== id),
         loading: false,
       });
-    } catch (error) {
+    } catch (error: any) {
       set({ error: error.message, loading: false });
     }
   },
@@ -121,16 +134,21 @@ const useAccountStore = create<AccountsState>((set, get) => ({
         ),
         loading: false,
       });
-    } catch (error) {
+    } catch (error: any) {
       set({ error: error.message, loading: false });
     }
   },
-  switchAccount: async (id) => {
+  switchAccount: async (id, cb) => {
+    if (get().currentAccountId === id) {
+      cb?.(false);
+      return;
+    }
     set({ isSwitching: true, error: null });
     try {
       const account = await getAccount(id);
       if (!account) {
         set({ error: "Account not found", isSwitching: false });
+        cb?.(false);
         return;
       }
       kvHelper.setAccounts(account.id);
@@ -140,7 +158,8 @@ const useAccountStore = create<AccountsState>((set, get) => ({
         currentAccountId: account.id,
         isSwitching: false,
       });
-    } catch (error) {
+      cb?.(true);
+    } catch (error: any) {
       set({ error: error.message, isSwitching: false });
     }
   },
@@ -159,7 +178,7 @@ const useAccountStore = create<AccountsState>((set, get) => ({
         await removeAccount(currentAccountId);
       }
       set({ currentAccountId: null });
-    } catch (error) {
+    } catch (error: any) {
       set({ error: error.message, loading: false });
     }
   },
@@ -167,7 +186,7 @@ const useAccountStore = create<AccountsState>((set, get) => ({
     try {
       await deleteAllAccounts();
       set({ accounts: [], loading: false });
-    } catch (error) {
+    } catch (error: any) {
       set({ error: error.message, loading: false });
     }
   },
@@ -190,7 +209,7 @@ const useAccountStore = create<AccountsState>((set, get) => ({
         loading: false,
         currentAccountId: account.id,
       });
-    } catch (error) {
+    } catch (error: any) {
       set({ error: error.message, loading: false });
     }
   },
