@@ -124,11 +124,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   //const textRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    if (userRef.current.username !== user.username) {
+    if (userRef.current?.username !== user?.username) {
       userRef.current = user;
       tabNavigation.navigate("Dashboard");
     }
-  }, [user.username]);
+  }, [user?.username]);
 
   useEffect(() => {
     // When colors object changes (theme toggled), update from/to and animate
