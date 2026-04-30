@@ -664,7 +664,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     sgpaValue: {
       fontSize: 22,
-      fontWeight: "700",
+      fontWeight: "600",
       color: colors.primary,
     },
 
