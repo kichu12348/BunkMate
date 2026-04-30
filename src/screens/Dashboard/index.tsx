@@ -7,7 +7,7 @@ import {
   Modal,
   FlatList,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuthStore } from "../../state/auth";
@@ -27,11 +27,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
   withSpring,
+  withDelay,
+  withTiming,
   useAnimatedStyle,
   useAnimatedScrollHandler,
   Extrapolation,
   interpolate,
   runOnJS,
+  FadeInDown,
 } from "react-native-reanimated";
 import { RootStackParamList } from "../../navigation/RootNavigator";
 import { useThemeStore } from "../../state/themeStore";
@@ -42,6 +45,9 @@ import { usePfpStore } from "../../state/pfpStore";
 import CustomRefreshLoader from "../../components/UI/RefreshLoader";
 import { useAssignmentStore } from "../../state/assignments";
 import Text from "../../components/UI/Text";
+
+const AnimatedTouchableOpacity =
+  Animated.createAnimatedComponent(TouchableOpacity);
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -114,6 +120,12 @@ export const Dashboard: React.FC = () => {
   const [shouldShowLoader, setShouldShowLoader] = useState(true);
   const scrollViewRef = useRef<Animated.ScrollView>(null);
   const scaleAnim = useSharedValue(0.8);
+  const ktuButtonOpacity = useSharedValue(0);
+  const ktuBtnMaxHeight = useSharedValue(0);
+  const ktuBtnPaddingHorizontal = useSharedValue(0);
+  const ktuBtnPaddingVertical = useSharedValue(0);
+  const ktuBtnBorderWidth = useSharedValue(0);
+  const ktuBtnMarginVertical = useSharedValue(0);
 
   const scrollToTop = () => {
     if (scrollViewRef.current) {
@@ -230,7 +242,24 @@ export const Dashboard: React.FC = () => {
     };
   }, [enhancedSubjects]);
   useEffect(() => {
-    initFetchAttendance().finally(() => setRefreshing(false));
+    initFetchAttendance().finally(() => {
+      setRefreshing(false);
+      // Fade in the KTU button after data loads
+      ktuButtonOpacity.value = withDelay(300, withTiming(1, { duration: 400 }));
+      ktuBtnMaxHeight.value = withDelay(300, withTiming(50, { duration: 400 }));
+      ktuBtnPaddingHorizontal.value = withDelay(
+        300,
+        withTiming(20, { duration: 400 }),
+      );
+      ktuBtnPaddingVertical.value = withDelay(
+        300,
+        withTiming(12, { duration: 400 }),
+      );
+      ktuBtnBorderWidth.value = withDelay(
+        300,
+        withTiming(1, { duration: 400 }),
+      );
+    });
 
     // Animate card on load
     scaleAnim.value = withSpring(1, {
@@ -314,6 +343,18 @@ export const Dashboard: React.FC = () => {
   );
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleAnim.value }],
+  }));
+
+  const ktuButtonAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: ktuButtonOpacity.value,
+    maxHeight: ktuBtnMaxHeight.value,
+  }));
+
+  const ktuButtonContentAnimatedStyle = useAnimatedStyle(() => ({
+    paddingHorizontal: ktuBtnPaddingHorizontal.value,
+    paddingVertical: ktuBtnPaddingVertical.value,
+    borderWidth: ktuBtnBorderWidth.value,
+    marginVertical: ktuBtnMarginVertical.value,
   }));
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -484,6 +525,37 @@ export const Dashboard: React.FC = () => {
                       <Text style={styles.statusLabel}>Safe</Text>
                     </View>
                   </View>
+
+                  {/* KTU Grade Card shortcut */}
+                  <Animated.View
+                    style={[styles.ktuButtonWrapper, ktuButtonAnimatedStyle]}
+                  >
+                    <AnimatedTouchableOpacity
+                      style={[styles.ktuButton, ktuButtonContentAnimatedStyle]}
+                      onPress={() => navigation.navigate("KtuGradeCard")}
+                      activeOpacity={0.7}
+                    >
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <MaterialCommunityIcons
+                          name="school-outline"
+                          size={16}
+                          color={colors.textSecondary}
+                        />
+                        <Text style={styles.ktuButtonText}>KTU Results</Text>
+                      </View>
+                      <Ionicons
+                        name="chevron-forward"
+                        size={14}
+                        color={colors.textSecondary}
+                      />
+                    </AnimatedTouchableOpacity>
+                  </Animated.View>
                 </View>
               </Animated.View>
             )}
@@ -898,6 +970,28 @@ const createStyles = (colors: ThemeColors) =>
     statusLabel: {
       fontSize: 12,
       color: colors.textSecondary,
+    },
+    ktuButtonWrapper: {
+      marginTop: 16,
+      paddingHorizontal: 16,
+    },
+    ktuButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: colors.border,
+    },
+    ktuButtonText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.textSecondary,
+      letterSpacing: 0.3,
     },
     errorCard: {
       backgroundColor: colors.surface,

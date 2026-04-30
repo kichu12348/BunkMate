@@ -33,6 +33,7 @@ export default function App() {
   const { colors, mode, initializeTheme } = useThemeStore();
   const { isAuthenticated, checkAuthStatus } = useAuthStore();
   const backwardCompact = useAccountStore((s) => s.backwardCompact);
+  const initAccounts = useAccountStore((s) => s.initAccounts);
 
   const [appIsReady, setAppIsReady] = useState(false);
 
@@ -61,6 +62,7 @@ export default function App() {
           checkForUpdates(),
           initializeTheme(Appearance.getColorScheme() || "light"),
           checkAuthStatus(undefined, backwardCompact),
+          initAccounts(),
         ]);
       } catch (error) {
         console.error("Initialization error:", error);

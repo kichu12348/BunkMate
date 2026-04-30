@@ -89,3 +89,11 @@ export const CHAT_CONFIG = {
   TENOR_API_KEY: process.env.EXPO_PUBLIC_TENOR_API_KEY!,
   TENOR_API_URL: process.env.EXPO_PUBLIC_TENOR_API_URL!,
 };
+
+export const KTU_SCRAPER_CONFIG = {
+  BASE_URL: process.env.EXPO_PUBLIC_KTU_SCRAPER_BASE_URL!,
+  login: "/login",
+  getCsrfToken: "/get-grade-card-token",
+  getGradeCard: "/grade-card",
+  timeLimit: 420000, // 7 minutes
+};

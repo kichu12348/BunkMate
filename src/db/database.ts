@@ -38,6 +38,31 @@ export class Database {
           token TEXT NOT NULL
         )
       `);
+
+    this.db.execSync(
+      `
+      CREATE TABLE IF NOT EXISTS ktu_login(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        account_id INTEGER NOT NULL UNIQUE,
+        username TEXT NOT NULL,
+        password TEXT NOT NULL,
+        FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+      )
+      `,
+    );
+
+    this.db.execSync(
+      `
+        CREATE TABLE IF NOT EXISTS grade_cache(
+          login_id INTEGER NOT NULL,
+          semester INTEGER NOT NULL,
+          grades TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (login_id, semester),
+          FOREIGN KEY (login_id) REFERENCES ktu_login(id) ON DELETE CASCADE
+        )
+        `,
+    );
   }
 
   public getDatabase(): SQLite.SQLiteDatabase {
