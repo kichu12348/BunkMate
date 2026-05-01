@@ -55,6 +55,7 @@ interface KtuGradeState {
   refreshGrades: () => Promise<void>;
   /** Forget saved credentials and go back to the login form */
   disconnectKtu: () => void;
+  resetError: () => void;
 }
 
 // ── Ephemeral session state (not reactive) ───────────────────────
@@ -114,11 +115,15 @@ async function ensureSession(
     set({ isLoggedIn: true, isLoggingIn: false });
     return true;
   } catch (e: any) {
+    const message =
+      e?.response?.data?.error ||
+      e.message ||
+      "login failed. Please try again.";
     resetSession();
     set({
       isLoggedIn: false,
       isLoggingIn: false,
-      loginError: e?.message || "Auto-login failed. Please try again.",
+      loginError: message,
     });
     return false;
   }
@@ -157,6 +162,7 @@ const useKtuGradeStore = create<KtuGradeState>((set, get) => ({
       fetchError: null,
       fromCache: false,
     }),
+  resetError: () => set({ loginError: null, fetchError: null }),
 
   // ── Load cached credentials from DB ────────────────────────────
   loadCachedCredentials: async (accountId) => {
@@ -230,7 +236,7 @@ const useKtuGradeStore = create<KtuGradeState>((set, get) => ({
       }
     } catch (e: any) {
       set({
-        loginError: e?.message || "Login failed. Check your credentials.",
+        loginError: "Login failed. Check your credentials.",
       });
     } finally {
       _isProcessing = false;

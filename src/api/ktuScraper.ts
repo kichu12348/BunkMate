@@ -33,7 +33,7 @@ export async function loginToKtuScraper(
     );
     return response.data;
   } catch (error) {
-    throw new Error("Failed to login to KTU Scraper");
+    throw error;
   }
 }
 
@@ -47,7 +47,7 @@ export async function getGradeCardToken(
     );
     return response.data;
   } catch (error) {
-    throw new Error("Failed to get grade card token");
+    throw error;
   }
 }
 
@@ -71,7 +71,7 @@ export async function getGradeCard({
     );
     return response.data;
   } catch (error) {
-    throw new Error("Failed to get grade card");
+    throw error;
   }
 }
 

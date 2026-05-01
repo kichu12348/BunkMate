@@ -46,7 +46,6 @@ import {
 } from "../../utils/helpers";
 import Text from "../../components/UI/Text";
 import Animated, {
-  FadeIn,
   FadeInDown,
   FadeOutUp,
   LinearTransition,
