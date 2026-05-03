@@ -49,7 +49,6 @@ export function KtuGradeCardScreen({
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
-          style={styles.backButton}
         >
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -58,6 +57,7 @@ export function KtuGradeCardScreen({
           <TouchableOpacity
             onPress={disconnectKtu}
             activeOpacity={0.7}
+            style={styles.logoutButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="log-out-outline" size={22} color={colors.danger} />

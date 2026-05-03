@@ -123,10 +123,10 @@ export function LoginView() {
                   activeOpacity={0.8}
                 >
                   {isLoggingIn ? (
-                    <ActivityIndicator size="small" color={colors.primary} />
+                    <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <View style={styles.primaryButtonContent}>
-                      <Text style={styles.primaryButtonText}>Login</Text>
+                      <Text style={styles.primaryButtonText}>Login to Portal</Text>
                     </View>
                   )}
                 </TouchableOpacity>

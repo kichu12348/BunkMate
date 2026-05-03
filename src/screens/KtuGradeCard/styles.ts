@@ -16,16 +16,19 @@ export const createStyles = (colors: ThemeColors) =>
       paddingVertical: 16,
       gap: 12,
     },
-    backButton: {
+    logoutButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: colors.danger + "10",
       alignItems: "center",
       justifyContent: "center",
     },
     headerTitle: {
       flex: 1,
-      fontSize: 24,
-      fontWeight: "700",
+      fontSize: 20,
+      fontWeight: "bold",
       color: colors.text,
-      letterSpacing: 0.4,
     },
 
     // Loading
@@ -37,39 +40,41 @@ export const createStyles = (colors: ThemeColors) =>
 
     // Sections
     section: {
-      marginBottom: 8,
+      marginBottom: 16,
     },
     sectionHeader: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
-      paddingHorizontal: 20,
-      paddingVertical: 12,
+      gap: 10,
+      paddingHorizontal: 24,
+      paddingVertical: 14,
     },
     sectionTitle: {
-      fontSize: 15,
-      fontWeight: "700",
-      color: colors.text,
+      fontSize: 14,
+      fontWeight: "800",
+      color: colors.textSecondary,
       textTransform: "uppercase",
-      letterSpacing: 0.8,
+      letterSpacing: 1.2,
     },
 
     // Card
     card: {
       backgroundColor: colors.surface,
       marginHorizontal: 20,
-      borderRadius: 16,
+      borderRadius: 20,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      elevation: 2,
-      marginBottom: 12,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.06,
+      shadowRadius: 12,
+      elevation: 3,
+      marginBottom: 16,
       overflow: "hidden",
+      borderWidth: 1,
+      borderColor: colors.border + "40",
     },
     cardContent: {
-      padding: 16,
-      gap: 12,
+      padding: 20,
+      gap: 16,
     },
 
     // Form
@@ -116,18 +121,18 @@ export const createStyles = (colors: ThemeColors) =>
 
     // Buttons
     primaryButton: {
-      borderColor: colors.primary,
-      borderWidth: 1.5,
-      borderStyle: "dashed",
-      borderRadius: 12,
-      paddingVertical: 14,
+      backgroundColor: colors.primary,
+      borderRadius: 14,
+      paddingVertical: 16,
       paddingHorizontal: 20,
       alignItems: "center",
       justifyContent: "center",
       marginTop: 8,
     },
     primaryButtonDisabled: {
-      opacity: 0.5,
+      backgroundColor: colors.border,
+      shadowOpacity: 0,
+      elevation: 0,
     },
     primaryButtonContent: {
       flexDirection: "row",
@@ -135,45 +140,48 @@ export const createStyles = (colors: ThemeColors) =>
       gap: 10,
     },
     primaryButtonText: {
-      color: colors.primary,
+      color: "#FFFFFF",
       fontSize: 16,
-      fontWeight: "600",
-      letterSpacing: 0.5,
+      fontWeight: "700",
+      letterSpacing: 0.3,
     },
 
     // Privacy note
     noteBox: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
-      marginHorizontal: 20,
-      paddingVertical: 8,
+      gap: 10,
+      marginHorizontal: 24,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      marginTop: 16,
     },
     noteText: {
       flex: 1,
       fontSize: 12,
       color: colors.textSecondary,
-      lineHeight: 17,
+      lineHeight: 18,
     },
 
     // Semester chips
     semRow: {
       paddingHorizontal: 20,
-      gap: 8,
-      marginBottom: 12,
+      paddingBottom: 4,
+      gap: 10,
     },
     semChip: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
+      paddingHorizontal: 18,
+      paddingVertical: 10,
       borderRadius: 20,
-      borderWidth: 1.2,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
       borderColor: colors.border,
-      borderStyle: "dashed",
     },
     semChipActive: {
-      backgroundColor: colors.primary,
+      backgroundColor: colors.primary + "15",
       borderColor: colors.primary,
-      borderWidth: 0,
     },
     semChipText: {
       fontSize: 14,
@@ -181,7 +189,7 @@ export const createStyles = (colors: ThemeColors) =>
       color: colors.textSecondary,
     },
     semChipTextActive: {
-      color: colors.text,
+      color: colors.primary,
     },
 
     // SGPA
@@ -191,15 +199,17 @@ export const createStyles = (colors: ThemeColors) =>
       justifyContent: "space-between",
       backgroundColor: colors.surface,
       marginHorizontal: 20,
-      borderRadius: 16,
-      paddingVertical: 16,
-      paddingHorizontal: 20,
-      marginBottom: 12,
+      borderRadius: 20,
+      paddingVertical: 20,
+      paddingHorizontal: 24,
+      marginBottom: 16,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.06,
+      shadowRadius: 12,
+      elevation: 3,
+      borderWidth: 1,
+      borderColor: colors.border + "40",
     },
     sgpaLabel: {
       fontSize: 15,

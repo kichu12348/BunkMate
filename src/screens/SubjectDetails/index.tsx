@@ -93,7 +93,7 @@ const StatCard = React.memo(
           {stat.title}
         </Text>
       </View>
-    )
+    ),
 );
 
 const AttendanceCell = React.memo(
@@ -150,7 +150,7 @@ const AttendanceCell = React.memo(
         </View>
       </TouchableOpacity>
     );
-  }
+  },
 );
 
 export const SubjectDetailsScreen: React.FC = () => {
@@ -171,16 +171,16 @@ export const SubjectDetailsScreen: React.FC = () => {
 
   const subjectSchedule = useMemo(
     () => courseSchedule?.get(subjectId.toString()) || [],
-    [courseSchedule, subjectId]
+    [courseSchedule, subjectId],
   );
 
   const lastEntry = useMemo(
     () => subjectSchedule[subjectSchedule.length - 1],
-    [subjectSchedule]
+    [subjectSchedule],
   );
 
   const [selectedMonth, setSelectedMonth] = useState<Date>(() =>
-    lastEntry ? new Date(lastEntry.year, lastEntry.month - 1) : new Date()
+    lastEntry ? new Date(lastEntry.year, lastEntry.month - 1) : new Date(),
   );
 
   const [selectedDay, setSelectedDay] = useState<{
@@ -203,7 +203,7 @@ export const SubjectDetailsScreen: React.FC = () => {
   // Memoize subject data to prevent unnecessary recalculations
   const subjectData = useMemo(() => {
     return attendanceData?.subjects.find(
-      (s) => s.subject.id.toString() === subjectId
+      (s) => s.subject.id.toString() === subjectId,
     );
   }, [attendanceData, subjectId]);
 
@@ -215,12 +215,12 @@ export const SubjectDetailsScreen: React.FC = () => {
     const startMonth = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth() - 1,
-      1
+      1,
     );
     const endMonth = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth() + 2,
-      0
+      0,
     ); // Last day of next month
 
     const lookup = new Map<string, AttendanceEntry[]>();
@@ -296,11 +296,11 @@ export const SubjectDetailsScreen: React.FC = () => {
           };
 
           const presentCount = attendanceEntries?.filter(
-            (e: any) => e.attendance?.toLowerCase() === "present"
+            (e: any) => e.attendance?.toLowerCase() === "present",
           ).length;
 
           const absentCount = attendanceEntries?.filter(
-            (e: any) => e.attendance?.toLowerCase() === "absent"
+            (e: any) => e.attendance?.toLowerCase() === "absent",
           ).length;
 
           return {
@@ -315,7 +315,7 @@ export const SubjectDetailsScreen: React.FC = () => {
 
       weeks.push(weekData);
       currentWeekStart = new Date(
-        currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000
+        currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000,
       );
     }
     return weeks;
@@ -419,7 +419,7 @@ export const SubjectDetailsScreen: React.FC = () => {
       }
       return colorsList.sort();
     },
-    [attendanceLookup, colors, getCellIntensity]
+    [attendanceLookup, colors, getCellIntensity],
   );
 
   // Memoize navigation handlers
@@ -444,7 +444,7 @@ export const SubjectDetailsScreen: React.FC = () => {
         handleOpen();
       }
     },
-    [attendanceLookup]
+    [attendanceLookup],
   );
 
   // Memoize stat cards data
@@ -494,7 +494,7 @@ export const SubjectDetailsScreen: React.FC = () => {
         visible: toAttend > 0,
       },
     ],
-    [stats, colors]
+    [stats, colors],
   );
 
   // Memoized render functions
@@ -542,7 +542,7 @@ export const SubjectDetailsScreen: React.FC = () => {
         ))}
       </View>
     ),
-    [statCards, colors]
+    [statCards, colors],
   );
 
   const renderAttendanceGrid = useCallback(
@@ -597,7 +597,7 @@ export const SubjectDetailsScreen: React.FC = () => {
       getCellIntensity,
       handleCellPress,
       renderMonthSelector,
-    ]
+    ],
   );
 
   if (isLoading) {
@@ -870,9 +870,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   cellGradient: {
-    position: "absolute",
-    top: 0,
-    left: 0,
     zIndex: -1,
     ...StyleSheet.absoluteFillObject,
   },

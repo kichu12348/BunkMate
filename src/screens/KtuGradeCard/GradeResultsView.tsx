@@ -83,7 +83,7 @@ export function GradeResultsView() {
         <TouchableOpacity
           style={[
             styles.primaryButton,
-            { marginHorizontal: 20, marginTop: 4, borderWidth: 1.2 },
+            { marginHorizontal: 20, marginTop: 12 },
             (isFetching || isLoggingIn) && styles.primaryButtonDisabled,
           ]}
           onPress={fetchGrades}
@@ -91,16 +91,16 @@ export function GradeResultsView() {
           activeOpacity={0.8}
         >
           {isFetching || isLoggingIn ? (
-            <ActivityIndicator size="small" color={colors.primary} />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <View style={styles.primaryButtonContent}>
               <Ionicons
                 name="cloud-download-outline"
                 size={20}
-                color={colors.primary}
+                color="#FFFFFF"
               />
               <Text style={styles.primaryButtonText}>
-                Get Sem - {selectedSemester} Result
+                Get Result for Semester {selectedSemester}
               </Text>
             </View>
           )}
