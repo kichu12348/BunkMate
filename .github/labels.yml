@@ -1,0 +1,115 @@
+# Default GitHub labels
+- name: bug
+  color: d73a4a
+  description: Something isn't working
+
+- name: documentation
+  color: 0075ca
+  description: Improvements or additions to documentation
+
+- name: duplicate
+  color: cfd3d7
+  description: This issue or pull request already exists
+
+- name: enhancement
+  color: a2eeef
+  description: Improvement to existing functionality
+
+- name: good first issue
+  color: 7057ff
+  description: Good for newcomers
+
+- name: help wanted
+  color: 008672
+  description: Extra attention is needed
+
+- name: invalid
+  color: e4e669
+  description: This doesn't seem right
+
+- name: question
+  color: d876e3
+  description: Further information is requested
+
+- name: wontfix
+  color: ffffff
+  description: This will not be worked on
+
+# Additional type labels
+- name: feature
+  color: 84b6eb
+  description: Request for new functionality
+
+- name: refactor
+  color: fbca04
+  description: Code improvements without behavior changes
+
+- name: performance
+  color: 5319e7
+  description: Performance improvements
+
+- name: security
+  color: b60205
+  description: Security-related issues
+
+- name: dependencies
+  color: 0366d6
+  description: Dependency updates
+
+# BunkMate areas
+- name: attendance
+  color: 0052cc
+  description: Attendance tracking and calculations
+
+- name: grade-card
+  color: 6f42c1
+  description: KTU grade card functionality
+
+- name: chat
+  color: 1d76db
+  description: Public forum and messaging
+
+- name: assignments
+  color: 0e8a16
+  description: Assignments and exams
+
+- name: duty-leave
+  color: f9d0c4
+  description: Duty leave functionality
+
+- name: authentication
+  color: c2e0c6
+  description: Login and authentication flows
+
+- name: accounts
+  color: bfdadc
+  description: Multi-account support
+
+- name: settings
+  color: d4c5f9
+  description: Application settings
+
+- name: api
+  color: 006b75
+  description: Backend communication and services
+
+- name: database
+  color: 7057ff
+  description: SQLite and persistence
+
+- name: theming
+  color: ff9800
+  description: Light and dark mode support
+
+# Priorities
+- name: "priority: high"
+  color: b60205
+  description: High priority
+
+- name: "priority: medium"
+  color: fbca04
+  description: Normal priority
+
+- name: "priority: low"
+  color: 0e8a16
+  description: Low priority
