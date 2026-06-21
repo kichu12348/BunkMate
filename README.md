@@ -55,6 +55,39 @@ BunkMate helps students stay on top of their attendance requirements, manage aca
 
 ---
 
+# 🚀 Quick Start
+
+Get BunkMate running locally in a few minutes:
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/kichu12348/BunkMate.git
+cd BunkMate
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Start the Development Server
+
+```bash
+npx expo start
+```
+
+### 4. Run the App
+
+- **Android Emulator:** Press `a` in the terminal after the dev server starts.
+- **iOS Simulator:** Press `i` (macOS only).
+- **Physical Device:** Scan the QR code shown in the terminal with **Expo Go** (Android) or the Camera app (iOS).
+
+> Expo Go is available on the [App Store](https://apps.apple.com/app/expo-go/id982107779) and [Google Play](https://play.google.com/store/apps/details?id=host.exp.exponent). No additional setup is required to test on a real device.
+
+---
+
 # 🛠 Tech Stack
 
 ## Core
