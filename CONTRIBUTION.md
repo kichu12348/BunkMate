@@ -523,6 +523,15 @@ Before submitting your contribution, verify the following:
 
 ---
 
+### ⚠️ Native Dependency Policy
+This project relies on **Expo**. 
+
+When adding a new package that requires native iOS/Android code:
+1. **Do not manually edit the `android/` or `ios/` directories.** 2. Always use **Expo Config Plugins** in the `app.json` file to manage native permissions and configurations.
+3. If you add a native dependency, standard Expo Go will no longer work for testing that feature. You must create a local Development Build using `npx expo run:android` or `npx expo run:ios`.
+
+---
+
 # Questions?
 
 If you're unsure about an implementation, architecture decision, or whether a contribution aligns with the project's goals, feel free to open an issue and start a discussion before investing significant time.
