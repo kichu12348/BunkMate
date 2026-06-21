@@ -12,7 +12,7 @@
   description: "Complex tasks or full mini-projects."
 - name: "frontend"
   color: "1d76db"
-  description: "Related to HTML, CSS, React, UI."
+  description: "Related to React Native, UI."
 - name: "backend"
   color: "0e8a16"
   description: "Related to APIs, Databases, Logic."
