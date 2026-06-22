@@ -83,7 +83,7 @@ export const Dashboard: React.FC = () => {
   const scrollViewRef = useRef<Animated.ScrollView>(null);
 
   const fetchDebounced = useMemo(() => {
-    let timeout: number;
+    let timeout: ReturnType<typeof setTimeout>;
     return async () => {
       if (timeout) clearTimeout(timeout);
       timeout = setTimeout(() => {
