@@ -14,7 +14,6 @@ import { useFonts } from "expo-font";
 import Toast from "./src/components/UI/toast";
 import { useThemeStore } from "./src/state/themeStore";
 import useAccountStore from "./src/state/accounts";
-//import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
 
 enableScreens();
 
