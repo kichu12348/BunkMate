@@ -43,12 +43,6 @@ export const API_CONFIG = {
   RETRY_ATTEMPTS: 3,
 };
 
-export const CACHE_CONFIG = {
-  DEFAULT_TTL: 5 * 60 * 1000, // 5 minutes
-  ATTENDANCE_TTL: 10 * 60 * 1000, // 10 minutes
-  LONG_TTL: 60 * 60 * 1000, // 1 hour
-};
-
 export const ATTENDANCE_THRESHOLDS = {
   DANGER: 75,
   WARNING: 80,

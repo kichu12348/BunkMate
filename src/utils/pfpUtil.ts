@@ -14,19 +14,6 @@ export const validatePfpUri = (uri: string): boolean => {
   }
 };
 
-export const getCurrentValidPfpUri = (): string | null => {
-  const currentUri = usePfpStore.getState().uri;
-  if (!currentUri) return null;
-
-  const isValid = validatePfpUri(currentUri);
-  if (isValid) {
-    return currentUri;
-  } else {
-    usePfpStore.getState().setUri("");
-    return null;
-  }
-};
-
 export const usePfp = (cb?: () => void) => {
   const showToast = useToastStore.getState().showToast;
   const pickImage = async () => {

@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export class Database {
+class Database {
   private static instance: Database;
   private db: SQLite.SQLiteDatabase;
   private keySet: Set<string>;

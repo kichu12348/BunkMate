@@ -11,7 +11,7 @@ export const SEMESTERS: { label: string; value: Semester }[] = [
   { label: "S8", value: "8" },
 ];
 
-export const GRADE_COLORS: Record<string, string> = {
+const GRADE_COLORS: Record<string, string> = {
   S: "#22c55e",
   "A+": "#4ade80",
   A: "#86efac",

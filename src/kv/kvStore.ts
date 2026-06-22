@@ -54,12 +54,11 @@ class KVStore {
 }
 
 // Create namespace instances
-export const tokenStore = new KVStore();
-export const themeStore = new KVStore();
-export const userStore = new KVStore();
-export const settingsStore = new KVStore();
-export const insightsStore = new KVStore();
-export const pfpStore = new KVStore();
+const tokenStore = new KVStore();
+const themeStore = new KVStore();
+const settingsStore = new KVStore();
+const insightsStore = new KVStore();
+const pfpStore = new KVStore();
 
 let localToken: string | null;
 let timeoutId: NodeJS.Timeout | null = null;
