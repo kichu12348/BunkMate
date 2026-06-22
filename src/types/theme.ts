@@ -26,3 +26,11 @@ export interface ThemeState {
   toggleMode: () => void;
   initializeTheme: (appearance: "light" | "dark") => Promise<void>;
 }
+
+export interface StatCardData {
+  title: string;
+  value: string;
+  icon: string;
+  color: string;
+  visible: boolean;
+}

@@ -59,10 +59,10 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
         username.trim()
       );
       setResetOptions(options);
-    } catch (error: any) {
+    } catch (error: unknown) {
       showToast({
         title: "Username Not Found",
-        message: error.message || "Invalid username",
+        message: error instanceof Error ? error.message : "Invalid username",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     } finally {

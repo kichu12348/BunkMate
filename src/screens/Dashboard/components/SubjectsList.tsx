@@ -3,6 +3,7 @@ import { View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemedStyles } from "../../../hooks/useTheme";
 import { ThemeColors } from "../../../types/theme";
+import { SubjectAttendance } from "../../../types/api";
 import Text from "../../../components/UI/Text";
 import { AttendanceCard } from "../../../components/AttendanceCard";
 
@@ -10,11 +11,11 @@ type DisplayFilter = "all" | "danger" | "warning" | "safe";
 
 interface SubjectsListProps {
   activeDisplayFilter: DisplayFilter;
-  dangerSubjects: any[];
-  warningSubjects: any[];
-  safeSubjects: any[];
+  dangerSubjects: SubjectAttendance[];
+  warningSubjects: SubjectAttendance[];
+  safeSubjects: SubjectAttendance[];
   handleSubjectPress: (
-    subject: any,
+    subject: SubjectAttendance,
     canMiss: number,
     classesToAttend: number,
   ) => void;

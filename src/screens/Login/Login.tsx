@@ -77,10 +77,10 @@ export const LoginScreen: React.FC = () => {
     }
     try {
       await lookupUsername(formattedUsername);
-    } catch (error: any) {
+    } catch (error: unknown) {
       showToast({
         title: "Username Not Found",
-        message: error.message || "Invalid username",
+        message: error instanceof Error ? error.message : "Invalid username",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }
@@ -106,10 +106,10 @@ export const LoginScreen: React.FC = () => {
         },
         addAccount,
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       showToast({
         title: "Login Failed",
-        message: error.message || "Invalid credentials",
+        message: error instanceof Error ? error.message : "Invalid credentials",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }
@@ -151,10 +151,10 @@ export const LoginScreen: React.FC = () => {
   const handleResetSuccess = async (username: string, password: string) => {
     try {
       await login({ username, password, stay_logged_in: true }, addAccount);
-    } catch (err) {
+    } catch (err: unknown) {
       showToast({
         title: "Login Failed",
-        message: err.message || "Invalid credentials",
+        message: err instanceof Error ? err.message : "Invalid credentials",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }

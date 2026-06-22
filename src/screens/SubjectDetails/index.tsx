@@ -66,6 +66,14 @@ interface AttendanceWeek {
   days: AttendanceDay[];
 }
 
+interface StatCardData {
+  title: string;
+  value: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  visible: boolean;
+}
+
 interface AttendanceStats {
   percentage: number;
   streak: number;
@@ -80,11 +88,11 @@ const CELL_SIZE = (width - 80) / 7;
 
 // Memoized components
 const StatCard = React.memo(
-  ({ stat, colors }: { stat: any; colors: any }) =>
+  ({ stat, colors }: { stat: StatCardData; colors: ThemeColors }) =>
     stat.visible && (
       <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
         <View style={[styles.statIcon, { backgroundColor: stat.color + "20" }]}>
-          <Ionicons name={stat.icon as any} size={20} color={stat.color} />
+          <Ionicons name={stat.icon} size={20} color={stat.color} />
         </View>
         <Text style={[styles.statValue, { color: colors.text }]}>
           {stat.value}
@@ -288,7 +296,7 @@ export const SubjectDetailsScreen: React.FC = () => {
           const dateKey = format(date, "yyyy-MM-dd");
           const attendanceEntries = attendanceLookup.get(dateKey); // This is now an array
 
-          const getStatus = (entries: any[] | undefined) => {
+          const getStatus = (entries: AttendanceEntry[] | undefined) => {
             if (!entries || entries?.length === 0) return "none";
             if (entries?.some((e) => e.attendance?.toLowerCase() === "present"))
               return "present";
@@ -296,11 +304,11 @@ export const SubjectDetailsScreen: React.FC = () => {
           };
 
           const presentCount = attendanceEntries?.filter(
-            (e: any) => e.attendance?.toLowerCase() === "present",
+            (e: AttendanceEntry) => e.attendance?.toLowerCase() === "present",
           ).length;
 
           const absentCount = attendanceEntries?.filter(
-            (e: any) => e.attendance?.toLowerCase() === "absent",
+            (e: AttendanceEntry) => e.attendance?.toLowerCase() === "absent",
           ).length;
 
           return {
@@ -384,7 +392,7 @@ export const SubjectDetailsScreen: React.FC = () => {
         ];
       }
 
-      attendanceEntries.forEach((entry: any) => {
+      attendanceEntries.forEach((entry: AttendanceEntry) => {
         // --- Start of Fix ---
 
         // Priority 1: If the record is marked as a conflict, always show the warning color.
@@ -448,7 +456,7 @@ export const SubjectDetailsScreen: React.FC = () => {
   );
 
   // Memoize stat cards data
-  const statCards = useMemo(
+  const statCards = useMemo<StatCardData[]>(
     () => [
       {
         title: "Total Classes",

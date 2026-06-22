@@ -384,3 +384,19 @@ export interface Message {
   timestamp: string;
   image_url?: string;
 }
+
+export interface GifMedia {
+  url: string;
+}
+
+export interface GifData {
+  id: string;
+  media_formats?: {
+    gif?: GifMedia;
+    tinygif?: GifMedia;
+  };
+  media?: Array<{
+    gif?: GifMedia;
+    tinygif?: GifMedia;
+  }>;
+}

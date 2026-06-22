@@ -87,7 +87,6 @@ export const NotificationsScreen: React.FC = () => {
     error,
     hasMore,
     fetchNotifications,
-    markAllAsRead,
     loadMore,
   } = useNotificationsStore();
 

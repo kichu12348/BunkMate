@@ -102,8 +102,8 @@ export const SurveyAttemptScreen: React.FC = () => {
       });
       setResponses(initialResponses);
       questionsPartRef.current = 1 / data.questionsChoices.length;
-    } catch (error: any) {
-      setError(error.message || "Failed to load survey");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Failed to load survey");
     } finally {
       setIsLoading(false);
     }
@@ -215,10 +215,10 @@ export const SurveyAttemptScreen: React.FC = () => {
           },
         ],
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       showToast({
         title: "Submission Failed",
-        message: error.message || "Failed to submit survey",
+        message: error instanceof Error ? error.message : "Failed to submit survey",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     } finally {

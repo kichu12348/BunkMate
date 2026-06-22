@@ -100,10 +100,10 @@ export const LoginNewAccount: React.FC<{ navigation: RootNavigationProp }> = ({
     }
     try {
       await lookupUsername(formattedUsername);
-    } catch (error: any) {
+    } catch (error: unknown) {
       showToast({
         title: "Username Not Found",
-        message: error.message || "Invalid username",
+        message: error instanceof Error ? error.message : "Invalid username",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }
@@ -133,8 +133,8 @@ export const LoginNewAccount: React.FC<{ navigation: RootNavigationProp }> = ({
         },
         addAccount,
       ).then(() => reInitAllStores());
-    } catch (error) {
-      throw error;
+    } catch (error: unknown) {
+      throw error instanceof Error ? error : new Error("Login failed");
     }
   };
 
@@ -154,10 +154,10 @@ export const LoginNewAccount: React.FC<{ navigation: RootNavigationProp }> = ({
         username: verifiedUsername || username.trim(),
         password: password.trim(),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       showToast({
         title: "Login Failed",
-        message: error.message || "Invalid credentials",
+        message: error instanceof Error ? error.message : "Invalid credentials",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }
@@ -199,10 +199,10 @@ export const LoginNewAccount: React.FC<{ navigation: RootNavigationProp }> = ({
   const handleResetSuccess = async (username: string, password: string) => {
     try {
       await handleLoginFlow({ username, password });
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast({
         title: "Login Failed",
-        message: err.message || "Invalid credentials",
+        message: err instanceof Error ? err.message : "Invalid credentials",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }

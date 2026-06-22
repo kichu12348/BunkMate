@@ -68,7 +68,7 @@ export const AssignmentsDetailsScreen: React.FC = () => {
           totalScore: data.totalScore || 0,
           totalMaxMarks: data.totalMaxMarks || 0,
         });
-      } catch (e: any) {
+      } catch {
         if (mounted) setError("Failed to load assignment");
       } finally {
         mounted && setLoading(false);
@@ -125,7 +125,7 @@ export const AssignmentsDetailsScreen: React.FC = () => {
   const renderItem = ({ item, index }: { item: QA; index: number }) => {
     const questionLabel = `Q${index + 1}`;
     const itemScore = item.score ?? null;
-    const itemMax = (item as any).maximum_mark ?? null; // using any in case type not updated
+    const itemMax = item.maximum_mark ?? null;
     const questionText = item.question || item.text || "";
     const parsedContent = parseHtmlContent(questionText);
 
@@ -235,8 +235,8 @@ export const AssignmentsDetailsScreen: React.FC = () => {
                     totalMaxMarks: data.totalMaxMarks || 0,
                   });
                 })
-                .catch((e: any) =>
-                  setError(e?.message || "Failed to load assignment"),
+                .catch((e: unknown) =>
+                  setError(e instanceof Error ? e.message : "Failed to load assignment"),
                 )
                 .finally(() => setLoading(false));
             }}

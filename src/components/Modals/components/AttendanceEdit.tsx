@@ -100,9 +100,9 @@ const AttendanceEditModal: React.FC<{
       });
       onStatusUpdate?.(); // Refresh the parent view
       close(); // Close the modal on success
-    } catch (error: any) {
+    } catch (error: unknown) {
       // The store threw an error (e.g., conflict), so we just show it.
-      Alert.alert("Error", error.message);
+      Alert.alert("Error", error instanceof Error ? error.message : "An unknown error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -122,8 +122,8 @@ const AttendanceEditModal: React.FC<{
       onStatusUpdate?.();
       close();
       closeThis?.();
-    } catch (error: any) {
-      Alert.alert("Error", error.message);
+    } catch (error: unknown) {
+      Alert.alert("Error", error instanceof Error ? error.message : "An unknown error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -157,8 +157,8 @@ const AttendanceEditModal: React.FC<{
       } else {
         throw new Error("Could not find the conflict record to resolve.");
       }
-    } catch (error: any) {
-      Alert.alert("Error", error.message);
+    } catch (error: unknown) {
+      Alert.alert("Error", error instanceof Error ? error.message : "An unknown error occurred");
     } finally {
       setIsLoading(false);
     }

@@ -1,7 +1,7 @@
 import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated from "react-native-reanimated";
+import Animated, { AnimatedStyle } from "react-native-reanimated";
 import { useThemedStyles } from "../../../hooks/useTheme";
 import { ThemeColors } from "../../../types/theme";
 import Text from "../../../components/UI/Text";
@@ -10,7 +10,7 @@ interface DashboardHeaderProps {
   insetsTop: number;
   name: string | null;
   onNavigateForum: () => void;
-  filterInfoAnimatedStyle: any;
+  filterInfoAnimatedStyle: AnimatedStyle<ViewStyle>;
   setFilterInfoHeight: (height: number) => void;
   filterInfoHeight: number;
   openFilterModal: (filter: "year" | "semester") => void;

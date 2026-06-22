@@ -19,7 +19,7 @@ import { ThemeColors } from "../../types/theme";
 import { useThemeStore } from "../../state/themeStore";
 import { useChatStore } from "../../state/chat";
 import { useWebSocket } from "../../utils/websocket";
-import { Message } from "../../types/api";
+import { GifData, Message } from "../../types/api";
 import Animated, {
   useAnimatedStyle,
   withTiming,
@@ -119,12 +119,12 @@ const GifPickerModal = ({
   colors: ThemeColors;
   styles: ReturnType<typeof createStyles>;
 }) => {
-  const [gifs, setGifs] = useState<any[]>([]);
+  const [gifs, setGifs] = useState<GifData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const insets = useSafeAreaInsets();
 
-  const currGifsRef = useRef<any[]>([]);
+  const currGifsRef = useRef<GifData[]>([]);
   const translateY = useSharedValue(0);
 
   const pan = Gesture.Pan()
@@ -300,18 +300,22 @@ const GifPickerModal = ({
                       overflow: "hidden",
                     }}
                     onPress={() => {
-                      onSelect(
-                        item.media_formats?.gif?.url || item.media[0]?.gif?.url,
-                      );
-                      onClose();
+                      const gifUrl =
+                        item.media_formats?.gif?.url ??
+                        item.media?.[0]?.gif?.url;
+
+                      if (gifUrl) {
+                        onSelect(gifUrl);
+                        onClose();
+                      }
                     }}
                     activeOpacity={0.7}
                   >
                     <Image
                       source={{
                         uri:
-                          item.media_formats?.tinygif?.url ||
-                          item.media[0]?.tinygif?.url,
+                          item.media_formats?.tinygif?.url ??
+                          item.media?.[0]?.tinygif?.url,
                         cache: "force-cache",
                       }}
                       style={{ width: "100%", height: "100%" }}

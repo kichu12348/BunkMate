@@ -3,7 +3,11 @@ import React from "react";
 import chatBackground from "../../assets/bonk_bg_n_3.webp";
 import { useThemeStore } from "../../state/themeStore";
 
-const ChatBackground = ({ children }) => {
+interface ChatBackgroundProps {
+  children: React.ReactNode;
+}
+
+const ChatBackground: React.FC<ChatBackgroundProps> = ({ children }) => {
   const colors = useThemeStore((state) => state.colors);
   return (
     <ImageBackground

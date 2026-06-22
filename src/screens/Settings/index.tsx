@@ -75,7 +75,7 @@ interface SettingsScreenProps {
 
 function debounced(func: Function, delay: number) {
   let timeoutId: NodeJS.Timeout;
-  return (...args: any[]) => {
+  return (...args: unknown[]) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
   };
@@ -189,7 +189,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     ] as [{ translateX: number }, { translateY: number }],
   }));
 
-  const AnimatedCard: React.FC<{ style?: any; children: React.ReactNode }> = ({
+  const AnimatedCard: React.FC<{ style?: React.ComponentProps<typeof Animated.View>["style"]; children: React.ReactNode }> = ({
     style,
     children,
   }) => (
@@ -206,10 +206,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const handleYearChange = async (year: string) => {
     try {
       await setAcademicYear(year).then(fetchAttendanceDebounced);
-    } catch (error: any) {
+    } catch (error: unknown) {
       showToast({
         title: "Error",
-        message: error.message || "Failed to update academic year",
+        message: error instanceof Error ? error.message : "Failed to update academic year",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }
@@ -218,10 +218,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const handleSemesterChange = async (semester: string) => {
     try {
       await setSemester(semester).then(fetchAttendanceDebounced);
-    } catch (error: any) {
+    } catch (error: unknown) {
       showToast({
         title: "Error",
-        message: error.message || "Failed to update semester",
+        message: error instanceof Error ? error.message : "Failed to update semester",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }
@@ -230,10 +230,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const handleApplySettings = async () => {
     try {
       fetchAttendanceDebounced();
-    } catch (error) {
+    } catch (error: unknown) {
       showToast({
         title: "Error",
-        message: "Failed to refresh attendance data",
+        message: error instanceof Error ? error.message : "Failed to refresh attendance data",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }

@@ -72,10 +72,10 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         `Verification code sent via ${option === "mail" ? "email" : "SMS"}`,
         [{ text: "OK", style: "default" }]
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert(
         "Failed to Send OTP",
-        error.message || "Something went wrong",
+        error instanceof Error ? error.message : "Something went wrong",
         [{ text: "OK", style: "destructive", onPress: handleClose }]
       );
     } finally {
@@ -129,10 +129,10 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
       handleClose();
       onSuccess(username, password);
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert(
         "Reset Failed",
-        error.message || "Invalid verification code or something went wrong",
+        error instanceof Error ? error.message : "Invalid verification code or something went wrong",
         [{ text: "OK", style: "destructive" }]
       );
     } finally {

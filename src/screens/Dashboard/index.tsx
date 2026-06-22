@@ -8,6 +8,7 @@ import { useAttendanceStore } from "../../state/attendance";
 import { useSettingsStore } from "../../state/settings";
 import { useThemedStyles } from "../../hooks/useTheme";
 import { ThemeColors } from "../../types/theme";
+import { SubjectAttendance } from "../../types/api";
 import {
   calculateEnhancedAttendanceStats,
   getAttendanceStatus,
@@ -86,7 +87,7 @@ export const Dashboard: React.FC = () => {
   const scrollViewRef = useRef<Animated.ScrollView>(null);
 
   const fetchDebounced = useMemo(() => {
-    let timeout: number;
+    let timeout: ReturnType<typeof setTimeout>;
     return async () => {
       if (timeout) clearTimeout(timeout);
       timeout = setTimeout(() => {
@@ -124,10 +125,10 @@ export const Dashboard: React.FC = () => {
       await setAcademicYear(year);
       scrollToTop();
       await fetchDebounced();
-    } catch (e: any) {
+    } catch (e: unknown) {
       showToast({
         title: "Error",
-        message: e.message || "Failed to update academic year.",
+        message: e instanceof Error ? e.message : "Failed to update academic year.",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }
@@ -140,10 +141,10 @@ export const Dashboard: React.FC = () => {
       await setSemester(semester);
       scrollToTop();
       await fetchDebounced();
-    } catch (e: any) {
+    } catch (e: unknown) {
       showToast({
         title: "Error",
-        message: e.message || "Failed to update semester.",
+        message: e instanceof Error ? e.message : "Failed to update semester.",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }
@@ -162,7 +163,7 @@ export const Dashboard: React.FC = () => {
 
   const enhancedSubjects = useMemo(() => {
     if (!attendanceData || !courseSchedule) return [];
-    return attendanceData.subjects.map((subject) => {
+    return attendanceData.subjects.map((subject: SubjectAttendance) => {
       const userRecords =
         courseSchedule.get(subject.subject.id.toString()) || [];
       const enhancedStats = calculateEnhancedAttendanceStats(
@@ -215,10 +216,10 @@ export const Dashboard: React.FC = () => {
     setRefreshing(true);
     try {
       await refreshAttendance();
-    } catch (error: any) {
+    } catch (error: unknown) {
       showToast({
         title: "Error",
-        message: error.message || "Failed to refresh data",
+        message: error instanceof Error ? error.message : "Failed to refresh data",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     } finally {
@@ -227,7 +228,7 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleSubjectPress = (
-    subject: any,
+    subject: SubjectAttendance,
     canMiss: number,
     classesToAttend: number,
   ) => {
