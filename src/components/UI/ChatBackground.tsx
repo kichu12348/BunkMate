@@ -1,4 +1,4 @@
-import { Image, ImageBackground } from "react-native";
+import { ImageBackground } from "react-native";
 import React from "react";
 import chatBackground from "../../assets/bonk_bg_n_3.webp";
 import { useThemeStore } from "../../state/themeStore";

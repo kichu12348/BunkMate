@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  FlatList,
   Alert,
   Dimensions,
   ScrollView,
@@ -125,7 +124,7 @@ const DutyLeaveCard: React.FC<{
   onEdit: (leave: DutyLeave) => void;
   hasCoverage?: boolean;
   topInset: number;
-}> = ({ leave, onDelete, onUpdate, onEdit, hasCoverage = true, topInset }) => {
+}> = ({ leave, onDelete, onUpdate, onEdit, hasCoverage = true}) => {
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
   const [imagePreviewVisible, setImagePreviewVisible] = useState(false);

@@ -7,7 +7,6 @@ import {
   Dimensions,
   ActivityIndicator,
   ColorValue,
-  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";

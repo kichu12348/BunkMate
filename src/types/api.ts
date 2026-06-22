@@ -60,7 +60,7 @@ export interface Course {
   enable_laboratory: null;
 }
 
-export interface Session {
+interface Session {
   id: number;
   name: string;
   time_from: null;

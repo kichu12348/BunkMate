@@ -6,7 +6,6 @@ import { logInsight } from "../api/insights";
 import { useSettingsStore } from "./settings";
 import { useAttendanceStore } from "./attendance";
 import { useChatStore } from "./chat";
-import useAccountStore from "./accounts";
 
 interface AuthState {
   user: User | null;

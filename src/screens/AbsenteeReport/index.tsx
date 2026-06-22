@@ -41,7 +41,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { DateReport, AbsentSubject, openPdf } from "../../utils/absentee";
 
-const { width, height } = Dimensions.get("window");
+const { width} = Dimensions.get("window");
 const CELL_SIZE = Math.floor((width * 0.9 - 40) / 7);
 
 const AnimatedTouchableOpacity =

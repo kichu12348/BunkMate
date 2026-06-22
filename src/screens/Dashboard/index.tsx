@@ -16,8 +16,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
   withSpring,
-  withDelay,
-  withTiming,
   useAnimatedStyle,
   useAnimatedScrollHandler,
   Extrapolation,
@@ -25,7 +23,6 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import { RootStackParamList } from "../../navigation/RootNavigator";
-import { useThemeStore } from "../../state/themeStore";
 import { useToastStore } from "../../state/toast";
 import { TAB_BAR_HEIGHT } from "../../constants/config";
 import AnimatedHeart from "../../components/UI/AnimatedHeart";
