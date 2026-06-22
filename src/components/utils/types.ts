@@ -45,9 +45,6 @@ interface EditModalDataProps {
 }
 
 export type {
-  AttendanceDay,
-  AttendanceEntry,
-  Data,
   AttendanceDayViewProps,
   EditModalDataProps,
 };

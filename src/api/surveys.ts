@@ -3,13 +3,13 @@ import { API_CONFIG } from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
 
 
-export interface SurveyPivot {
+interface SurveyPivot {
   student_id: number;
   stud_f_b_survey_id: number;
   end_at: string | null;
 }
 
-export interface UsergroupSettings {
+interface UsergroupSettings {
   vision: string;
   mission: string;
   attainment_calculation_method: {
@@ -19,7 +19,7 @@ export interface UsergroupSettings {
   };
 }
 
-export interface Usergroup {
+interface Usergroup {
   id: number;
   name: string;
   description: string | null;
@@ -39,7 +39,7 @@ export interface Usergroup {
   programme_type_id: number;
 }
 
-export interface UserSubgroup {
+interface UserSubgroup {
   id: number;
   si_no: string;
   name: string;
@@ -61,7 +61,7 @@ export interface UserSubgroup {
   usergroup?: Usergroup;
 }
 
-export interface Course {
+interface Course {
   id: number;
   si_no: number;
   name: string;
@@ -119,7 +119,7 @@ interface StudentFeedbackSurveyAnswer {
   answer: "" | string;
 }
 
-export type SurveyApiResponse = Survey[];
+type SurveyApiResponse = Survey[];
 
 class SurveysService {
   private api: AxiosInstance;

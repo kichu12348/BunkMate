@@ -13,11 +13,6 @@ export interface Notification {
   updated_at?: string;
 }
 
-
-export interface MarkNotificationReadRequest {
-  notification_id: number;
-}
-
 class NotificationsService {
   private api: AxiosInstance;
 

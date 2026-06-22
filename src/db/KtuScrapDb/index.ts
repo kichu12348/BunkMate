@@ -10,7 +10,7 @@ export interface KtuLogin {
   password: string;
 }
 
-export interface GradeCache {
+interface GradeCache {
   login_id: number;
   semester: number;
   grades: string; // JSON-stringified GradeCardResponse

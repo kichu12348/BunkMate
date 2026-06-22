@@ -1,6 +1,6 @@
 export type Semester = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8";
 
-export interface Course {
+interface Course {
   course: string;
   credits: string;
   grade: string;
