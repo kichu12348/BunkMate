@@ -55,13 +55,12 @@ class KVStore {
 
 // Create namespace instances
 const tokenStore = new KVStore();
-const themeStore = new KVStore();
 const settingsStore = new KVStore();
 const insightsStore = new KVStore();
 const pfpStore = new KVStore();
 
 let localToken: string | null;
-let timeoutId: NodeJS.Timeout | null = null;
+let timeoutId: number | null = null;
 
 export const kvHelper = {
   // Auth tokens
@@ -98,15 +97,12 @@ export const kvHelper = {
     localToken = null;
   },
 
-  setThemeMode(mode: "light" | "dark"): void {
-    if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      themeStore.set(THEME_MODE, mode);
-    }, 300);
+  async setThemeMode(mode: "light" | "dark"): Promise<void> {
+    await Storage.setItemAsync(THEME_MODE, mode);
   },
 
   getThemeMode(): "light" | "dark" | null {
-    return themeStore.get<"light" | "dark">(THEME_MODE);
+    return Storage.getItemSync(THEME_MODE) as "light" | "dark" | null;
   },
 
   setPfpUri(uri: string): void {
