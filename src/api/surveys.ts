@@ -2,7 +2,6 @@ import axios, { AxiosInstance } from "axios";
 import { API_CONFIG } from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
 
-
 export interface SurveyPivot {
   student_id: number;
   stud_f_b_survey_id: number;
@@ -115,7 +114,7 @@ interface StudentFeedbackSurveyAnswer {
   course_id: number | null;
   teacher_id: number | null;
   survey_question_id: number;
-  survey_choice_id: number;
+  survey_choice_id: number | null;
   answer: "" | string;
 }
 
@@ -141,7 +140,7 @@ class SurveysService {
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     this.api.interceptors.response.use(
@@ -151,7 +150,7 @@ class SurveysService {
           kvHelper.clearAuthToken();
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -168,7 +167,7 @@ class SurveysService {
   async getSurveyDetail(surveyId: number): Promise<any> {
     try {
       const response = await this.api.get(
-        `${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}`
+        `${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}`,
       );
       return response.data;
     } catch (error) {
@@ -180,7 +179,7 @@ class SurveysService {
   async startSurvey(surveyId: number): Promise<any> {
     try {
       const response = await this.api.get(
-        `${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}/start`
+        `${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}/start`,
       );
       return response.data;
     } catch (error) {
@@ -191,12 +190,12 @@ class SurveysService {
 
   async submitSurvey(
     surveyId: number,
-    responses: StudentFeedbackSurveyAnswer[]
+    responses: StudentFeedbackSurveyAnswer[],
   ): Promise<void> {
     try {
       await this.api.post(
         `${API_CONFIG.ENDPOINTS.SURVEY.GET}/${surveyId}/studfbsurveyanswer`,
-        { studfbsurveyanswers: responses }
+        { studfbsurveyanswers: responses },
       );
     } catch (error) {
       console.error("Error submitting survey:", error);

@@ -52,13 +52,15 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   }, [visible, username, option]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: number | undefined;
     if (countdown > 0) {
       interval = setInterval(() => {
         setCountdown((prev) => prev - 1);
       }, 1000);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [countdown]);
 
   const requestOtp = async () => {
@@ -70,13 +72,13 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
       Alert.alert(
         "OTP Sent",
         `Verification code sent via ${option === "mail" ? "email" : "SMS"}`,
-        [{ text: "OK", style: "default" }]
+        [{ text: "OK", style: "default" }],
       );
     } catch (error: unknown) {
       Alert.alert(
         "Failed to Send OTP",
         error instanceof Error ? error.message : "Something went wrong",
-        [{ text: "OK", style: "destructive", onPress: handleClose }]
+        [{ text: "OK", style: "destructive", onPress: handleClose }],
       );
     } finally {
       setIsRequestingOtp(false);
@@ -118,13 +120,13 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
       await authService.VerifyPasswordReset(
         username,
         otp.trim(),
-        password.trim()
+        password.trim(),
       );
 
       Alert.alert(
         "Success",
         "Password reset successfully! Please login with your new password.",
-        [{ text: "OK", style: "default" }]
+        [{ text: "OK", style: "default" }],
       );
 
       handleClose();
@@ -132,8 +134,10 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
     } catch (error: unknown) {
       Alert.alert(
         "Reset Failed",
-        error instanceof Error ? error.message : "Invalid verification code or something went wrong",
-        [{ text: "OK", style: "destructive" }]
+        error instanceof Error
+          ? error.message
+          : "Invalid verification code or something went wrong",
+        [{ text: "OK", style: "destructive" }],
       );
     } finally {
       setIsVerifying(false);

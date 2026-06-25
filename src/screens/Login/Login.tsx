@@ -185,7 +185,7 @@ export const LoginScreen: React.FC = () => {
               style={styles.input}
               placeholder="Username/Email/Phone"
               placeholderTextColor={styles.inputPlaceholder.color}
-              value={isUsernameVerified ? verifiedUsername : username}
+              value={isUsernameVerified ? (verifiedUsername ?? "") : username}
               onChangeText={handleUsernameChange}
               autoCapitalize="none"
               autoCorrect={false}
@@ -308,13 +308,13 @@ export const LoginScreen: React.FC = () => {
         visible={showOptionsModal}
         onClose={() => setShowOptionsModal(false)}
         onOptionSelected={handleOptionSelected}
-        username={verifiedUsername}
+        username={verifiedUsername ?? username}
       />
 
       <ResetPasswordModal
         visible={showResetModal}
         onClose={() => setShowResetModal(false)}
-        username={verifiedUsername}
+        username={verifiedUsername ?? username}
         option={resetOption}
         onSuccess={handleResetSuccess}
       />

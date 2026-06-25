@@ -53,7 +53,7 @@ const AttendanceEditModal: React.FC<{
   } = useAttendanceStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isConflictModalVisible, setIsConflictModalVisible] = useState(false);
-  const timeOutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timeOutRef = React.useRef<number | null>(null);
 
   if (!isVisible || !data) return null;
   // State calculations
@@ -73,10 +73,10 @@ const AttendanceEditModal: React.FC<{
     setIsLoading(true);
     try {
       const conflictExists = await checkForConflicts({
-        hour: data.hour,
-        day: data.day,
-        month: data.month,
-        year: data.year,
+        hour: data.hour as number,
+        day: data.day as number,
+        month: data.month as number,
+        year: data.year as number,
       });
       if (conflictExists) {
         setIsLoading(false);
@@ -92,17 +92,20 @@ const AttendanceEditModal: React.FC<{
       // The component just calls the store action. That's it.
       await markManualAttendance({
         subjectId,
-        year: data.year,
-        month: data.month,
-        day: data.day,
-        hour: data.hour,
+        year: data.year as number,
+        month: data.month as number,
+        day: data.day as number,
+        hour: data.hour as number,
         attendance: attendance.toLowerCase() as "present" | "absent",
       });
       onStatusUpdate?.(); // Refresh the parent view
       close(); // Close the modal on success
     } catch (error: unknown) {
       // The store threw an error (e.g., conflict), so we just show it.
-      Alert.alert("Error", error instanceof Error ? error.message : "An unknown error occurred");
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -114,51 +117,59 @@ const AttendanceEditModal: React.FC<{
     try {
       await deleteManualAttendance({
         subjectId,
-        year: data.year,
-        month: data.month,
-        day: data.day,
+        year: data.year as number,
+        month: data.month as number,
+        day: data.day as number,
         hour: data.hour,
       });
       onStatusUpdate?.();
       close();
       closeThis?.();
     } catch (error: unknown) {
-      Alert.alert("Error", error instanceof Error ? error.message : "An unknown error occurred");
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleResolveConflict = async (
-    resolution: "accept_teacher" | "keep_user"
+    resolution: "accept_teacher" | "keep_user",
   ) => {
     if (!subjectId || !data || !data.is_conflict) return;
 
     setIsLoading(true);
     try {
       // Find the full conflict record from the schedule
-      const conflictRecord = courseSchedule
-        .get(subjectId)
-        ?.find((rec) => rec.hour === data.hour);
-      if (conflictRecord) {
-        await resolveConflict(
-          {
-            subject_id: subjectId,
-            year: data.year,
-            month: data.month,
-            day: data.day,
-            hour: data.hour,
-          },
-          resolution
-        );
-        onStatusUpdate?.();
-        close();
-        closeThis?.();
+      if (courseSchedule) {
+        const conflictRecord = courseSchedule
+          .get(subjectId)
+          ?.find((rec) => rec.hour === data.hour);
+        if (conflictRecord) {
+          await resolveConflict(
+            {
+              subject_id: subjectId,
+              year: data.year as number,
+              month: data.month as number,
+              day: data.day as number,
+              hour: data.hour,
+            },
+            resolution,
+          );
+          onStatusUpdate?.();
+          close();
+          closeThis?.();
+        }
       } else {
         throw new Error("Could not find the conflict record to resolve.");
       }
     } catch (error: unknown) {
-      Alert.alert("Error", error instanceof Error ? error.message : "An unknown error occurred");
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     } finally {
       setIsLoading(false);
     }

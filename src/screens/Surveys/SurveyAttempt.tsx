@@ -65,10 +65,10 @@ export const SurveyAttemptScreen: React.FC = () => {
   const [showTempSubmitButton, setShowTempSubmitButton] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [responses, setResponses] = useState<Map<number, QuestionResponse>>(
-    new Map()
+    new Map(),
   );
   const [selectedBulkChoice, setSelectedBulkChoice] = useState<string | null>(
-    null
+    null,
   );
   const questionsPartRef = useRef(0);
 
@@ -103,7 +103,9 @@ export const SurveyAttemptScreen: React.FC = () => {
       setResponses(initialResponses);
       questionsPartRef.current = 1 / data.questionsChoices.length;
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Failed to load survey");
+      setError(
+        error instanceof Error ? error.message : "Failed to load survey",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +114,7 @@ export const SurveyAttemptScreen: React.FC = () => {
   const handleChoiceSelect = (
     questionId: number,
     choiceId: number,
-    courseTeacherId?: number
+    courseTeacherId?: number,
   ) => {
     const updatedResponses = new Map(responses);
     const currentResponse = updatedResponses.get(questionId) || {
@@ -129,11 +131,11 @@ export const SurveyAttemptScreen: React.FC = () => {
 
     setResponses(updatedResponses);
     const answeredQuestions = Array.from(updatedResponses.values()).filter(
-      (response) => response.choiceId !== null
+      (response) => response.choiceId !== null,
     ).length;
     progressWidth.value = withTiming(
       (answeredQuestions / surveyData!.questionsChoices.length) * 100,
-      { duration: 300, easing: Easing.out(Easing.ease) }
+      { duration: 300, easing: Easing.out(Easing.ease) },
     );
   };
 
@@ -153,11 +155,11 @@ export const SurveyAttemptScreen: React.FC = () => {
     setResponses(updatedResponses);
 
     const answeredQuestions = Array.from(updatedResponses.values()).filter(
-      (response) => response.choiceId !== null || response.answer.trim() !== ""
+      (response) => response.choiceId !== null || response.answer.trim() !== "",
     ).length;
     progressWidth.value = withTiming(
       (answeredQuestions / surveyData!.questionsChoices.length) * 100,
-      { duration: 300, easing: Easing.out(Easing.ease) }
+      { duration: 300, easing: Easing.out(Easing.ease) },
     );
   };
 
@@ -218,7 +220,8 @@ export const SurveyAttemptScreen: React.FC = () => {
     } catch (error: unknown) {
       showToast({
         title: "Submission Failed",
-        message: error instanceof Error ? error.message : "Failed to submit survey",
+        message:
+          error instanceof Error ? error.message : "Failed to submit survey",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     } finally {
@@ -327,7 +330,7 @@ export const SurveyAttemptScreen: React.FC = () => {
     if (!surveyData) return 0;
 
     const answeredQuestions = Array.from(responses.values()).filter(
-      (response) => response.choiceId !== null || response.answer.trim() !== ""
+      (response) => response.choiceId !== null || response.answer.trim() !== "",
     ).length;
 
     return (answeredQuestions / surveyData.questionsChoices.length) * 100;
@@ -362,7 +365,7 @@ export const SurveyAttemptScreen: React.FC = () => {
         });
       } else {
         const matchingChoice = question.choices.find(
-          (choice) => choice.name === choiceName
+          (choice) => choice.name === choiceName,
         );
 
         if (matchingChoice) {
@@ -527,7 +530,7 @@ export const SurveyAttemptScreen: React.FC = () => {
                   value: name,
                 }))}
                 placeholder="Select a response for all questions"
-                selectedValue={selectedBulkChoice}
+                selectedValue={selectedBulkChoice ?? ""}
                 onSelect={(value) => handleBulkChoiceSelect(value)}
               />
             </View>
