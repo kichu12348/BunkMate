@@ -1,17 +1,9 @@
-export interface LoginLookupRequest {
-  username: string;
-}
-
 export interface ResetOptionsResponse{
   username:string;
   options:{
     emails:string[];
     mobiles:string[];
   }
-}
-
-export interface LoginLookupResponse {
-  usernames: string[];
 }
 
 export interface LoginRequest {
@@ -44,30 +36,6 @@ export interface UserProfile {
   user:User;
 }
 
-export interface StudentProfile {
-  id: number;
-  student_id: string;
-  phone_number?: string;
-  date_of_birth?: string;
-  gender?: 'M' | 'F' | 'O';
-  address?: string;
-  academic_year: string;
-  academic_semester: string;
-  institution: number;
-  course: number;
-}
-
-export interface Institution {
-  id: number;
-  name: string;
-  code: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  is_active: boolean;
-}
-
 export interface Course {
   id: number;
   si_no: number;
@@ -92,7 +60,7 @@ export interface Course {
   enable_laboratory: null;
 }
 
-export interface Session {
+interface Session {
   id: number;
   name: string;
   time_from: null;
@@ -118,7 +86,7 @@ export interface AttendanceType {
   updated_at: string | null;
 }
 
-export interface AttendanceRecord {
+interface AttendanceRecord {
   course: number | null;
   attendance: number | null;
   marked_by: number | null;
@@ -135,14 +103,6 @@ export interface AttendanceApiResponse {
   studentAttendanceData: Record<string, DailyAttendance>;
 }
 
-export interface Notification {
-  id: string;
-  type: string;
-  data: string;
-  read_at: string | null;
-  created_at: string;
-}
-
 export interface Subject {
   id: number;
   name: string;
@@ -151,20 +111,6 @@ export interface Subject {
   course: number;
   semester: string;
   is_active: boolean;
-}
-
-export interface AttendanceRecord {
-  id: number;
-  student: number;
-  subject: number;
-  course: number | null;
-  attendance: number | null;
-  total_classes: number;
-  attended_classes: number;
-  percentage: number;
-  marked_by: number | null;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface AttendanceDetailedResponse {
@@ -188,27 +134,8 @@ export interface ApiError {
   status_code: number;
 }
 
-
-export interface SetDefaultYearRequest {
-  default_academic_year: string; // "0" or "2024-25" format
-}
-
-export interface SetDefaultSemesterRequest {
-  default_semester: string; // "0", "odd", or "even"
-}
-
-export interface AcademicYear {
-  value: string;
-  label: string;
-}
-
-export interface Semester {
-  value: string;
-  label: string;
-}
-
 // Survey Attempt interfaces
-export interface SurveyDetail {
+interface SurveyDetail {
   id: number;
   name: string;
   summary: string;
@@ -232,7 +159,7 @@ export interface SurveyDetail {
   usersubgroup: any | null;
 }
 
-export interface Choice {
+interface Choice {
   id: number;
   name: string;
   summary: null;
@@ -263,7 +190,7 @@ export interface QuestionChoice {
   programme_specific_outcomes: any[];
 }
 
-export interface CourseDetail {
+interface CourseDetail {
   id: number;
   si_no: number;
   name: string;
@@ -287,7 +214,7 @@ export interface CourseDetail {
   enable_laboratory: null;
 }
 
-export interface Teacher {
+interface Teacher {
   id: number;
   first_name: string;
   last_name: string;
@@ -321,7 +248,7 @@ export interface Teacher {
   user_data_completed: number;
 }
 
-export interface SurveyCourseTeacher {
+interface SurveyCourseTeacher {
   id: number;
   stud_f_b_survey_id: number;
   course_id: number;
@@ -338,18 +265,7 @@ export interface SurveyStartData {
   surveyCourceTeachers: SurveyCourseTeacher[];
 }
 
-export interface SurveyResponse {
-  question_id: number;
-  choice_id: number;
-  comment?: string;
-  course_teacher_id?: number;
-}
-
-export interface SurveySubmissionRequest {
-  responses: SurveyResponse[];
-}
-
- type AttendanceValue = "Present" | "Absent" | "Late" | "P" | "A" | "L" | string;
+type AttendanceValue = "Present" | "Absent" | "Late" | "P" | "A" | "L" | string;
 
 export interface CourseSchedule{
   id: number;

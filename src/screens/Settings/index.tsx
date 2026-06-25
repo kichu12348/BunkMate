@@ -56,7 +56,6 @@ import { RootStackParamList } from "../../navigation/RootNavigator";
 import { TabParamList } from "../../navigation/TabNavigator";
 import useAccountStore from "../../state/accounts";
 //import Slider from "../../components/UI/Slider";
-
 type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const GITHUB_URL = process.env.EXPO_PUBLIC_GITHUB_URL;

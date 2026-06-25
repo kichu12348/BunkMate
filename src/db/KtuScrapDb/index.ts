@@ -10,7 +10,7 @@ export interface KtuLogin {
   password: string;
 }
 
-export interface GradeCache {
+interface GradeCache {
   login_id: number;
   semester: number;
   grades: string; // JSON-stringified GradeCardResponse
@@ -107,45 +107,4 @@ export async function getGradeCache({
   } catch {
     return null;
   }
-}
-
-export async function getAllGradeCaches({
-  loginId,
-}: {
-  loginId: number;
-}): Promise<GradeCardResponse[]> {
-  const db = database.getDatabase();
-  const rows = await db.getAllAsync<GradeCache>(
-    `SELECT * FROM grade_cache WHERE login_id = ?`,
-    [loginId],
-  );
-  return rows
-    .map((row) => {
-      try {
-        return JSON.parse(row.grades) as GradeCardResponse;
-      } catch {
-        return null;
-      }
-    })
-    .filter((g): g is GradeCardResponse => g !== null);
-}
-
-export async function deleteGradeCache({
-  loginId,
-  semester,
-}: {
-  loginId: number;
-  semester: number;
-}): Promise<void> {
-  const db = database.getDatabase();
-  await db.runAsync(
-    `DELETE FROM grade_cache WHERE login_id = ? AND semester = ?`,
-    [loginId, semester],
-  );
-}
-
-export async function clearKtuTables(): Promise<void> {
-  const db = database.getDatabase();
-  await db.runAsync("DELETE FROM grade_cache");
-  await db.runAsync("DELETE FROM ktu_login");
 }

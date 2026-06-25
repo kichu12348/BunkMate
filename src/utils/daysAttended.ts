@@ -18,7 +18,7 @@ interface AttendanceRecord {
   marked_by: number | null;
 }
 
-export interface DailyAttendance {
+interface DailyAttendance {
   [sessionId: string]: AttendanceRecord;
 }
 

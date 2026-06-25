@@ -1,6 +1,6 @@
 import { ThemeColors } from "../types/theme";
 
-export const loaderColorsLight = [
+const loaderColorsLight = [
   "#0f172a", // Deep Navy
   "#334155", // Slate Blue
   "#64748b", // Cool Gray-Blue
@@ -11,7 +11,7 @@ export const loaderColorsLight = [
   "#8b5cf6"  // Violet
 ];
 
-export const loaderColorsDark = [
+const loaderColorsDark = [
   "#1e293b", // Deep Slate (base tone, replaces off-white)
   "#64748b", // Cool Steel (replaces silver, adds contrast)
   "#0ea5e9", // Vibrant Sky Blue (strong glow)
@@ -60,5 +60,3 @@ export const darkTheme: ThemeColors = {
   overlay: "#000000B3",       // 70% opacity black for overlays
   loaderColors: loaderColorsDark,
 };
-
-export const THEME_STORAGE_KEY = "bunkmate_theme_mode";

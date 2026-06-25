@@ -1,37 +1,38 @@
-import { create } from 'zustand';
-import { ThemeMode, ThemeState } from '../types/theme';
-import { lightTheme, darkTheme } from '../constants/colors';
-import { kvHelper } from '../kv/kvStore';
+import { create } from "zustand";
+import { ThemeMode, ThemeState } from "../types/theme";
+import { lightTheme, darkTheme } from "../constants/colors";
+import { kvHelper } from "../kv/kvStore";
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
   mode: "dark",
   colors: darkTheme,
 
   setMode: (mode: ThemeMode) => {
-    const colors = mode === 'light' ? lightTheme : darkTheme;
-    
+    const colors = mode === "light" ? lightTheme : darkTheme;
+
     set({ mode, colors });
 
     try {
       kvHelper.setThemeMode(mode);
     } catch (error) {
-      console.error('Failed to save theme preference:', error);
+      console.error("Failed to save theme preference:", error);
     }
   },
 
   toggleMode: async () => {
     const currentMode = get().mode;
-    const newMode = currentMode === 'light' ? 'dark' : 'light';
+    const newMode = currentMode === "light" ? "dark" : "light";
     get().setMode(newMode);
   },
   initializeTheme: async (appearance: "light" | "dark") => {
-
     try {
       const savedMode = kvHelper.getThemeMode();
-      if (savedMode && savedMode !== get().mode) {
-        set({ mode: savedMode, colors: savedMode === "light" ? lightTheme : darkTheme });
-      }
-      else{
+      if (savedMode === "light" || savedMode === "dark") {
+        set({
+          mode: savedMode,
+          colors: savedMode === "light" ? lightTheme : darkTheme,
+        });
+      } else {
         const initialMode = appearance === "light" ? "light" : "dark";
         get().setMode(initialMode);
       }
@@ -40,4 +41,3 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     }
   },
 }));
-

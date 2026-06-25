@@ -7,7 +7,7 @@ export interface PfpState {
   initialize: () => Promise<void>;
 }
 
-export const usePfpStore = create<PfpState>((set, get) => ({
+export const usePfpStore = create<PfpState>((set) => ({
   uri: null,
   setUri: (uri) => {
     if (uri && uri.trim()) {

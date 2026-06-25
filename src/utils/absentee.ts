@@ -1,7 +1,7 @@
 import LZstring from "lz-string";
 import { Linking } from "react-native";
 
-export const API_BASE_URL = process.env.EXPO_PUBLIC_OVERVIEW_URL!;
+const API_BASE_URL = process.env.EXPO_PUBLIC_OVERVIEW_URL!;
 
 export interface DateReport {
   date: Date;

@@ -1,3 +1,13 @@
+/**
+ * Birthday Gift Modal Component
+ * 
+ * A beautiful, interactive birthday gift modal with:
+ * - Animated kinetic background orbs
+ * - Gift opening sequence with particles
+ * - Floating animated letters
+ * - Secret "anti-gravity" mode (tap on name 3 times)
+ * - Expiry date support for time-limited displays
+ */
 import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
@@ -305,7 +315,7 @@ const Abinsk: React.FC<AbinskProps> = ({ isVisible, expiryDate }) => {
     }
   };
 
-  const [visible, setVisible] = useState(isVisible || false);
+  const [visible, setVisible] = useState<boolean>(isVisible || false);
 
   // Animation Values
   const containerOpacity = useSharedValue(0);

@@ -128,7 +128,6 @@ const TextRevealTab: React.FC<TextRevealTabProps> = React.memo(
 
 const CustomTabNavigator: React.FC<CustomTabNavigatorProps> = ({
   state,
-  descriptors,
   navigation,
   tabs,
 }) => {
