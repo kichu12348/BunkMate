@@ -207,7 +207,9 @@ const AttendanceDayView: React.FC<AttendanceDayViewProps> = ({
 
   const handleCloseEditModal = () => {
     setShowEditModal(false);
-    setEditData(null);
+    // Delay clearing editData until after the slide-out animation
+    // finishes, so it isn't yanked out from under the closing Modal.
+    setTimeout(() => setEditData(null), 300);
   };
 
   const formatDate = (dateString: string) => {
