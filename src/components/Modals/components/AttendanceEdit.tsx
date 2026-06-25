@@ -54,6 +54,13 @@ const AttendanceEditModal: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [isConflictModalVisible, setIsConflictModalVisible] = useState(false);
   const timeOutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = React.useRef(true);
+
+  React.useEffect(() => {
+   return () => {
+     isMountedRef.current = false;
+    };
+  }, []);
 
   if (!isVisible || !data) return null;
   // State calculations
@@ -79,13 +86,13 @@ const AttendanceEditModal: React.FC<{
         year: data.year,
       });
       if (conflictExists) {
-        setIsLoading(false);
+        if (isMountedRef.current) setIsLoading(false);
         if (timeOutRef.current) {
           clearTimeout(timeOutRef.current);
         }
-        setIsConflictModalVisible(true);
+        if (isMountedRef.current) setIsConflictModalVisible(true);
         timeOutRef.current = setTimeout(() => {
-          setIsConflictModalVisible(false);
+          if (isMountedRef.current) setIsConflictModalVisible(false);
         }, 5000);
         return;
       }
@@ -99,12 +106,16 @@ const AttendanceEditModal: React.FC<{
         attendance: attendance.toLowerCase() as "present" | "absent",
       });
       onStatusUpdate?.(); // Refresh the parent view
+      // Clear loading BEFORE telling the parent to close — previously this
+      // ran in `finally`, i.e. AFTER close(), which set state on a component
+      // whose parent Modal had already started its closing transition.
+      // That ordering is what left the native modal host stuck.
+      if (isMountedRef.current) setIsLoading(false);
       close(); // Close the modal on success
     } catch (error: any) {
       // The store threw an error (e.g., conflict), so we just show it.
+      if (isMountedRef.current) setIsLoading(false);
       Alert.alert("Error", error.message);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -120,12 +131,15 @@ const AttendanceEditModal: React.FC<{
         hour: data.hour,
       });
       onStatusUpdate?.();
+      if (isMountedRef.current) setIsLoading(false);
+      // Close the inner modal first, then the outer one on the next tick.
+      // Closing two stacked native Modals in the same synchronous tick is
+      // what caused the frozen/unresponsive overlay.
       close();
-      closeThis?.();
+      setTimeout(() => closeThis?.(), 250);
     } catch (error: any) {
+      if (isMountedRef.current) setIsLoading(false);
       Alert.alert("Error", error.message);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -152,15 +166,15 @@ const AttendanceEditModal: React.FC<{
           resolution
         );
         onStatusUpdate?.();
+        if (isMountedRef.current) setIsLoading(false);
         close();
-        closeThis?.();
+        setTimeout(() => closeThis?.(), 250);
       } else {
         throw new Error("Could not find the conflict record to resolve.");
       }
     } catch (error: any) {
+      if (isMountedRef.current) setIsLoading(false);
       Alert.alert("Error", error.message);
-    } finally {
-      setIsLoading(false);
     }
   };
 
