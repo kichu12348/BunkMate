@@ -369,21 +369,34 @@ bunkmate_cache.db
 
 # 🚀 Getting Started
 
-## Prerequisites
+## ⚡ Quick Start (TL;DR)
+
+```bash
+git clone https://github.com/kichu12348/BunkMate.git
+cd BunkMate
+npm install
+# create .env file with required variables (see Configuration below)
+npx expo start
+```
+
+Scan the QR code with **Expo Go** ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) · [iOS](https://apps.apple.com/app/expo-go/id982107779)) to preview instantly on your phone.
+
+---
+
+### Prerequisites
 
 Before running the project, ensure you have:
 
-- Node.js (v18+ recommended)
-- npm or Yarn
-- Expo CLI
-- EAS CLI
-- Android Emulator, iOS Simulator, or Expo Go
+- **Node.js** v18 or higher — [Download](https://nodejs.org)
+- **npm** or **Yarn** — comes with Node.js
+- **Expo CLI** — install with `npm install -g expo-cli`
+- **EAS CLI** — install with `npm install -g eas-cli`
+- One of the following to run the app:
+  - **Expo Go** app on your Android or iOS phone *(easiest for beginners)*
+  - Android Emulator via Android Studio
+  - iOS Simulator via Xcode *(macOS only)*
 
-Install EAS CLI globally:
-
-```bash
-npm install -g eas-cli
-```
+> 💡 **Tip for beginners:** Expo Go is the fastest way to preview changes. Just install it on your phone and scan the QR code after running `npx expo start`.
 
 ---
 
@@ -416,6 +429,12 @@ yarn install
 
 Create a `.env` file in the project root.
 
+```bash
+cp .env.example .env   # if example exists, otherwise create manually
+```
+
+Fill in the following variables:
+
 ```env
 EXPO_PUBLIC_API_URL=your_api_url_here
 EXPO_PUBLIC_INSIGHTS_URL=your_insights_url_here
@@ -427,6 +446,8 @@ EXPO_PUBLIC_OVERVIEW_URL=your_website_url
 ```
 
 Refer to the configuration files for any additional variables required during development.
+
+> ⚠️ **Note:** The app requires a running backend for full functionality. For UI-only contributions (styling, components, screens), the app will still launch without all variables filled in. Comment on the issue you're working on to ask for development API URLs.
 
 ---
 
@@ -463,6 +484,28 @@ i
 to launch the iOS simulator.
 
 ---
+
+## 🛠️ Troubleshooting
+
+### Metro bundler not starting?
+```bash
+npx expo start --clear
+```
+
+### Dependencies not installing?
+```bash
+rm -rf node_modules
+npm install
+```
+
+### Expo Go showing version mismatch?
+Make sure your Expo Go app is updated to the latest version. The project uses **Expo SDK 54.x**.
+
+### Environment variable not loading?
+Ensure your `.env` file is in the **project root** (same level as `package.json`) and all variable names start with `EXPO_PUBLIC_`.
+
+### Android emulator not detected?
+Make sure Android Studio is open and the emulator is running before pressing `a` in the Expo terminal.
 
 #### Physical Device
 
