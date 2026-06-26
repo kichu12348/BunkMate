@@ -1,7 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import Animated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 import { useThemedStyles } from "../../../hooks/useTheme";
 import { useThemeStore } from "../../../state/themeStore";
 import { ThemeColors } from "../../../types/theme";
@@ -20,15 +27,16 @@ type DashboardNavigationProp = NativeStackNavigationProp<
 >;
 
 interface OverallStatsCardProps {
-  enhancedOverallStats: {
+  enhancedOverallStats?: {
     percentage: number;
     totalSubjects: number;
-  };
+  } | null;
   animatedStyle: ReturnType<typeof useAnimatedStyle>;
   lastUpdated?: Date | null;
   dangerSubjectsCount: number;
   warningSubjectsCount: number;
   safeSubjectsCount: number;
+  isLoading?: boolean;
 }
 
 export const OverallStatsCard: React.FC<OverallStatsCardProps> = ({
@@ -38,10 +46,35 @@ export const OverallStatsCard: React.FC<OverallStatsCardProps> = ({
   dangerSubjectsCount,
   warningSubjectsCount,
   safeSubjectsCount,
+  isLoading = false,
 }) => {
   const styles = useThemedStyles(createStyles);
   const colors = useThemeStore((state) => state.colors);
   const navigation = useNavigation<DashboardNavigationProp>();
+  const shimmerOffset = useSharedValue(-1);
+
+  useEffect(() => {
+    if (!isLoading) {
+      shimmerOffset.value = -1;
+      return;
+    }
+
+    shimmerOffset.value = withRepeat(
+      withTiming(1, { duration: 1200, easing: Easing.linear }),
+      -1,
+      false
+    );
+  }, [isLoading, shimmerOffset]);
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: interpolate(shimmerOffset.value, [0, 1], [-width * 1.2, width * 1.2]),
+      },
+    ],
+  }));
+
+  const showSkeleton = isLoading || !enhancedOverallStats;
 
   const getOverallStatus = () => {
     if (!enhancedOverallStats) return "unknown";
@@ -81,77 +114,141 @@ export const OverallStatsCard: React.FC<OverallStatsCardProps> = ({
 
   return (
     <Animated.View style={[styles.statsCardContainer, animatedStyle]}>
-      <View style={styles.statsGradientBanner}>
-        <Text style={styles.statsTitle}>Overall Attendance</Text>
-        <Ionicons
-          name={getOverallStatusIcon()}
-          size={24}
-          color={styles.textSecondary.color}
-        />
-      </View>
-
-      <View style={styles.statsCard}>
-        <View style={styles.statsContent}>
-          <Text style={[styles.overallPercentage, getOverallStatusColor()]}>
-            {formatPercentage(enhancedOverallStats.percentage)}
-          </Text>
-          <Text style={styles.totalSubjects}>
-            {enhancedOverallStats.totalSubjects} subjects
-          </Text>
-
-          {lastUpdated && (
-            <Text style={styles.lastUpdated}>
-              Last updated: {getTimeAgo(lastUpdated)}
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.statusCounts}>
-          <View style={styles.statusCountItem}>
-            <Text style={[styles.statusCount, styles.dangerText]}>
-              {dangerSubjectsCount}
-            </Text>
-            <Text style={styles.statusLabel}>Critical</Text>
+      {showSkeleton ? (
+        <>
+          <View style={styles.statsGradientBanner}>
+            <View style={styles.skeletonTitle}>
+              <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+            </View>
+            <View style={styles.skeletonIcon}>
+              <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+            </View>
           </View>
 
-          <View style={styles.statusCountItem}>
-            <Text style={[styles.statusCount, styles.warningText]}>
-              {warningSubjectsCount}
-            </Text>
-            <Text style={styles.statusLabel}>Warning</Text>
+          <View style={styles.statsCard}>
+            <View style={styles.statsContent}>
+              <View style={styles.skeletonPercentage}>
+                <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+              </View>
+              <View style={styles.skeletonSubject}>
+                <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+              </View>
+              <View style={styles.skeletonLastUpdated}>
+                <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+              </View>
+            </View>
+
+            <View style={styles.statusCounts}>
+              <View style={[styles.statusCountItem, styles.statusCountSkeleton]}>
+                <View style={styles.skeletonStatusValue}>
+                  <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+                </View>
+                <View style={styles.skeletonStatusLabel}>
+                  <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+                </View>
+              </View>
+
+              <View style={[styles.statusCountItem, styles.statusCountSkeleton]}>
+                <View style={styles.skeletonStatusValue}>
+                  <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+                </View>
+                <View style={styles.skeletonStatusLabel}>
+                  <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+                </View>
+              </View>
+
+              <View style={[styles.statusCountItem, styles.statusCountSkeleton]}>
+                <View style={styles.skeletonStatusValue}>
+                  <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+                </View>
+                <View style={styles.skeletonStatusLabel}>
+                  <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+                </View>
+              </View>
+            </View>
           </View>
 
-          <View style={styles.statusCountItem}>
-            <Text style={[styles.statusCount, styles.safeText]}>
-              {safeSubjectsCount}
-            </Text>
-            <Text style={styles.statusLabel}>Safe</Text>
+          <View style={styles.ktuButtonWrapper}>
+            <View style={styles.skeletonButton}>
+              <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+            </View>
           </View>
-        </View>
-      </View>
-
-      {/* KTU Grade Card shortcut */}
-      <Animated.View style={styles.ktuButtonWrapper}>
-        <TouchableOpacity
-          style={styles.ktuButton}
-          onPress={() => navigation.navigate("KtuGradeCard")}
-          activeOpacity={0.7}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <MaterialCommunityIcons
-              name="school-outline"
-              size={16}
-              color={colors.textSecondary}
+        </>
+      ) : (
+        <>
+          <View style={styles.statsGradientBanner}>
+            <Text style={styles.statsTitle}>Overall Attendance</Text>
+            <Ionicons
+              name={getOverallStatusIcon()}
+              size={24}
+              color={styles.textSecondary.color}
             />
-            <Text style={styles.ktuButtonText}>KTU Results</Text>
           </View>
-          <Ionicons
-            name="chevron-forward"
-            size={14}
-            color={colors.textSecondary}
-          />
-        </TouchableOpacity>
-      </Animated.View>
+
+          <View style={styles.statsCard}>
+            <View style={styles.statsContent}>
+              <Text style={[styles.overallPercentage, getOverallStatusColor()]}>
+                {formatPercentage(enhancedOverallStats!.percentage)}
+              </Text>
+              <Text style={styles.totalSubjects}>
+                {enhancedOverallStats!.totalSubjects} subjects
+              </Text>
+
+              {lastUpdated && (
+                <Text style={styles.lastUpdated}>
+                  Last updated: {getTimeAgo(lastUpdated)}
+                </Text>
+              )}
+            </View>
+
+            <View style={styles.statusCounts}>
+              <View style={styles.statusCountItem}>
+                <Text style={[styles.statusCount, styles.dangerText]}>
+                  {dangerSubjectsCount}
+                </Text>
+                <Text style={styles.statusLabel}>Critical</Text>
+              </View>
+
+              <View style={styles.statusCountItem}>
+                <Text style={[styles.statusCount, styles.warningText]}>
+                  {warningSubjectsCount}
+                </Text>
+                <Text style={styles.statusLabel}>Warning</Text>
+              </View>
+
+              <View style={styles.statusCountItem}>
+                <Text style={[styles.statusCount, styles.safeText]}>
+                  {safeSubjectsCount}
+                </Text>
+                <Text style={styles.statusLabel}>Safe</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* KTU Grade Card shortcut */}
+          <Animated.View style={styles.ktuButtonWrapper}>
+            <TouchableOpacity
+              style={styles.ktuButton}
+              onPress={() => navigation.navigate("KtuGradeCard")}
+              activeOpacity={0.7}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <MaterialCommunityIcons
+                  name="school-outline"
+                  size={16}
+                  color={colors.textSecondary}
+                />
+                <Text style={styles.ktuButtonText}>KTU Results</Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={14}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
+          </Animated.View>
+        </>
+      )}
     </Animated.View>
   );
 };
@@ -249,4 +346,90 @@ const createStyles = (colors: ThemeColors) =>
     warningColor: { color: colors.warning },
     dangerColor: { color: colors.danger },
     textSecondary: { color: colors.textSecondary },
+    skeletonBase: {
+      backgroundColor: colors.border,
+      borderRadius: 999,
+      overflow: "hidden",
+      position: "relative",
+    },
+    skeletonTitle: {
+      width: 140,
+      height: 18,
+      backgroundColor: colors.border,
+      borderRadius: 999,
+      overflow: "hidden",
+      position: "relative",
+    },
+    skeletonIcon: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: colors.border,
+      overflow: "hidden",
+      position: "relative",
+    },
+    skeletonPercentage: {
+      width: 120,
+      height: 42,
+      backgroundColor: colors.border,
+      borderRadius: 16,
+      overflow: "hidden",
+      position: "relative",
+      marginBottom: 12,
+    },
+    skeletonSubject: {
+      width: 110,
+      height: 14,
+      backgroundColor: colors.border,
+      borderRadius: 999,
+      overflow: "hidden",
+      position: "relative",
+      marginBottom: 10,
+    },
+    skeletonLastUpdated: {
+      width: 140,
+      height: 12,
+      backgroundColor: colors.border,
+      borderRadius: 999,
+      overflow: "hidden",
+      position: "relative",
+    },
+    statusCountSkeleton: {
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    skeletonStatusValue: {
+      width: 24,
+      height: 20,
+      backgroundColor: colors.border,
+      borderRadius: 999,
+      overflow: "hidden",
+      position: "relative",
+      marginBottom: 6,
+    },
+    skeletonStatusLabel: {
+      width: 40,
+      height: 12,
+      backgroundColor: colors.border,
+      borderRadius: 999,
+      overflow: "hidden",
+      position: "relative",
+    },
+    skeletonButton: {
+      width: "100%",
+      height: 48,
+      backgroundColor: colors.background,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: colors.border,
+      overflow: "hidden",
+      position: "relative",
+    },
+    shimmerOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(255,255,255,0.18)",
+      transform: [{ translateX: -width * 1.2 }],
+    },
   });

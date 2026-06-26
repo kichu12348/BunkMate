@@ -55,10 +55,12 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!fontsLoaded && !error) return;
+
     const initialize = async () => {
       if (appIsReady) return;
       try {
-        await Promise.all([
+        await Promise.allSettled([
           checkForUpdates(),
           initializeTheme(Appearance.getColorScheme() || "light"),
           checkAuthStatus(undefined, backwardCompact),
@@ -67,14 +69,12 @@ export default function App() {
       } catch (error) {
         console.error("Initialization error:", error);
       } finally {
-        if (fontsLoaded || error) {
-          setAppIsReady(true);
-        }
+        setAppIsReady(true);
       }
     };
 
     initialize();
-  }, [fontsLoaded, error]);
+  }, [appIsReady, backwardCompact, checkAuthStatus, error, fontsLoaded, initAccounts, initializeTheme]);
 
   useEffect(() => {
     if (colors.background) {

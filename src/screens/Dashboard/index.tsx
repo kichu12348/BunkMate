@@ -318,16 +318,15 @@ export const Dashboard: React.FC = () => {
           ref={scrollViewRef}
         >
           <View>
-            {enhancedOverallStats && (
-              <OverallStatsCard
-                enhancedOverallStats={enhancedOverallStats}
-                animatedStyle={animatedStyle}
-                lastUpdated={lastUpdated}
-                dangerSubjectsCount={dangerSubjects.length}
-                warningSubjectsCount={warningSubjects.length}
-                safeSubjectsCount={safeSubjects.length}
-              />
-            )}
+            <OverallStatsCard
+              enhancedOverallStats={enhancedOverallStats}
+              animatedStyle={animatedStyle}
+              lastUpdated={lastUpdated}
+              dangerSubjectsCount={dangerSubjects.length}
+              warningSubjectsCount={warningSubjects.length}
+              safeSubjectsCount={safeSubjects.length}
+              isLoading={isLoading}
+            />
           </View>
 
           <View
