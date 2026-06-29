@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemedStyles } from "../../../hooks/useTheme";
@@ -6,6 +6,13 @@ import { ThemeColors } from "../../../types/theme";
 import { SubjectAttendance } from "../../../types/api";
 import Text from "../../../components/UI/Text";
 import { AttendanceCard } from "../../../components/AttendanceCard";
+import Animated, {
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  Easing,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 
 type DisplayFilter = "all" | "danger" | "warning" | "safe";
 
@@ -19,6 +26,7 @@ interface SubjectsListProps {
     canMiss: number,
     classesToAttend: number,
   ) => void;
+  isLoading?: boolean;
 }
 
 export const SubjectsList: React.FC<SubjectsListProps> = ({
@@ -27,8 +35,70 @@ export const SubjectsList: React.FC<SubjectsListProps> = ({
   warningSubjects,
   safeSubjects,
   handleSubjectPress,
+  isLoading = false,
 }) => {
   const styles = useThemedStyles(createStyles);
+
+  const opacityOffset = useSharedValue(0.4);
+
+  useEffect(() => {
+    if (!isLoading) {
+      opacityOffset.value = 1;
+      return;
+    }
+
+    opacityOffset.value = withRepeat(
+      withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true,
+    );
+  }, [isLoading, opacityOffset]);
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    opacity: opacityOffset.value,
+  }));
+
+  if (isLoading) {
+    return (
+      <Animated.View style={[styles.subjectsContainer, shimmerStyle]}>
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.skeletonSectionIcon} />
+            <View style={styles.skeletonSectionTitle} />
+          </View>
+          {[1, 2, 3].map((_, index) => (
+            <View key={index} style={styles.skeletonCard}>
+              <View style={styles.skeletonHeader}>
+                <View style={styles.skeletonTitleContainer}>
+                  <View style={styles.skeletonSubjectName} />
+                  <View style={styles.skeletonSubjectCode} />
+                </View>
+                <View style={styles.skeletonStatusBadge} />
+              </View>
+
+              <View style={styles.skeletonStatsContainer}>
+                <View style={styles.skeletonStatItem}>
+                  <View style={styles.skeletonStatLabel} />
+                  <View style={styles.skeletonStatValue} />
+                </View>
+                <View style={styles.skeletonStatItem}>
+                  <View style={styles.skeletonStatLabel} />
+                  <View style={styles.skeletonStatValue} />
+                </View>
+              </View>
+
+              <View style={styles.skeletonProgressContainer}>
+                <View style={styles.skeletonProgressBar} />
+                <View style={styles.skeletonProgressText} />
+              </View>
+
+              <View style={styles.skeletonStatusMessage} />
+            </View>
+          ))}
+        </View>
+      </Animated.View>
+    );
+  }
 
   return (
     <View style={styles.subjectsContainer}>
@@ -136,4 +206,103 @@ const createStyles = (colors: ThemeColors) =>
     safeColor: { color: colors.success },
     warningColor: { color: colors.warning },
     dangerColor: { color: colors.danger },
+    
+    // Skeleton Styles
+    skeletonSectionIcon: {
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: colors.border,
+    },
+    skeletonSectionTitle: {
+      width: 180,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: colors.border,
+      marginLeft: 8,
+    },
+    skeletonCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 16,
+      marginVertical: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    skeletonHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      marginBottom: 12,
+    },
+    skeletonTitleContainer: {
+      flex: 1,
+      marginRight: 12,
+    },
+    skeletonSubjectName: {
+      width: "70%",
+      height: 16,
+      backgroundColor: colors.border,
+      borderRadius: 8,
+      marginBottom: 6,
+    },
+    skeletonSubjectCode: {
+      width: "30%",
+      height: 12,
+      backgroundColor: colors.border,
+      borderRadius: 6,
+    },
+    skeletonStatusBadge: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.border,
+    },
+    skeletonStatsContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 12,
+    },
+    skeletonStatItem: {
+      alignItems: "center",
+      width: 60,
+    },
+    skeletonStatLabel: {
+      width: 50,
+      height: 10,
+      backgroundColor: colors.border,
+      borderRadius: 5,
+      marginBottom: 6,
+    },
+    skeletonStatValue: {
+      width: 40,
+      height: 16,
+      backgroundColor: colors.border,
+      borderRadius: 8,
+    },
+    skeletonProgressContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    skeletonProgressBar: {
+      flex: 1,
+      height: 6,
+      backgroundColor: colors.border,
+      borderRadius: 3,
+      marginRight: 8,
+    },
+    skeletonProgressText: {
+      width: 30,
+      height: 12,
+      backgroundColor: colors.border,
+      borderRadius: 6,
+    },
+    skeletonStatusMessage: {
+      width: "60%",
+      height: 12,
+      backgroundColor: colors.border,
+      borderRadius: 6,
+      alignSelf: "center",
+    },
   });

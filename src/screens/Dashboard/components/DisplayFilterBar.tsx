@@ -1,9 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { useThemedStyles } from "../../../hooks/useTheme";
 import { useThemeStore } from "../../../state/themeStore";
 import { ThemeColors } from "../../../types/theme";
 import Text from "../../../components/UI/Text";
+import Animated, {
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  Easing,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 
 type DisplayFilter = "all" | "danger" | "warning" | "safe";
 
@@ -13,6 +20,7 @@ interface DisplayFilterBarProps {
   dangerCount: number;
   warningCount: number;
   safeCount: number;
+  isLoading?: boolean;
 }
 
 export const DisplayFilterBar: React.FC<DisplayFilterBarProps> = ({
@@ -21,9 +29,53 @@ export const DisplayFilterBar: React.FC<DisplayFilterBarProps> = ({
   dangerCount,
   warningCount,
   safeCount,
+  isLoading = false,
 }) => {
   const styles = useThemedStyles(createStyles);
   const colors = useThemeStore((state) => state.colors);
+
+  const opacityOffset = useSharedValue(0.4);
+
+  useEffect(() => {
+    if (!isLoading) {
+      opacityOffset.value = 1;
+      return;
+    }
+
+    opacityOffset.value = withRepeat(
+      withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true,
+    );
+  }, [isLoading, opacityOffset]);
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    opacity: opacityOffset.value,
+  }));
+
+  if (isLoading) {
+    return (
+      <Animated.View style={[styles.displayFilterContainer, shimmerStyle]}>
+        {[1, 2, 3, 4].map((_, index) => (
+          <View
+            key={index}
+            style={[styles.displayFilterButton, styles.skeletonButton]}
+          >
+            <Text
+              style={[
+                styles.displayFilterText,
+                {
+                  color: "transparent",
+                },
+              ]}
+            >
+              .
+            </Text>
+          </View>
+        ))}
+      </Animated.View>
+    );
+  }
 
   return (
     <View style={styles.displayFilterContainer}>
@@ -132,5 +184,9 @@ const createStyles = (colors: ThemeColors) =>
     displayFilterText: {
       color: colors.textSecondary,
       fontSize: 12,
+    },
+    skeletonButton: {
+      backgroundColor: colors.border,
+      borderWidth: 0,
     },
   });

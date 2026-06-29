@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -337,13 +337,14 @@ export const Dashboard: React.FC = () => {
               stickyPointY.value = layoutY;
             }}
           >
-            {enhancedSubjects.length > 0 && (
+            {(enhancedSubjects.length > 0 || isLoading) && (
               <DisplayFilterBar
                 activeDisplayFilter={activeDisplayFilter}
                 setActiveDisplayFilter={setActiveDisplayFilter}
                 dangerCount={dangerSubjects.length}
                 warningCount={warningSubjects.length}
                 safeCount={safeSubjects.length}
+                isLoading={isLoading}
               />
             )}
           </View>
@@ -365,19 +366,14 @@ export const Dashboard: React.FC = () => {
             </View>
           )}
 
-          {isLoading && enhancedSubjects.length === 0 && (
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Loading attendance data...</Text>
-            </View>
-          )}
-
-          {enhancedSubjects.length > 0 && (
+          {(enhancedSubjects.length > 0 || isLoading) && (
             <SubjectsList
               activeDisplayFilter={activeDisplayFilter}
               dangerSubjects={dangerSubjects}
               warningSubjects={warningSubjects}
               safeSubjects={safeSubjects}
               handleSubjectPress={handleSubjectPress}
+              isLoading={isLoading}
             />
           )}
           <View style={styles.footer}>
@@ -430,8 +426,6 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: 10,
     },
     retryButtonText: { color: "white", fontSize: 14, fontWeight: "600" },
-    loadingContainer: { padding: 32, alignItems: "center" },
-    loadingText: { fontSize: 16, color: colors.textSecondary },
     footer: {
       marginTop: 16,
       padding: 16,

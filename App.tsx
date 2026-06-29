@@ -74,7 +74,7 @@ export default function App() {
     };
 
     initialize();
-  }, [appIsReady, backwardCompact, checkAuthStatus, error, fontsLoaded, initAccounts, initializeTheme]);
+  }, [error, fontsLoaded]);
 
   useEffect(() => {
     if (colors.background) {
