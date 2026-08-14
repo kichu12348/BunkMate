@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   TouchableOpacity,
@@ -10,23 +10,32 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useThemeStore } from "../../state/themeStore";
+import { useUpdateStore } from "../../state/updateStore";
 import Text from "../UI/Text";
 
 const { width } = Dimensions.get("screen");
 
-const UPDATE_URL = process.env.EXPO_PUBLIC_OVERVIEW_URL as string | undefined;
+interface NewUpdateAlertModalProps {
+  visible: boolean;
+}
 
-const NewUpdateAlertModal = ({
-    defaultVisible = true
-}) => {
+const NewUpdateAlertModal = ({ visible }: NewUpdateAlertModalProps) => {
+  const { isVisible, forceUpdate, downloadUrl, checkForUpdate, dismissModal } =
+    useUpdateStore();
+
   const insets = useSafeAreaInsets();
   const colors = useThemeStore((state) => state.colors);
 
-  const [isVisible, setIsVisible] = React.useState(defaultVisible);
-  const onClose = () => setIsVisible(false);
+  useEffect(() => {
+    if (visible) checkForUpdate();
+  }, []);
+
+  if (!visible) return null;
 
   const handleUpdatePress = async () => {
-    await Linking.openURL(UPDATE_URL + "/#download");
+    if (downloadUrl) {
+      await Linking.openURL(downloadUrl);
+    }
   };
 
   return (
@@ -37,6 +46,8 @@ const NewUpdateAlertModal = ({
       statusBarTranslucent
       navigationBarTranslucent
       hardwareAccelerated
+      // Prevent dismissal by back button when forceUpdate is true
+      onRequestClose={forceUpdate ? undefined : dismissModal}
     >
       <View
         style={[
@@ -48,7 +59,9 @@ const NewUpdateAlertModal = ({
         <View
           style={[
             styles.overlay,
-            { backgroundColor: colors.background + "80" },
+            {
+              backgroundColor: colors.background + (forceUpdate ? "EF" : "80"),
+            },
           ]}
         />
 
@@ -58,56 +71,94 @@ const NewUpdateAlertModal = ({
             {
               backgroundColor: colors.surface,
               shadowColor: colors.shadow,
+              borderColor: forceUpdate ? colors.danger : "transparent",
             },
+            forceUpdate && styles.cardDanger,
           ]}
         >
+          {forceUpdate && (
+            <View
+              style={[
+                styles.forceBadge,
+                { backgroundColor: colors.danger + "22" },
+              ]}
+            >
+              <Ionicons name="warning" size={14} color={colors.danger} />
+              <Text style={[styles.forceBadgeText, { color: colors.danger }]}>
+                Required update
+              </Text>
+            </View>
+          )}
+
           <Text style={[styles.title, { color: colors.text }]}>
-            Fresh update is here!
+            {forceUpdate
+              ? "Update required to continue"
+              : "Fresh update is here!"}
           </Text>
 
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            New features and improvements await! Updating now ensures you'll
-            stay compatible with all upcoming enhancements.
+            {forceUpdate
+              ? "This version of BunkMate is no longer supported. Please update to continue using the app."
+              : "New features and improvements await! Updating now ensures you stay compatible with all upcoming enhancements."}
           </Text>
 
           <View style={{ flexDirection: "row", gap: 12 }}>
+            {!forceUpdate && (
+              <TouchableOpacity
+                onPress={dismissModal}
+                style={[
+                  styles.cta,
+                  {
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    borderStyle: "dashed",
+                  },
+                ]}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Remind me later"
+              >
+                <MaterialIcons
+                  name="watch-later"
+                  size={18}
+                  color={colors.text}
+                />
+                <Text style={[styles.ctaText, { color: colors.text }]}>
+                  Later
+                </Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
-              onPress={onClose}
+              onPress={handleUpdatePress}
               style={[
                 styles.cta,
                 {
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  borderStyle: "dashed",
+                  backgroundColor: colors.primary,
+                  alignItems: "center",
+                  justifyContent: "center",
                 },
               ]}
-              activeOpacity={0.9}
-              accessibilityRole="button"
-              accessibilityLabel="Remind me later"
-            >
-              <MaterialIcons name="watch-later" size={18} color={colors.text} />
-              <Text style={[styles.ctaText, { color: colors.text }]}>
-                Later
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleUpdatePress}
-              style={[styles.cta, { backgroundColor: colors.primary }]}
-              activeOpacity={0.9}
+              activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Update now"
             >
-              <Ionicons name="rocket" size={18} color={colors.text} />
+              <Ionicons
+                name={forceUpdate ? "warning" : "rocket"}
+                size={18}
+                color={colors.text}
+              />
               <Text style={[styles.ctaText, { color: colors.text }]}>
                 Update now
               </Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.legal, { color: colors.textSecondary }]}>
-            Psst… not updating means you won't be eligible for new improvements
-            that roll out next.
-          </Text>
+          {!forceUpdate && (
+            <Text style={[styles.legal, { color: colors.textSecondary }]}>
+              Psst… not updating means you won't be eligible for new
+              improvements that roll out next.
+            </Text>
+          )}
         </View>
       </View>
     </Modal>
@@ -139,7 +190,25 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  closeBtnLeft: {},
+  cardDanger: {
+    borderWidth: 1,
+    borderStyle: "dashed",
+  },
+  forceBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: 8,
+  },
+  forceBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
   title: {
     fontSize: 20,
     fontWeight: "800",

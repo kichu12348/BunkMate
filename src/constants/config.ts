@@ -71,6 +71,7 @@ export const INSIGHTS_LOGGED_CODE = "ABCD_12348_";
 export const PFP_URL = "pfp_url";
 export const WEBSOCKET_TIMEOUT = 3000;
 export const ACCOUNTS_KEY = "accounts";
+export const UPDATE_TIME = "update_time";
 
 export const CHAT_CONFIG = {
   GET_MESSAGES: (
@@ -90,4 +91,11 @@ export const KTU_SCRAPER_CONFIG = {
   getCsrfToken: "/get-grade-card-token",
   getGradeCard: "/grade-card",
   timeLimit: 420000, // 7 minutes
+};
+
+export const INSIGHTS_API_URL = process.env.EXPO_PUBLIC_INSIGHTS_URL!;
+
+export const UPDATE_API_CONFIG = {
+  BASE_URL: INSIGHTS_API_URL,
+  VERSION: INSIGHTS_API_URL + "/version",
 };

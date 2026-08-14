@@ -14,6 +14,8 @@ import { kvHelper } from "../kv/kvStore";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../state/auth";
 import { LoginNewAccount } from "../screens/SwitchAccounts/LoginNewAccount";
+import NewUpdateAlertModal from "../components/Modals/NewUpdateAlert";
+import { useUpdateStore } from "../state/updateStore";
 //import Abinsk from "../components/Abinsk";
 
 // 1/12/2025 11:59:59 PM ASIA/KOLKATA
@@ -56,11 +58,17 @@ export const RootNavigator: React.FC = () => {
     (s) => s.hasShownSubscriptionModal,
   );
 
+  const { isVisible, forceUpdate, downloadUrl, checkForUpdate, dismissModal } =
+    useUpdateStore();
+
   useEffect(() => {
-    const hasBeenShown = hasShownSubscriptionModal;
-    if (!hasBeenShown) {
+    if (!hasShownSubscriptionModal) {
       setShowSubscriptionModal(true);
     }
+  }, []);
+
+  useEffect(() => {
+    checkForUpdate();
   }, []);
 
   const handleCloseSubscriptionModal = () => {
@@ -112,6 +120,9 @@ export const RootNavigator: React.FC = () => {
         visible={showSubscriptionModal}
         onClose={handleCloseSubscriptionModal}
       />
+
+      {/* Global Update Modal */}
+      <NewUpdateAlertModal visible={true} />
     </>
   );
 };

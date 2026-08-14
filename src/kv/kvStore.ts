@@ -6,6 +6,7 @@ import {
   SUBSCRIPTION_MODAL_SHOWN,
   THEME_MODE,
   ACCOUNTS_KEY,
+  UPDATE_TIME,
 } from "../constants/config";
 
 class KVStore {
@@ -140,5 +141,17 @@ export const kvHelper = {
 
   clearAccounts(): void {
     settingsStore.delete(ACCOUNTS_KEY);
+  },
+
+  setUpdateTime(time: string): void {
+    settingsStore.set(UPDATE_TIME, time);
+  },
+
+  getUpdateTime(): string | null {
+    return settingsStore.get<string>(UPDATE_TIME);
+  },
+
+  clearUpdateTime(): void {
+    settingsStore.delete(UPDATE_TIME);
   },
 };
