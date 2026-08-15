@@ -87,7 +87,7 @@ interface AccountsState {
     cb?: (switched: boolean) => void,
   ) => Promise<void>;
   getCurrentAccount: () => Promise<Account | null>;
-  logout: () => Promise<void>;
+  logout: () => Promise<boolean>;
   removeAllAccounts: () => Promise<void>;
   backwardCompact: (
     name: string,
@@ -239,12 +239,19 @@ const useAccountStore = create<AccountsState>((set, get) => ({
   },
   logout: async () => {
     try {
-      const { currentAccountId, removeAccount } = get();
+      const { currentAccountId, removeAccount, switchAccount } = get();
       if (currentAccountId) {
         kvHelper.clearAccounts();
         await removeAccount(currentAccountId);
       }
+      if (get().accounts.length !== 0) {
+        const newAccId = get().accounts[0].id;
+        await switchAccount(newAccId);
+        return true;
+      }
       set({ currentAccountId: null });
+      kvHelper.clearAuthToken();
+      return true;
     } catch (error: any) {
       set({ error: error.message, loading: false });
     }

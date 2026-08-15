@@ -100,6 +100,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const userRef = useRef(user);
   const showToast = useToastStore((state) => state.showToast);
   const logoutAcc = useAccountStore((s) => s.logout);
+  const accounts = useAccountStore((s) => s.accounts);
   const insets = useSafeAreaInsets();
   const bottomBarHeight = useBottomTabBarHeight();
   const pfpUri = usePfpStore((s) => s.uri);
@@ -123,9 +124,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     style?: StyleProp<ViewStyle>;
     children: React.ReactNode;
   }> = ({ style, children }) => (
-    <View style={[styles.card, style]}>
-      {children}
-    </View>
+    <View style={[styles.card, style]}>{children}</View>
   );
 
   const fetchAttendanceDebounced = useMemo(
@@ -177,9 +176,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         {
           text: "Logout",
           style: "destructive",
-          onPress: () => {
-            logout();
-            logoutAcc();
+          onPress: async () => {
+            if (accounts.length === 1) await logout();
+            await logoutAcc();
             onClose?.();
           },
         },
@@ -281,12 +280,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   );
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top },
-      ]}
-    >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
