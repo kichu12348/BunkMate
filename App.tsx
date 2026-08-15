@@ -36,6 +36,7 @@ const hideSplashScreen = () => {
 export default function App() {
   const { colors, initializeTheme } = useThemeStore();
   const statusBarStyle = useThemeTransitionStore((s) => s.statusBarStyle);
+  const isTransitioning = useThemeTransitionStore((s) => s.isTransitioning);
   const { isAuthenticated, checkAuthStatus } = useAuthStore();
   const backwardCompact = useAccountStore((s) => s.backwardCompact);
   const initAccounts = useAccountStore((s) => s.initAccounts);
@@ -81,18 +82,18 @@ export default function App() {
     initialize();
   }, [error, fontsLoaded]);
 
-  // useEffect(() => {
-  //   if (colors.background) {
-  //     const setNavigationBarColor = async () => {
-  //       try {
-  //         SystemUI.setBackgroundColorAsync(colors.background);
-  //       } catch (error) {
-  //         console.error("Error setting navigation bar color:", error);
-  //       }
-  //     };
-  //     setNavigationBarColor();
-  //   }
-  // }, [colors.background]);
+  useEffect(() => {
+    if (colors.background && !isTransitioning) {
+      const setNavigationBarColor = async () => {
+        try {
+          SystemUI.setBackgroundColorAsync(colors.background);
+        } catch (error) {
+          console.error("Error setting navigation bar color:", error);
+        }
+      };
+      setNavigationBarColor();
+    }
+  }, [colors.background, isTransitioning]);
 
   return (
     <GestureHandlerRootView
