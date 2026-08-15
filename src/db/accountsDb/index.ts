@@ -54,6 +54,34 @@ export async function getAccountByUsername(username: string) {
   );
 }
 
+export async function updateAccount(id: number, name: string, token: string) {
+  const db = database.getDatabase();
+  await db.runAsync(
+    `
+    UPDATE accounts SET name = ?, token = ? WHERE id = ?
+  `,
+    [name, token, id],
+  );
+  return getAccount(id);
+}
+
+export async function upsertAccount(
+  name: string,
+  username: string,
+  token: string,
+) {
+  const db = database.getDatabase();
+  const existing = await getAccountByUsername(username);
+  if (existing) {
+    await db.runAsync(
+      `UPDATE accounts SET name = ?, token = ? WHERE id = ?`,
+      [name, token, existing.id],
+    );
+    return { ...existing, name, token };
+  }
+  return insertAccount(name, username, token);
+}
+
 export async function deleteAllAccounts() {
   const db = database.getDatabase();
   await db.runAsync(`DELETE FROM accounts`);

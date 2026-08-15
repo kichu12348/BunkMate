@@ -19,6 +19,8 @@ class Database {
   }
 
   private initTables() {
+    this.db.execSync("PRAGMA foreign_keys = ON;");
+
     this.db.execSync(`
       CREATE TABLE IF NOT EXISTS kv_store (
         key TEXT PRIMARY KEY,
@@ -70,12 +72,11 @@ class Database {
   }
 
   public async clearAllTables(): Promise<void> {
-    this.db.execSync("DELETE FROM cache");
-    this.db.execSync("DELETE FROM attendance_subjects");
-    this.db.execSync("DELETE FROM attendance_summary");
+    this.db.execSync("DELETE FROM grade_cache");
+    this.db.execSync("DELETE FROM ktu_login");
+    this.db.execSync("DELETE FROM accounts");
     this.db.execSync("DELETE FROM kv_store");
     this.keySet.clear();
-    this.initTables(); // Reinitialize the kv_store table
   }
 
   ///kv store

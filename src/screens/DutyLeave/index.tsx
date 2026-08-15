@@ -35,6 +35,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useThemedStyles, useTheme } from "../../hooks/useTheme";
 import { useAttendanceStore } from "../../state/attendance";
 import { useDutyLeaveStore } from "../../state/dutyLeave";
+import useAccountStore from "../../state/accounts";
 import { DutyLeaveDatabase } from "../../utils/dutyLeaveDatabase";
 import { ThemeColors } from "../../types/theme";
 import { DutyLeave } from "../../types/dutyLeave";
@@ -809,6 +810,8 @@ export const DutyLeaveScreen: React.FC = () => {
 
   const [addModalVisible, setAddModalVisible] = useState(false);
 
+  const currentAccountId = useAccountStore((s) => s.currentAccountId);
+
   const {
     dutyLeaves,
     fetchDutyLeaves,
@@ -821,7 +824,7 @@ export const DutyLeaveScreen: React.FC = () => {
 
   useEffect(() => {
     fetchDutyLeaves();
-  }, []);
+  }, [currentAccountId]);
 
   const { subjectImpacts, leaveCoverageMap } = useMemo(() => {
     const map: Record<string, boolean> = {};

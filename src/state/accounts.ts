@@ -6,6 +6,8 @@ import {
   getAccount,
   deleteAllAccounts,
   getAccountByUsername,
+  updateAccount as updateAccountDb,
+  upsertAccount,
 } from "../db/accountsDb";
 import type { Account } from "../db/accountsDb";
 import { kvHelper } from "../kv/kvStore";
@@ -13,20 +15,58 @@ import { useAuthStore } from "./auth";
 import { useAttendanceStore } from "./attendance";
 import { useNotificationsStore } from "./notifications";
 import { useSurveysStore } from "./surveys";
+import { useDutyLeaveStore } from "./dutyLeave";
+import { useAssignmentStore } from "./assignments";
+import { useChatStore } from "./chat";
+import { usePfpStore } from "./pfpStore";
+import useKtuGradeStore from "./ktuGrades";
 
 async function reInitAllStores() {
-  const { checkAuthStatus, clearData } = useAuthStore.getState();
-  clearData();
+  const { checkAuthStatus } = useAuthStore.getState();
   await checkAuthStatus();
+
   const { fetchAttendance, clearAttendanceData } =
     useAttendanceStore.getState();
   clearAttendanceData();
   fetchAttendance();
-  const { clearNotifications } = useNotificationsStore.getState();
+
+  const { clearNotifications, fetchNotifications } =
+    useNotificationsStore.getState();
   clearNotifications();
+  fetchNotifications(true);
+
   const { clearSurveys, fetchSurveys } = useSurveysStore.getState();
   clearSurveys();
   fetchSurveys();
+
+  const { clearDutyLeaves, fetchDutyLeaves } = useDutyLeaveStore.getState();
+  clearDutyLeaves();
+  fetchDutyLeaves();
+
+  const { clearAssignments, fetchAssignments } = useAssignmentStore.getState();
+  clearAssignments();
+  fetchAssignments();
+
+  const { clearMessages } = useChatStore.getState();
+  clearMessages();
+
+  const { initialize: initPfp } = usePfpStore.getState();
+  initPfp();
+
+  // Reset KTU session state so old session doesn't linger
+  useKtuGradeStore.setState({
+    credentialsLoaded: false,
+    hasSavedCredentials: false,
+    accountId: null,
+    ktuLoginId: null,
+    isLoggedIn: false,
+    gradeCard: null,
+    fetchError: null,
+    loginError: null,
+    fromCache: false,
+    username: "",
+    password: "",
+  });
 }
 
 interface AccountsState {
@@ -83,18 +123,18 @@ const useAccountStore = create<AccountsState>((set, get) => ({
   addAccount: async (name, username, token) => {
     set({ loading: true, error: null });
     try {
-      const existingAccount = await getAccountByUsername(username);
-      if (existingAccount) {
-        set({ error: "Account already exists", loading: false });
-        return;
-      }
-      const account = await insertAccount(name, username, token);
+      const account = await upsertAccount(name, username, token);
       kvHelper.setAccounts(account.id);
+      kvHelper.setAuthToken(token);
+
+      const accounts = await getAllAccounts();
       set({
-        accounts: [...get().accounts, account],
+        accounts,
         loading: false,
         currentAccountId: account.id,
       });
+
+      await reInitAllStores();
     } catch (error: any) {
       set({ error: error.message, loading: false });
     }
@@ -128,10 +168,10 @@ const useAccountStore = create<AccountsState>((set, get) => ({
         set({ error: "Account not found", loading: false });
         return;
       }
+      await updateAccountDb(id, name, token);
+      const accounts = await getAllAccounts();
       set({
-        accounts: get().accounts.map((account) =>
-          account.id === id ? { ...account, name, token } : account,
-        ),
+        accounts,
         loading: false,
       });
     } catch (error: any) {
@@ -143,6 +183,9 @@ const useAccountStore = create<AccountsState>((set, get) => ({
       cb?.(false);
       return;
     }
+    const previousAccountId = get().currentAccountId;
+    const previousToken = kvHelper.getAuthToken();
+
     set({ isSwitching: true, error: null });
     try {
       const account = await getAccount(id);
@@ -153,7 +196,30 @@ const useAccountStore = create<AccountsState>((set, get) => ({
       }
       kvHelper.setAccounts(account.id);
       kvHelper.setAuthToken(account.token);
-      await reInitAllStores();
+
+      try {
+        await reInitAllStores();
+      } catch (authErr: any) {
+        // Roll back to previous account if switch failed
+        if (previousAccountId && previousToken) {
+          kvHelper.setAccounts(previousAccountId);
+          kvHelper.setAuthToken(previousToken);
+          try {
+            await reInitAllStores();
+          } catch {
+            // ignore
+          }
+        }
+        set({
+          error:
+            authErr?.message ||
+            "Failed to switch account. Session may have expired.",
+          isSwitching: false,
+        });
+        cb?.(false);
+        return;
+      }
+
       set({
         currentAccountId: account.id,
         isSwitching: false,
@@ -161,6 +227,7 @@ const useAccountStore = create<AccountsState>((set, get) => ({
       cb?.(true);
     } catch (error: any) {
       set({ error: error.message, isSwitching: false });
+      cb?.(false);
     }
   },
   getCurrentAccount: async () => {
@@ -185,7 +252,7 @@ const useAccountStore = create<AccountsState>((set, get) => ({
   removeAllAccounts: async () => {
     try {
       await deleteAllAccounts();
-      set({ accounts: [], loading: false });
+      set({ accounts: [], loading: false, currentAccountId: null });
     } catch (error: any) {
       set({ error: error.message, loading: false });
     }
@@ -197,15 +264,15 @@ const useAccountStore = create<AccountsState>((set, get) => ({
     try {
       const existingAccount = await getAccountByUsername(username);
       if (existingAccount) {
+        kvHelper.setAccounts(existingAccount.id);
+        set({ currentAccountId: existingAccount.id });
         return;
       }
       const account = await insertAccount(name, username, token);
       kvHelper.setAccounts(account.id);
+      const accounts = await getAllAccounts();
       set({
-        accounts: [
-          ...get().accounts.filter((account) => account.id !== account.id),
-          account,
-        ],
+        accounts,
         loading: false,
         currentAccountId: account.id,
       });

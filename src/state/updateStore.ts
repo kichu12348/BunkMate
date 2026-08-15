@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { getAppVersion } from "../api/update";
 import { kvHelper } from "../kv/kvStore";
 import { APP_CONFIG } from "../constants/config";
-import type { AppVersion } from "../types/update";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 

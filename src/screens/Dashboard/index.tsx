@@ -38,6 +38,7 @@ import { OverallStatsCard } from "./components/OverallStatsCard";
 import { DisplayFilterBar } from "./components/DisplayFilterBar";
 import { SubjectsList } from "./components/SubjectsList";
 import { FilterModal } from "./components/FilterModal";
+import useAccountStore from "../../state/accounts";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -49,16 +50,17 @@ export const Dashboard: React.FC = () => {
   const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<DashboardNavigationProp>();
   const name = useAuthStore((state) => state.name);
-  const showToast = useToastStore((state) => state.showToast);
+  const currentAccountId = useAccountStore((state) => state.currentAccountId);
   const initPfp = usePfpStore((state) => state.initialize);
   const fetchAssignments = useAssignmentStore(
     (state) => state.fetchAssignments,
   );
+  const showToast = useToastStore((s) => s.showToast);
 
   useEffect(() => {
     fetchAssignments();
-    initPfp();
-  }, []);
+    initPfp(currentAccountId);
+  }, [currentAccountId]);
 
   const {
     data: attendanceData,
@@ -125,7 +127,8 @@ export const Dashboard: React.FC = () => {
     } catch (e: unknown) {
       showToast({
         title: "Error",
-        message: e instanceof Error ? e.message : "Failed to update academic year.",
+        message:
+          e instanceof Error ? e.message : "Failed to update academic year.",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     }
@@ -216,7 +219,8 @@ export const Dashboard: React.FC = () => {
     } catch (error: unknown) {
       showToast({
         title: "Error",
-        message: error instanceof Error ? error.message : "Failed to refresh data",
+        message:
+          error instanceof Error ? error.message : "Failed to refresh data",
         buttons: [{ text: "OK", style: "destructive" }],
       });
     } finally {

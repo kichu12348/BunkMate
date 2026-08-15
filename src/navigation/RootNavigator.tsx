@@ -43,6 +43,7 @@ export type RootStackParamList = {
   AssignmentsDetails: {
     assignmentId: string;
     assignmentName: string;
+    courseCode: string;
   };
   SwitchAccounts: undefined;
   LoginNewAccount: undefined;

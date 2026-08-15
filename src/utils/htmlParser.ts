@@ -1,10 +1,8 @@
+import { ContentNode } from "../types/content";
+
 const imgTagRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
 const htmlTagRegex = /<[^>]+>/g;
 const brTagRegex = /<br\s*\/?>/gi;
-
-export type ContentNode =
-  | { type: "text"; text: string }
-  | { type: "image"; imgUrl: string };
 
 export const parseHtmlContent = (html: string): ContentNode[] => {
   const content: ContentNode[] = [];

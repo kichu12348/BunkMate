@@ -2,13 +2,28 @@ import { database } from "../db/database";
 import { DutyLeave } from "../types/dutyLeave";
 import { parseISO } from "date-fns";
 import { deleteFromLocal, saveToLocal } from "./fsUtils";
+import { kvHelper } from "../kv/kvStore";
 
 const DUTY_LEAVE_PREFIX = "duty_leave_";
 
 export class DutyLeaveDatabase {
-  static async saveDutyLeave(leave: DutyLeave): Promise<void> {
+  private static getKey(id: string, accountId?: number | null): string {
+    const accId = accountId ?? kvHelper.getAccounts();
+    return accId
+      ? `${DUTY_LEAVE_PREFIX}${accId}_${id}`
+      : `${DUTY_LEAVE_PREFIX}${id}`;
+  }
+
+  private static getLegacyKey(id: string): string {
+    return `${DUTY_LEAVE_PREFIX}${id}`;
+  }
+
+  static async saveDutyLeave(
+    leave: DutyLeave,
+    accountId?: number | null,
+  ): Promise<void> {
     try {
-      const key = `${DUTY_LEAVE_PREFIX}${leave.id}`;
+      const key = this.getKey(leave.id, accountId);
       await database.set(key, JSON.stringify(leave));
     } catch (error) {
       console.error("Error saving duty leave:", error);
@@ -16,10 +31,16 @@ export class DutyLeaveDatabase {
     }
   }
 
-  static async getDutyLeave(id: string): Promise<DutyLeave | null> {
+  static async getDutyLeave(
+    id: string,
+    accountId?: number | null,
+  ): Promise<DutyLeave | null> {
     try {
-      const key = `${DUTY_LEAVE_PREFIX}${id}`;
-      const data = await database.get(key);
+      const key = this.getKey(id, accountId);
+      let data = await database.get(key);
+      if (!data) {
+        data = await database.get(this.getLegacyKey(id));
+      }
       if (data) {
         return JSON.parse(data) as DutyLeave;
       }
@@ -30,12 +51,23 @@ export class DutyLeaveDatabase {
     }
   }
 
-  static async getAllDutyLeaves(): Promise<DutyLeave[]> {
+  static async getAllDutyLeaves(
+    accountId?: number | null,
+  ): Promise<DutyLeave[]> {
     try {
+      const accId = accountId ?? kvHelper.getAccounts();
       const allKeys = await database.getAllKeys();
-      const dutyLeaveKeys = allKeys.filter((key) =>
-        key.startsWith(DUTY_LEAVE_PREFIX),
-      );
+
+      const prefix = accId
+        ? `${DUTY_LEAVE_PREFIX}${accId}_`
+        : DUTY_LEAVE_PREFIX;
+
+      const dutyLeaveKeys = allKeys.filter((key) => {
+        if (key.startsWith(prefix)) return true;
+        // If no account ID active, include legacy duty leaves without underscore suffix
+        if (!accId && key.startsWith(DUTY_LEAVE_PREFIX)) return true;
+        return false;
+      });
 
       const leaves: DutyLeave[] = [];
 
@@ -91,25 +123,32 @@ export class DutyLeaveDatabase {
     }
   }
 
-  static async deleteDutyLeave(id: string): Promise<void> {
+  static async deleteDutyLeave(
+    id: string,
+    accountId?: number | null,
+  ): Promise<void> {
     try {
-      const leave = await this.getDutyLeave(id);
+      const leave = await this.getDutyLeave(id, accountId);
       if (leave?.documentUri) {
         await this.deleteDocument(leave.documentUri);
       }
 
-      const key = `${DUTY_LEAVE_PREFIX}${id}`;
+      const key = this.getKey(id, accountId);
       await database.delete(key);
+      await database.delete(this.getLegacyKey(id));
     } catch (error) {
       console.error("Error deleting duty leave:", error);
       throw error;
     }
   }
 
-  static async updateDutyLeave(leave: DutyLeave): Promise<void> {
+  static async updateDutyLeave(
+    leave: DutyLeave,
+    accountId?: number | null,
+  ): Promise<void> {
     try {
-      const key = `${DUTY_LEAVE_PREFIX}${leave.id}`;
-      const exists = await database.has(key);
+      const key = this.getKey(leave.id, accountId);
+      const exists = (await database.has(key)) || (await database.has(this.getLegacyKey(leave.id)));
       if (!exists) {
         throw new Error(`Duty leave with id ${leave.id} not found`);
       }

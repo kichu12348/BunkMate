@@ -5,6 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
@@ -25,11 +26,12 @@ import Animated, {
 import { CustomLoader } from "../../components/UI/RefreshLoader";
 import Text from "../../components/UI/Text";
 import { parseHtmlContent } from "../../utils/htmlParser";
+import { createAndShareAssignmentPdf } from "../../utils/createPdf";
 
 export const AssignmentsDetailsScreen: React.FC = () => {
   const route = useRoute<RouteProp<RootStackParamList, "AssignmentsDetails">>();
   const navigation = useNavigation();
-  const { assignmentId, assignmentName } = route.params;
+  const { assignmentId, assignmentName, courseCode } = route.params;
   const insets = useSafeAreaInsets();
   const fetchSpecificAssignment = useAssignmentStore(
     (state) => state.fetchSpecificAssignment,
@@ -41,6 +43,25 @@ export const AssignmentsDetailsScreen: React.FC = () => {
   const [score, setScore] = React.useState({ totalScore: 0, totalMaxMarks: 0 });
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [sharing, setSharing] = React.useState(false);
+
+  const handleSharePdf = async () => {
+    if (sharing || loading || list.length === 0) return;
+    setSharing(true);
+    try {
+      await createAndShareAssignmentPdf({
+        assignmentName,
+        totalScore: score.totalScore,
+        totalMaxMarks: score.totalMaxMarks,
+        list,
+        courseCode,
+      });
+    } catch (e) {
+      console.warn("PDF share failed:", e);
+    } finally {
+      setSharing(false);
+    }
+  };
 
   const selectColor = (score: number, maxMarks: number) => {
     const percentage = score / maxMarks;
@@ -201,6 +222,33 @@ export const AssignmentsDetailsScreen: React.FC = () => {
               {assignmentName}
             </Text>
           </View>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Export as PDF"
+            onPress={handleSharePdf}
+            style={[
+              styles.shareButton,
+              (sharing || loading || list.length === 0) &&
+                styles.shareButtonDisabled,
+            ]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.7}
+            disabled={sharing || loading || list.length === 0}
+          >
+            {sharing ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons
+                name="document-text-outline"
+                size={22}
+                color={
+                  loading || list.length === 0
+                    ? colors.textSecondary
+                    : colors.primary
+                }
+              />
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -236,7 +284,11 @@ export const AssignmentsDetailsScreen: React.FC = () => {
                   });
                 })
                 .catch((e: unknown) =>
-                  setError(e instanceof Error ? e.message : "Failed to load assignment"),
+                  setError(
+                    e instanceof Error
+                      ? e.message
+                      : "Failed to load assignment",
+                  ),
                 )
                 .finally(() => setLoading(false));
             }}
@@ -332,6 +384,17 @@ const createStyles = (colors: ThemeColors) =>
       fontWeight: "700",
       color: colors.text,
       marginBottom: 4,
+    },
+    shareButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.primary + "15",
+    },
+    shareButtonDisabled: {
+      opacity: 0.4,
     },
     summaryCard: {
       backgroundColor: colors.surface,

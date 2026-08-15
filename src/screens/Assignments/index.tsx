@@ -1,9 +1,4 @@
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-} from "react-native";
+import { View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeStore } from "../../state/themeStore";
@@ -16,7 +11,6 @@ import { ThemeColors } from "../../types/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Text from "../../components/UI/Text";
-
 
 export const AssignmentsScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, "Assignments">>();
@@ -38,6 +32,7 @@ export const AssignmentsScreen = () => {
     navigation.navigate("AssignmentsDetails", {
       assignmentId: id,
       assignmentName: name,
+      courseCode: subjectCode,
     });
   };
 

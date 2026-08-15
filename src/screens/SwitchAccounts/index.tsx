@@ -21,9 +21,25 @@ import type { Account } from "../../db/accountsDb";
 import { useToastStore } from "../../state/toast";
 import Text from "../../components/UI/Text";
 import { CustomLoader } from "../../components/UI/RefreshLoader";
-import { SharedValue } from "react-native-reanimated";
+import Animated, {
+  FadeIn,
+  FadeOut,
+  ZoomIn,
+  ZoomOut,
+  SharedValue,
+  LinearTransition,
+} from "react-native-reanimated";
 
 type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+const getInitials = (name: string) => {
+  if (!name) return "";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+};
 
 export function SwitchAccountsScreen({
   navigation,
@@ -45,8 +61,16 @@ export function SwitchAccountsScreen({
   const { showToast } = useToastStore();
 
   const handleSwitching = async (id: number) => {
-    await switchAccount(id);
-    // Only go back if the switch succeeded (no error in store)
+    await switchAccount(id, (switched) => {
+      if (switched) {
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate("MainTabs");
+        }
+      }
+    });
+    // Only show error if the switch failed
     const { error } = useAccountStore.getState();
     if (error) {
       showToast({
@@ -95,8 +119,10 @@ export function SwitchAccountsScreen({
   const renderItem = useCallback(
     ({ item }: { item: Account }) => {
       const isActive = item.id === currentAccountId;
+      const initials = getInitials(item.name);
+
       return (
-        <View>
+        <View style={styles.cardWrapper}>
           <TouchableOpacity
             style={[styles.accountItem, isActive && styles.activeAccount]}
             onPress={() => handleSwitchAccount(item.id, item.name)}
@@ -110,24 +136,42 @@ export function SwitchAccountsScreen({
                 isActive && styles.avatarContainerActive,
               ]}
             >
-              <Ionicons
-                name="person"
-                size={20}
-                color={isActive ? "white" : colors.primary}
-              />
+              {initials ? (
+                <Text
+                  style={[
+                    styles.avatarText,
+                    isActive && styles.avatarTextActive,
+                  ]}
+                >
+                  {initials}
+                </Text>
+              ) : (
+                <Ionicons
+                  name="person"
+                  size={20}
+                  color={isActive ? "white" : colors.primary}
+                />
+              )}
               {isActive && <View style={styles.activeDot} />}
             </View>
 
             {/* Info */}
             <View style={styles.accountInfo}>
               <View style={styles.accountNameRow}>
-                <Text style={styles.accountName}>{item.name}</Text>
+                <Text style={styles.accountName} numberOfLines={1}>
+                  {item.name}
+                </Text>
                 {isActive && (
                   <View style={styles.activeBadge}>
                     <Text style={styles.activeBadgeText}>Active</Text>
                   </View>
                 )}
               </View>
+              {item.username ? (
+                <Text style={styles.accountUsername} numberOfLines={1}>
+                  @{item.username}
+                </Text>
+              ) : null}
               <Text style={styles.accountSubtitle}>
                 {isActive
                   ? "Currently signed in"
@@ -137,30 +181,34 @@ export function SwitchAccountsScreen({
 
             {/* Actions */}
             {isActive ? (
-              <Ionicons
-                name="checkmark-circle"
-                size={22}
-                color={colors.primary}
-              />
+              <View style={styles.activeCheckWrap}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={24}
+                  color={colors.primary}
+                />
+              </View>
             ) : (
               <TouchableOpacity
                 onPress={() => handleRemoveAccount(item.id, item.name)}
                 activeOpacity={0.7}
                 style={styles.trashButton}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons
-                  name="trash-outline"
-                  size={20}
-                  color={colors.danger}
-                />
+                <View style={styles.trashIconContainer}>
+                  <Ionicons
+                    name="trash-outline"
+                    size={18}
+                    color={colors.danger}
+                  />
+                </View>
               </TouchableOpacity>
             )}
           </TouchableOpacity>
         </View>
       );
     },
-    [accounts, currentAccountId, colors, styles],
+    [accounts],
   );
 
   const ListHeader = (
@@ -221,7 +269,7 @@ export function SwitchAccountsScreen({
         <Text style={styles.sectionTitle}>Saved Accounts</Text>
       </View>
 
-      {/* Loading / Empty states live inside the card above FlatList items */}
+      {/* Loading / Empty states */}
       {loading && (
         <View style={[styles.card, styles.stateCard]}>
           <View style={styles.loadingContainer}>
@@ -265,10 +313,11 @@ export function SwitchAccountsScreen({
         <Text style={styles.headerTitle}>Switch Accounts</Text>
       </View>
 
-      <FlatList
+      <Animated.FlatList
         data={accounts}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
+        itemLayoutAnimation={LinearTransition}
         ListHeaderComponent={ListHeader}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
@@ -278,20 +327,27 @@ export function SwitchAccountsScreen({
         ListHeaderComponentStyle={styles.listHeaderStyle}
       />
 
-      {/* Switching overlay */}
+      {/* Modern Switching Overlay */}
       {isSwitching && (
-        <View style={styles.switchingOverlay}>
-          <View style={styles.switchingCard}>
-            <CustomLoader
-              size={2}
-              pullProgress={{ value: 1 } as SharedValue<number>}
-            />
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+          style={styles.switchingOverlay}
+        >
+          <Animated.View
+            entering={ZoomIn.duration(250)}
+            exiting={ZoomOut.duration(200)}
+            style={styles.switchingCard}
+          >
+            <View style={styles.switchingLoaderWrapper}>
+              <ActivityIndicator size={"large"} color={colors.primary} />
+            </View>
             <Text style={styles.switchingTitle}>Switching Account</Text>
             <Text style={styles.switchingSubtitle}>
-              Please wait while we load your account…
+              Please wait while we sync your data…
             </Text>
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       )}
     </View>
   );
@@ -326,7 +382,7 @@ const createStyles = (colors: ThemeColors) =>
     // FlatList
     listContent: {
       paddingTop: 8,
-      gap: 20,
+      gap: 12,
     },
     listHeaderStyle: {
       marginBottom: 0,
@@ -344,9 +400,9 @@ const createStyles = (colors: ThemeColors) =>
       paddingVertical: 12,
     },
     sectionTitle: {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: "700",
-      color: colors.text,
+      color: colors.textSecondary,
       textTransform: "uppercase",
       letterSpacing: 0.8,
     },
@@ -358,14 +414,14 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 16,
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
+      shadowOpacity: 0.06,
       shadowRadius: 8,
       elevation: 2,
       marginBottom: 12,
       overflow: "hidden",
     },
     addCard: {
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.primary + "30",
     },
     // Card used for loading / empty state
@@ -373,30 +429,36 @@ const createStyles = (colors: ThemeColors) =>
       marginBottom: 0,
     },
 
-    // Account row (FlatList items share the same card background)
+    // Saved Account Cards
+    cardWrapper: {
+      marginHorizontal: 20,
+    },
     accountItem: {
       flexDirection: "row",
       alignItems: "center",
       paddingVertical: 14,
       paddingHorizontal: 16,
-      minHeight: 72,
+      minHeight: 76,
       gap: 14,
       backgroundColor: colors.surface,
-      marginHorizontal: 20,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
-      borderRadius: 12,
+      borderRadius: 16,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      elevation: 2,
     },
     activeAccount: {
-      borderWidth: 1,
-      borderStyle: "dashed",
+      borderWidth: 1.5,
       borderColor: colors.primary,
-      backgroundColor: colors.background,
+      backgroundColor: colors.primary + "0A",
     },
     avatarContainer: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+      width: 46,
+      height: 46,
+      borderRadius: 23,
       backgroundColor: colors.primary + "15",
       alignItems: "center",
       justifyContent: "center",
@@ -404,20 +466,29 @@ const createStyles = (colors: ThemeColors) =>
     avatarContainerActive: {
       backgroundColor: colors.primary,
     },
+    avatarText: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: colors.primary,
+      letterSpacing: 0.5,
+    },
+    avatarTextActive: {
+      color: "#FFFFFF",
+    },
     activeDot: {
       position: "absolute",
-      bottom: 1,
-      right: 1,
-      width: 12,
-      height: 12,
-      borderRadius: 6,
+      bottom: 0,
+      right: 0,
+      width: 13,
+      height: 13,
+      borderRadius: 6.5,
       backgroundColor: "#22c55e",
       borderWidth: 2,
       borderColor: colors.surface,
     },
     accountInfo: {
       flex: 1,
-      gap: 3,
+      gap: 2,
     },
     accountNameRow: {
       flexDirection: "row",
@@ -426,14 +497,21 @@ const createStyles = (colors: ThemeColors) =>
     },
     accountName: {
       fontSize: 16,
-      fontWeight: "600",
+      fontWeight: "700",
       color: colors.text,
       letterSpacing: 0.2,
+      flexShrink: 1,
+    },
+    accountUsername: {
+      fontSize: 13,
+      fontWeight: "500",
+      color: colors.textSecondary,
     },
     accountSubtitle: {
-      fontSize: 13,
+      fontSize: 12,
       color: colors.textSecondary,
-      lineHeight: 18,
+      lineHeight: 16,
+      marginTop: 1,
     },
     activeBadge: {
       backgroundColor: colors.primary + "18",
@@ -447,24 +525,38 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.primary,
       letterSpacing: 0.4,
     },
-    trashButton: {
-      padding: 4,
+    activeCheckWrap: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.primary + "12",
     },
-    separator: {
-      height: 1,
-      backgroundColor: colors.border + "20",
-      marginLeft: 94,
+    trashButton: {
+      padding: 2,
+    },
+    trashIconContainer: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.danger + "12",
+      alignItems: "center",
+      justifyContent: "center",
     },
 
     // States
     loadingContainer: {
+      flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: 40,
+      paddingVertical: 24,
+      paddingHorizontal: 16,
       gap: 12,
     },
     loadingText: {
       fontSize: 14,
+      fontWeight: "500",
       color: colors.textSecondary,
     },
     emptyContainer: {
@@ -545,41 +637,48 @@ const createStyles = (colors: ThemeColors) =>
       lineHeight: 20,
     },
 
-    // Switching overlay
+    // Modern Switching Overlay
     switchingOverlay: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: colors.overlay,
+      backgroundColor: "rgba(0, 0, 0, 0.6)",
       alignItems: "center",
       justifyContent: "center",
-      zIndex: 100,
+      zIndex: 1000,
+      paddingHorizontal: 32,
     },
     switchingCard: {
-      backgroundColor: colors.background,
-      borderRadius: 20,
-      paddingVertical: 36,
-      paddingHorizontal: 40,
+      backgroundColor: colors.surface,
+      borderRadius: 24,
+      paddingVertical: 32,
+      paddingHorizontal: 28,
       alignItems: "center",
       justifyContent: "center",
-      gap: 12,
-      borderWidth: 1.5,
-      borderColor: colors.primary,
-      borderStyle: "dashed",
-      minWidth: 240,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.18,
+      shadowRadius: 24,
+      elevation: 12,
+      minWidth: 260,
+      maxWidth: 320,
+      width: "100%",
     },
-    switchingIconWrap: {
+    switchingLoaderWrapper: {
       alignItems: "center",
       justifyContent: "center",
+      marginBottom: 16,
     },
     switchingTitle: {
       fontSize: 18,
       fontWeight: "700",
       color: colors.text,
       letterSpacing: 0.3,
+      textAlign: "center",
     },
     switchingSubtitle: {
       fontSize: 13,
       color: colors.textSecondary,
       textAlign: "center",
-      lineHeight: 20,
+      lineHeight: 19,
+      marginTop: 6,
     },
   });

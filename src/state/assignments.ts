@@ -14,6 +14,7 @@ interface AssignmentState {
     totalScore: number;
     totalMaxMarks: number;
   }>;
+  clearAssignments: () => void;
 }
 
 export const useAssignmentStore = create<AssignmentState>((set) => ({
@@ -37,5 +38,9 @@ export const useAssignmentStore = create<AssignmentState>((set) => ({
     } catch (error) {
       console.error("Failed to fetch assignments:", error);
     }
+  },
+
+  clearAssignments: () => {
+    set({ assignments: new Map<string, AssignmentData[]>() });
   },
 }));

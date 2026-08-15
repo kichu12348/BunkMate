@@ -13,6 +13,7 @@ interface DutyLeaveState {
   deleteDutyLeave: (id: string) => Promise<void>;
   updateDutyLeave: (id: string, updates: Partial<DutyLeave>) => Promise<void>;
   clearError: () => void;
+  clearDutyLeaves: () => void;
 }
 
 export const useDutyLeaveStore = create<DutyLeaveState>((set, get) => ({
@@ -81,4 +82,5 @@ export const useDutyLeaveStore = create<DutyLeaveState>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
+  clearDutyLeaves: () => set({ dutyLeaves: [], error: null, isLoading: false }),
 }));

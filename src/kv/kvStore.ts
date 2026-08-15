@@ -106,15 +106,21 @@ export const kvHelper = {
     return Storage.getItemSync(THEME_MODE) as "light" | "dark" | null;
   },
 
-  setPfpUri(uri: string): void {
-    pfpStore.set(PFP_URL, uri);
+  setPfpUri(uri: string, accountId?: number | null): void {
+    const key = accountId ? `${PFP_URL}_${accountId}` : PFP_URL;
+    pfpStore.set(key, uri);
   },
 
-  clearPfpUri(): void {
-    pfpStore.delete(PFP_URL);
+  clearPfpUri(accountId?: number | null): void {
+    const key = accountId ? `${PFP_URL}_${accountId}` : PFP_URL;
+    pfpStore.delete(key);
   },
 
-  getPfpUri(): string | null {
+  getPfpUri(accountId?: number | null): string | null {
+    if (accountId) {
+      const accountSpecific = pfpStore.get<string>(`${PFP_URL}_${accountId}`);
+      if (accountSpecific) return accountSpecific;
+    }
     return pfpStore.get<string>(PFP_URL);
   },
 
@@ -136,7 +142,10 @@ export const kvHelper = {
   },
 
   getAccounts(): number | null {
-    return Number(settingsStore.get<string>(ACCOUNTS_KEY));
+    const raw = settingsStore.get<string>(ACCOUNTS_KEY);
+    if (!raw) return null;
+    const num = Number(raw);
+    return isNaN(num) ? null : num;
   },
 
   clearAccounts(): void {

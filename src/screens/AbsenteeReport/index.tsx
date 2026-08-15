@@ -7,6 +7,7 @@ import {
   FlatList,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -39,9 +40,11 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { DateReport, AbsentSubject, openPdf } from "../../utils/absentee";
+import { DateReport, AbsentSubject } from "../../utils/absentee";
+import { createAndShareAbsenteePdf } from "../../utils/createAbsenteeReport";
+import { useAuthStore } from "../../state/auth";
 
-const { width} = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 const CELL_SIZE = Math.floor((width * 0.9 - 40) / 7);
 
 const AnimatedTouchableOpacity =
@@ -59,11 +62,13 @@ const ToPdfBtn = ({
   reportData,
   styles,
   onPress,
+  sharing,
 }: {
   selectedDates: Date[];
   reportData: DateReport[];
   styles: ReturnType<typeof createStyles>;
   onPress: () => void;
+  sharing?: boolean;
 }) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -115,16 +120,22 @@ const ToPdfBtn = ({
           bottom: TAB_BAR_HEIGHT + 50,
           right: insets.right + 10,
         },
+        sharing && { opacity: 0.6 },
       ]}
       onPress={onPress}
       activeOpacity={0.7}
+      disabled={sharing}
     >
-      <AnimatedIonicons
-        name="document-text-outline"
-        size={24}
-        color={colors.primary}
-        style={iconAnimStyle}
-      />
+      {sharing ? (
+        <ActivityIndicator size="small" color={colors.primary} />
+      ) : (
+        <AnimatedIonicons
+          name="document-text-outline"
+          size={24}
+          color={colors.primary}
+          style={iconAnimStyle}
+        />
+      )}
     </AnimatedTouchableOpacity>
   );
 };
@@ -138,6 +149,9 @@ export const AbsenteeReportScreen: React.FC = () => {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [reportData, setReportData] = useState<DateReport[]>([]);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
+  const { name: studentName, user } = useAuthStore();
 
   const { courseSchedule, data: attendanceData } = useAttendanceStore();
 
@@ -227,7 +241,18 @@ export const AbsenteeReportScreen: React.FC = () => {
   }, []);
 
   const handleGeneratePdf = async () => {
-    await openPdf(reportData);
+    if (sharing || reportData.length === 0) return;
+    setSharing(true);
+    try {
+      await createAndShareAbsenteePdf({
+        reportData,
+        studentName,
+      });
+    } catch (e) {
+      console.warn("Absentee PDF generation failed:", e);
+    } finally {
+      setSharing(false);
+    }
   };
 
   const renderDateSection = ({ item }: { item: DateReport }) => (
@@ -392,6 +417,7 @@ export const AbsenteeReportScreen: React.FC = () => {
         styles={styles}
         reportData={reportData}
         selectedDates={selectedDates}
+        sharing={sharing}
       />
     </View>
   );

@@ -3,23 +3,26 @@ import { kvHelper } from "../kv/kvStore";
 
 export interface PfpState {
   uri: string | null;
-  setUri: (uri: string) => void;
-  initialize: () => Promise<void>;
+  setUri: (uri: string, accountId?: number | null) => void;
+  initialize: (accountId?: number | null) => Promise<void>;
+  clearUri: () => void;
 }
 
 export const usePfpStore = create<PfpState>((set) => ({
   uri: null,
-  setUri: (uri) => {
+  setUri: (uri, accountId) => {
+    const accId = accountId ?? kvHelper.getAccounts();
     if (uri && uri.trim()) {
-      kvHelper.setPfpUri(uri);
+      kvHelper.setPfpUri(uri, accId);
       set({ uri });
     } else {
-      kvHelper.clearPfpUri();
+      kvHelper.clearPfpUri(accId);
       set({ uri: null });
     }
   },
-  initialize: async () => {
-    const uri = kvHelper.getPfpUri();
+  initialize: async (accountId) => {
+    const accId = accountId ?? kvHelper.getAccounts();
+    const uri = kvHelper.getPfpUri(accId);
     if (uri) {
       // Import the validation function dynamically to avoid circular imports
       const { validatePfpUri } = require("../utils/pfpUtil");
@@ -28,12 +31,12 @@ export const usePfpStore = create<PfpState>((set) => ({
         set({ uri });
       } else {
         // Clear invalid URI
-        kvHelper.clearPfpUri();
+        kvHelper.clearPfpUri(accId);
         set({ uri: null });
-        //  console.log("Profile picture file no longer exists, clearing URI");
       }
     } else {
-      set({ uri });
+      set({ uri: null });
     }
   },
+  clearUri: () => set({ uri: null }),
 }));

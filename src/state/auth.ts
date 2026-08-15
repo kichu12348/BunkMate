@@ -180,13 +180,14 @@ export const useAuthStore = create<AuthState>((set) => ({
           isLoading: false,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       set({
         user: null,
         isAuthenticated: false,
         isLoading: false,
-        error: "Failed to check authentication status",
+        error: error?.message || "Failed to check authentication status",
       });
+      throw error;
     } finally {
       if (cb) {
         setTimeout(() => cb(), 200);
@@ -224,7 +225,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     }),
   clearData: () => {
     set({
-      isAuthenticated: true,
+      user: null,
+      name: null,
+      isAuthenticated: false,
       isLoading: false,
       error: null,
       verifiedUsername: null,

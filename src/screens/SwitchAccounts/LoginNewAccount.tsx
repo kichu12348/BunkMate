@@ -29,18 +29,6 @@ import { useAttendanceStore } from "../../state/attendance";
 import { useNotificationsStore } from "../../state/notifications";
 import { useSurveysStore } from "../../state/surveys";
 
-async function reInitAllStores() {
-  const { fetchAttendance, clearAttendanceData } =
-    useAttendanceStore.getState();
-  clearAttendanceData();
-  fetchAttendance();
-  const { clearNotifications } = useNotificationsStore.getState();
-  clearNotifications();
-  const { clearSurveys, fetchSurveys } = useSurveysStore.getState();
-  clearSurveys();
-  fetchSurveys();
-}
-
 type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const LoginNewAccount: React.FC<{ navigation: RootNavigationProp }> = ({
@@ -120,7 +108,13 @@ export const LoginNewAccount: React.FC<{ navigation: RootNavigationProp }> = ({
       const acc = await checkAccountExists(username);
       if (acc) {
         await switchAccount(acc.id, (switched) => {
-          if (!switched) navigation.popToTop();
+          if (switched) {
+            if (navigation.canGoBack()) {
+              navigation.popToTop();
+            } else {
+              navigation.navigate("MainTabs");
+            }
+          }
           resetLoginFlow();
         });
         return;
@@ -132,7 +126,13 @@ export const LoginNewAccount: React.FC<{ navigation: RootNavigationProp }> = ({
           stay_logged_in: true,
         },
         addAccount,
-      ).then(() => reInitAllStores());
+      );
+      resetLoginFlow();
+      if (navigation.canGoBack()) {
+        navigation.popToTop();
+      } else {
+        navigation.navigate("MainTabs");
+      }
     } catch (error: unknown) {
       throw error instanceof Error ? error : new Error("Login failed");
     }

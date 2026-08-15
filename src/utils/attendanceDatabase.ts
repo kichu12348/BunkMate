@@ -1,7 +1,32 @@
 import { database } from "../db/database";
 import { CourseSchedule } from "../types/api";
+import { kvHelper } from "../kv/kvStore";
 
 export class AttendanceDatabase {
+  private static getKey(
+    subjectId: string,
+    year: number,
+    month: number,
+    day: number,
+    hour: number,
+    accountId?: number | null,
+  ): string {
+    const accId = accountId ?? kvHelper.getAccounts();
+    return accId
+      ? `att_${accId}_${subjectId}_${year}_${month}_${day}_${hour}`
+      : `${subjectId}-${year}-${month}-${day}-${hour}`;
+  }
+
+  private static getLegacyKey(
+    subjectId: string,
+    year: number,
+    month: number,
+    day: number,
+    hour: number,
+  ): string {
+    return `${subjectId}-${year}-${month}-${day}-${hour}`;
+  }
+
   /**
    * Get attendance record for a specific subject, date and hour
    */
@@ -10,15 +35,23 @@ export class AttendanceDatabase {
     year: number,
     month: number,
     day: number,
-    hour: number
+    hour: number,
+    accountId?: number | null,
   ): Promise<CourseSchedule | null> {
     try {
-      const key = `${subjectId}-${year}-${month}-${day}-${hour}`;
-      const recordData = await database.get(key);
+      const key = this.getKey(subjectId, year, month, day, hour, accountId);
+      let recordData = await database.get(key);
+
+      // Check legacy key if not found under scoped key
+      if (!recordData) {
+        const legacyKey = this.getLegacyKey(subjectId, year, month, day, hour);
+        recordData = await database.get(legacyKey);
+      }
+
       if (recordData) {
         return JSON.parse(recordData) as CourseSchedule;
       }
-      
+
       return null;
     } catch (error) {
       console.error("Error getting attendance record:", error);
@@ -35,10 +68,11 @@ export class AttendanceDatabase {
     month: number,
     day: number,
     hour: number,
-    record: CourseSchedule
+    record: CourseSchedule,
+    accountId?: number | null,
   ): Promise<void> {
     try {
-      const key = `${subjectId}-${year}-${month}-${day}-${hour}`;
+      const key = this.getKey(subjectId, year, month, day, hour, accountId);
       await database.set(key, JSON.stringify(record));
     } catch (error) {
       console.error("Error saving attendance record:", error);
@@ -54,11 +88,14 @@ export class AttendanceDatabase {
     year: number,
     month: number,
     day: number,
-    hour: number
+    hour: number,
+    accountId?: number | null,
   ): Promise<void> {
     try {
-      const key = `${subjectId}-${year}-${month}-${day}-${hour}`;
+      const key = this.getKey(subjectId, year, month, day, hour, accountId);
       await database.delete(key);
+      const legacyKey = this.getLegacyKey(subjectId, year, month, day, hour);
+      await database.delete(legacyKey);
     } catch (error) {
       console.error("Error deleting attendance record:", error);
       throw error;
@@ -73,11 +110,15 @@ export class AttendanceDatabase {
     year: number,
     month: number,
     day: number,
-    hour: number
+    hour: number,
+    accountId?: number | null,
   ): Promise<boolean> {
     try {
-      const key = `${subjectId}-${year}-${month}-${day}-${hour}`;
-      return await database.has(key);
+      const key = this.getKey(subjectId, year, month, day, hour, accountId);
+      const exists = await database.has(key);
+      if (exists) return true;
+      const legacyKey = this.getLegacyKey(subjectId, year, month, day, hour);
+      return await database.has(legacyKey);
     } catch (error) {
       console.error("Error checking attendance record:", error);
       return false;
@@ -91,19 +132,27 @@ export class AttendanceDatabase {
     subjectId: string,
     year: number,
     month: number,
-    day: number
+    day: number,
+    accountId?: number | null,
   ): Promise<CourseSchedule[]> {
     try {
       const records: CourseSchedule[] = [];
-      
+
       // Check for records across all possible hours (1-12 typically)
       for (let hour = 1; hour <= 12; hour++) {
-        const record = await this.getAttendanceRecord(subjectId, year, month, day, hour);
+        const record = await this.getAttendanceRecord(
+          subjectId,
+          year,
+          month,
+          day,
+          hour,
+          accountId,
+        );
         if (record) {
           records.push(record);
         }
       }
-      
+
       return records;
     } catch (error) {
       console.error("Error getting attendance records for date:", error);
@@ -113,7 +162,6 @@ export class AttendanceDatabase {
 
   /**
    * Check if a time slot is already occupied by any subject
-   * This version takes a list of known subject IDs to check against
    */
   static async checkTimeSlotConflictWithSubjects(
     year: number,
@@ -121,23 +169,36 @@ export class AttendanceDatabase {
     day: number,
     hour: number,
     allSubjectIds: string[],
-    excludeSubjectId?: string
+    excludeSubjectId?: string,
+    accountId?: number | null,
   ): Promise<{ hasConflict: boolean; conflictingSubject?: string }> {
     try {
       for (const subjectId of allSubjectIds) {
         if (excludeSubjectId && subjectId === excludeSubjectId) {
-          continue; // Skip the subject we're trying to add attendance for
+          continue;
         }
-        
-        const record = await this.getAttendanceRecord(subjectId, year, month, day, hour);
-        if (record && (record.user_attendance || record.teacher_attendance || record.final_attendance)) {
+
+        const record = await this.getAttendanceRecord(
+          subjectId,
+          year,
+          month,
+          day,
+          hour,
+          accountId,
+        );
+        if (
+          record &&
+          (record.user_attendance ||
+            record.teacher_attendance ||
+            record.final_attendance)
+        ) {
           return {
             hasConflict: true,
-            conflictingSubject: subjectId
+            conflictingSubject: subjectId,
           };
         }
       }
-      
+
       return { hasConflict: false };
     } catch (error) {
       console.error("Error checking time slot conflict:", error);
@@ -153,18 +214,24 @@ export class AttendanceDatabase {
     month: number,
     day: number,
     hour: number,
-    excludeSubjectId?: string
+    excludeSubjectId?: string,
+    accountId?: number | null,
   ): Promise<{ hasConflict: boolean; conflictingSubject?: string }> {
     try {
-      // Common subject ID patterns (you may need to adjust these based on your app's subject ID format)
       const commonSubjectIds = [
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
-        '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
-        '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'
+        "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+        "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+        "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
       ];
-      
+
       return await this.checkTimeSlotConflictWithSubjects(
-        year, month, day, hour, commonSubjectIds, excludeSubjectId
+        year,
+        month,
+        day,
+        hour,
+        commonSubjectIds,
+        excludeSubjectId,
+        accountId,
       );
     } catch (error) {
       console.error("Error checking time slot conflict:", error);
@@ -180,22 +247,35 @@ export class AttendanceDatabase {
     year: number,
     month: number,
     day: number,
-    hour: number
+    hour: number,
+    accountId?: number | null,
   ): Promise<boolean> {
     try {
-      // Check if this time slot is already occupied by another subject
-      const { hasConflict } = await this.checkTimeSlotConflict(year, month, day, hour, subjectId);
-      
+      const { hasConflict } = await this.checkTimeSlotConflict(
+        year,
+        month,
+        day,
+        hour,
+        subjectId,
+        accountId,
+      );
+
       if (hasConflict) {
         return true;
       }
-      
-      // Also check if the current subject has a conflict flag set
-      const record = await this.getAttendanceRecord(subjectId, year, month, day, hour);
+
+      const record = await this.getAttendanceRecord(
+        subjectId,
+        year,
+        month,
+        day,
+        hour,
+        accountId,
+      );
       if (record && record.is_conflict === 1) {
         return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error("Error checking for conflicts:", error);
@@ -214,26 +294,33 @@ export class AttendanceDatabase {
     hour: number,
     attendance: "Present" | "Absent",
     existingRecord?: CourseSchedule,
-    allSubjectIds?: string[]
+    allSubjectIds?: string[],
+    accountId?: number | null,
   ): Promise<CourseSchedule> {
     try {
-      // Check for time slot conflicts before marking attendance
       if (allSubjectIds) {
-        const { hasConflict, conflictingSubject } = await this.checkTimeSlotConflictWithSubjects(
-          year, month, day, hour, allSubjectIds, subjectId
-        );
-        
+        const { hasConflict, conflictingSubject } =
+          await this.checkTimeSlotConflictWithSubjects(
+            year,
+            month,
+            day,
+            hour,
+            allSubjectIds,
+            subjectId,
+            accountId,
+          );
+
         if (hasConflict) {
-          throw new Error(`Time slot conflict: Subject ${conflictingSubject} already has attendance for ${hour}:00 on ${day}/${month}/${year}`);
+          throw new Error(
+            `Time slot conflict: Subject ${conflictingSubject} already has attendance for ${hour}:00 on ${day}/${month}/${year}`,
+          );
         }
       }
 
       const attendanceValue = attendance === "Present" ? "present" : "absent";
-      
       let record: CourseSchedule;
-      
+
       if (existingRecord) {
-        // Update existing record
         record = {
           ...existingRecord,
           user_attendance: attendanceValue,
@@ -242,13 +329,9 @@ export class AttendanceDatabase {
           is_user_override: 1,
           updated_at: Date.now(),
           last_user_update: Date.now(),
+          is_conflict: 0,
         };
-        
-        // Don't check for conflicts here - let the display logic handle it
-        // Just mark that this was entered by student
-        record.is_conflict = 0; // Reset conflict flag, will be calculated during display
       } else {
-        // Create new record
         record = {
           id: 0,
           subject_id: subjectId,
@@ -269,7 +352,15 @@ export class AttendanceDatabase {
         };
       }
 
-      await this.saveAttendanceRecord(subjectId, year, month, day, hour, record);
+      await this.saveAttendanceRecord(
+        subjectId,
+        year,
+        month,
+        day,
+        hour,
+        record,
+        accountId,
+      );
       return record;
     } catch (error) {
       console.error("Error marking attendance:", error);
@@ -286,10 +377,18 @@ export class AttendanceDatabase {
     month: number,
     day: number,
     hour: number,
-    resolution: "accept_teacher" | "keep_user"
+    resolution: "accept_teacher" | "keep_user",
+    accountId?: number | null,
   ): Promise<CourseSchedule> {
     try {
-      const existingRecord = await this.getAttendanceRecord(subjectId, year, month, day, hour);
+      const existingRecord = await this.getAttendanceRecord(
+        subjectId,
+        year,
+        month,
+        day,
+        hour,
+        accountId,
+      );
       if (!existingRecord) {
         throw new Error("No record found to resolve conflict");
       }
@@ -308,7 +407,15 @@ export class AttendanceDatabase {
         updatedRecord.is_user_override = 1;
       }
 
-      await this.saveAttendanceRecord(subjectId, year, month, day, hour, updatedRecord);
+      await this.saveAttendanceRecord(
+        subjectId,
+        year,
+        month,
+        day,
+        hour,
+        updatedRecord,
+        accountId,
+      );
       return updatedRecord;
     } catch (error) {
       console.error("Error resolving conflict:", error);
@@ -317,35 +424,46 @@ export class AttendanceDatabase {
   }
 
   /**
-   * Get all manual attendance records from database
+   * Get all manual attendance records from database for an account
    */
-  static async getAllManualAttendanceRecords(): Promise<Map<string, CourseSchedule[]>> {
+  static async getAllManualAttendanceRecords(
+    accountId?: number | null,
+  ): Promise<Map<string, CourseSchedule[]>> {
     try {
+      const accId = accountId ?? kvHelper.getAccounts();
       const allKeys = await database.getAllKeys();
-      const attendanceKeys = allKeys.filter(key => 
-        key.includes('-') && key.split('-').length === 5
-      );
-      
+
+      // Only load keys matching current account prefix (or legacy keys if no account exists)
+      const prefix = accId ? `att_${accId}_` : null;
+
+      const attendanceKeys = allKeys.filter((key) => {
+        if (prefix && key.startsWith(prefix)) return true;
+        if (!accId && key.includes("-") && key.split("-").length === 5) {
+          return true;
+        }
+        return false;
+      });
+
       const recordsMap = new Map<string, CourseSchedule[]>();
-      
+
       for (const key of attendanceKeys) {
         try {
           const recordData = await database.get(key);
           if (recordData) {
             const record = JSON.parse(recordData) as CourseSchedule;
             const subjectId = record.subject_id;
-            
+
             if (!recordsMap.has(subjectId)) {
               recordsMap.set(subjectId, []);
             }
-            
+
             recordsMap.get(subjectId)!.push(record);
           }
         } catch (parseError) {
           console.warn(`Failed to parse record for key ${key}:`, parseError);
         }
       }
-      
+
       return recordsMap;
     } catch (error) {
       console.error("Error getting all manual attendance records:", error);
