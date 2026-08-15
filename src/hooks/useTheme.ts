@@ -1,15 +1,24 @@
 import { useThemeStore } from '../state/themeStore';
+import { useThemeTransitionStore } from '../components/ThemeTransition/state/themeTransitionStore';
 import { ThemeColors } from '../types/theme';
 
 export const useTheme = () => {
   const { mode, colors, setMode, toggleMode, initializeTheme } = useThemeStore();
+  const toggleModeWithTransition = useThemeTransitionStore(
+    (state) => state.toggleModeWithTransition
+  );
+  const isTransitioning = useThemeTransitionStore(
+    (state) => state.isTransitioning
+  );
 
   return {
     mode,
     colors,
     setMode,
     toggleMode,
+    toggleModeWithTransition,
     initializeTheme,
+    isTransitioning,
     isDark: mode === 'dark',
     isLight: mode === 'light',
   };
@@ -21,3 +30,4 @@ export const useThemedStyles = <T extends Record<string, any>>(
   const { colors } = useTheme();
   return styleFactory(colors);
 };
+

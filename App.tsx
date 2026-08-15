@@ -14,6 +14,7 @@ import { useFonts } from "expo-font";
 import Toast from "./src/components/UI/toast";
 import { useThemeStore } from "./src/state/themeStore";
 import useAccountStore from "./src/state/accounts";
+import { ThemeTransitionWrapper } from "./src/components/ThemeTransition";
 //import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
 
 enableScreens();
@@ -98,14 +99,16 @@ export default function App() {
         translucent
         backgroundColor="transparent"
       />
-      <SafeAreaProvider>
-        <NavigationContainer onReady={hideSplashScreen}>
-          {appIsReady &&
-            (isAuthenticated ? <RootNavigator /> : <AuthNavigator />)}
-        </NavigationContainer>
-        <Toast />
-        {/* <NewUpdateAlertModal defaultVisible={false}/> */}
-      </SafeAreaProvider>
+      <ThemeTransitionWrapper>
+        <SafeAreaProvider>
+          <NavigationContainer onReady={hideSplashScreen}>
+            {appIsReady &&
+              (isAuthenticated ? <RootNavigator /> : <AuthNavigator />)}
+          </NavigationContainer>
+          <Toast />
+          {/* <NewUpdateAlertModal defaultVisible={false}/> */}
+        </SafeAreaProvider>
+      </ThemeTransitionWrapper>
     </GestureHandlerRootView>
   );
 }

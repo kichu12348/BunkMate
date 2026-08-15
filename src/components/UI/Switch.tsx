@@ -16,6 +16,7 @@ interface SwitchProps {
   thumbDisabledColor?: string;
   trackEnabledColor?: string;
   trackDisabledColor?: string;
+  disabled?: boolean;
 }
 
 export default function Switch({
@@ -26,6 +27,7 @@ export default function Switch({
   thumbDisabledColor = "#f0f0f0",
   trackEnabledColor = "#4caf50",
   trackDisabledColor = "#888888",
+  disabled = false,
 }: SwitchProps) {
   const switchWidth = size * 2;
   const switchHeight = size;
@@ -55,7 +57,7 @@ export default function Switch({
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1],
-      [thumbDisabledColor, thumbEnabledColor]
+      [thumbDisabledColor, thumbEnabledColor],
     ),
   }));
 
@@ -63,11 +65,12 @@ export default function Switch({
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1],
-      [trackDisabledColor, trackEnabledColor]
+      [trackDisabledColor, trackEnabledColor],
     ),
   }));
 
   const handlePress = () => {
+    if (disabled) return;
     onValueChange(!value);
   };
 
@@ -76,6 +79,7 @@ export default function Switch({
       onPress={handlePress}
       style={styles.container}
       activeOpacity={0.8}
+      disabled={disabled}
     >
       <Animated.View
         style={[

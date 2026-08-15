@@ -14,6 +14,8 @@ import {
   ActivityIndicator,
   Linking,
   Image,
+  StyleProp,
+  ViewStyle,
   // TextInput,
 } from "react-native";
 import {
@@ -39,13 +41,6 @@ import { useNavigation } from "@react-navigation/native";
 import Switch from "../../components/UI/Switch";
 import { useToastStore } from "../../state/toast";
 import { useThemeStore } from "../../state/themeStore";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  interpolateColor,
-  Easing,
-} from "react-native-reanimated";
 import AnimatedHeart from "../../components/UI/AnimatedHeart";
 import { APP_CONFIG } from "../../constants/config";
 import { darkTheme, lightTheme } from "../../constants/colors";
@@ -73,7 +68,7 @@ interface SettingsScreenProps {
 }
 
 function debounced(func: Function, delay: number) {
-  let timeoutId: number | undefined;
+  let timeoutId: NodeJS.Timeout;
   return (...args: unknown[]) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
@@ -85,8 +80,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   navigation: tabNavigation,
 }) => {
   const styles = useThemedStyles(createStyles);
-  const { isDark, toggleMode } = useTheme();
+  const { isDark, toggleModeWithTransition, isTransitioning } = useTheme();
   const colors = useThemeStore((state) => state.colors);
+  const switchRef = useRef<View>(null);
   const {
     selectedYear,
     selectedSemester,
@@ -109,12 +105,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const pfpUri = usePfpStore((s) => s.uri);
   const updatePfp = usePfp(() => setPfpLoadingError(false));
 
-  const bgFrom = useSharedValue(colors.background);
-  const bgTo = useSharedValue(colors.background);
-  const surfaceFrom = useSharedValue(colors.surface);
-  const surfaceTo = useSharedValue(colors.surface);
-  const progress = useSharedValue(1);
-
   const [pfpLoadingError, setPfpLoadingError] = useState(false);
 
   const navigation = useNavigation<RootNavigationProp>();
@@ -129,72 +119,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   }, [user?.username]);
 
-  useEffect(() => {
-    // When colors object changes (theme toggled), update from/to and animate
-    if (
-      bgTo.value !== colors.background ||
-      surfaceTo.value !== colors.surface
-    ) {
-      bgFrom.value = bgTo.value;
-      surfaceFrom.value = surfaceTo.value;
-      bgTo.value = colors.background;
-      surfaceTo.value = colors.surface;
-      progress.value = 0;
-      progress.value = withTiming(1, {
-        duration: 320,
-        easing: Easing.inOut(Easing.ease),
-      });
-    }
-  }, [colors, bgFrom, bgTo, surfaceFrom, surfaceTo, progress]);
-
-  const containerAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(
-      progress.value,
-      [0, 1],
-      [bgFrom.value, bgTo.value],
-    ),
-  }));
-
-  const cardAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(
-      progress.value,
-      [0, 1],
-      [surfaceFrom.value, surfaceTo.value],
-    ),
-  }));
-
-  const darkModeIconTransLate = useSharedValue(isDark ? 0 : -30);
-  const lightModeIconTransLate = useSharedValue(isDark ? 30 : 0);
-
-  const lightModeIconAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        translateX: lightModeIconTransLate.value,
-      },
-      {
-        translateY: lightModeIconTransLate.value,
-      },
-    ] as [{ translateX: number }, { translateY: number }],
-  }));
-
-  const darkModeIconAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        translateX: darkModeIconTransLate.value,
-      },
-      {
-        translateY: darkModeIconTransLate.value * -1,
-      },
-    ] as [{ translateX: number }, { translateY: number }],
-  }));
-
-  const AnimatedCard: React.FC<{
-    style?: React.ComponentProps<typeof Animated.View>["style"];
+  const Card: React.FC<{
+    style?: StyleProp<ViewStyle>;
     children: React.ReactNode;
   }> = ({ style, children }) => (
-    <Animated.View style={[styles.card, cardAnimatedStyle, style]}>
+    <View style={[styles.card, style]}>
       {children}
-    </Animated.View>
+    </View>
   );
 
   const fetchAttendanceDebounced = useMemo(
@@ -258,25 +189,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   const handleToggleTheme = () => {
-    toggleMode();
-    if (isDark) {
-      darkModeIconTransLate.value = withTiming(-30, {
-        duration: 320,
-        easing: Easing.out(Easing.ease),
-      });
-      lightModeIconTransLate.value = withTiming(0, {
-        duration: 320,
-        easing: Easing.in(Easing.ease),
+    if (isTransitioning) return;
+    if (switchRef.current) {
+      switchRef.current.measureInWindow((x, y, width, height) => {
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        toggleModeWithTransition({ x: cx, y: cy });
       });
     } else {
-      darkModeIconTransLate.value = withTiming(0, {
-        duration: 320,
-        easing: Easing.in(Easing.ease),
-      });
-      lightModeIconTransLate.value = withTiming(30, {
-        duration: 320,
-        easing: Easing.out(Easing.ease),
-      });
+      toggleModeWithTransition();
     }
   };
 
@@ -360,10 +281,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   );
 
   return (
-    <Animated.View
+    <View
       style={[
         styles.container,
-        containerAnimatedStyle,
         { paddingTop: insets.top },
       ]}
     >
@@ -383,7 +303,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       >
         {/* User Profile Section */}
         <View style={styles.profileSection}>
-          <Animated.View style={[styles.profileCard, cardAnimatedStyle]}>
+          <View style={styles.profileCard}>
             <View style={styles.profileHeader}>
               <TouchableOpacity
                 style={styles.profileAvatarContainer}
@@ -422,7 +342,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 </View>
               </View>
             </View>
-          </Animated.View>
+          </View>
         </View>
         {/* Academic Settings */}
         <View style={styles.section}>
@@ -435,7 +355,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <Text style={styles.sectionTitle}>Academic Settings</Text>
           </View>
 
-          <AnimatedCard>
+          <Card>
             <View style={styles.cardContent}>
               <View style={styles.dropdownContainer}>
                 <Dropdown
@@ -479,7 +399,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 )}
               </TouchableOpacity>
             </View>
-          </AnimatedCard>
+          </Card>
         </View>
         {/* Preferences */}
         <View style={styles.section}>
@@ -492,50 +412,34 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <Text style={styles.sectionTitle}>Preferences</Text>
           </View>
 
-          <AnimatedCard>
+          <Card>
             <SettingItem
               Icon={
-                <View style={styles.themeIconContainer}>
-                  <Animated.View
-                    style={[
-                      lightModeIconAnimatedStyle,
-                      styles.themeIcon,
-                      isDark && styles.themeIconHidden,
-                    ]}
-                  >
-                    <Ionicons
-                      name="sunny"
-                      color={lightTheme.warning}
-                      size={22}
-                    />
-                  </Animated.View>
-                  <Animated.View
-                    style={[
-                      darkModeIconAnimatedStyle,
-                      styles.themeIcon,
-                      !isDark && styles.themeIconHidden,
-                    ]}
-                  >
-                    <Ionicons name="moon" color={darkTheme.primary} size={22} />
-                  </Animated.View>
-                </View>
+                <Ionicons
+                  name={isDark ? "moon" : "sunny"}
+                  color={isDark ? darkTheme.primary : lightTheme.warning}
+                  size={22}
+                />
               }
               title="Dark Mode"
               subtitle={isDark ? "Dark theme enabled" : "Light theme enabled"}
               rightElement={
-                <Switch
-                  value={isDark}
-                  onValueChange={handleToggleTheme}
-                  size={30}
-                  thumbDisabledColor={lightTheme.surface}
-                  thumbEnabledColor={darkTheme.surface}
-                  trackDisabledColor={lightTheme.border}
-                  trackEnabledColor={darkTheme.primary}
-                />
+                <View ref={switchRef} collapsable={false}>
+                  <Switch
+                    value={isDark}
+                    onValueChange={handleToggleTheme}
+                    size={30}
+                    disabled={isTransitioning}
+                    thumbDisabledColor={lightTheme.surface}
+                    thumbEnabledColor={darkTheme.surface}
+                    trackDisabledColor={lightTheme.border}
+                    trackEnabledColor={darkTheme.primary}
+                  />
+                </View>
               }
               showArrow={false}
             />
-          </AnimatedCard>
+          </Card>
           {/* <AnimatedCard>
             <View style={{ padding: 16, gap: 12 }}>
               <View
@@ -597,7 +501,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <Text style={styles.sectionTitle}>About & Support</Text>
           </View>
 
-          <AnimatedCard>
+          <Card>
             <SettingItem
               Icon={
                 <Entypo name="emoji-happy" size={22} color={colors.primary} />
@@ -621,9 +525,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               subtitle={APP_CONFIG.VERSION}
               showArrow={false}
             />
-          </AnimatedCard>
+          </Card>
 
-          <AnimatedCard>
+          <Card>
             <SettingItem
               Icon={
                 <Ionicons name="logo-github" size={22} color={colors.text} />
@@ -652,7 +556,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               subtitle="Support the development"
               onPress={handleCoffee}
             />
-          </AnimatedCard>
+          </Card>
         </View>
 
         {/* Account Actions */}
@@ -666,7 +570,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <Text style={styles.sectionTitle}>Account</Text>
           </View>
 
-          <AnimatedCard style={styles.primCard}>
+          <Card style={styles.primCard}>
             <SettingItem
               Icon={
                 <AntDesign
@@ -682,9 +586,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 <AntDesign name="swap" size={22} color={colors.primary} />
               }
             />
-          </AnimatedCard>
+          </Card>
 
-          <AnimatedCard style={styles.dangerCard}>
+          <Card style={styles.dangerCard}>
             <SettingItem
               Icon={
                 <Ionicons
@@ -698,7 +602,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               onPress={handleLogout}
               danger={true}
             />
-          </AnimatedCard>
+          </Card>
         </View>
 
         {/* Error Display */}
@@ -719,7 +623,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <AnimatedHeart size={20} />
         </View>
       </ScrollView>
-    </Animated.View>
+    </View>
   );
 };
 
@@ -943,19 +847,6 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.primary,
       minWidth: 30,
       textAlign: "center",
-    },
-    // Theme Icon
-    themeIconContainer: {
-      position: "relative",
-      width: 22,
-      height: 22,
-      overflow: "hidden",
-    },
-    themeIcon: {
-      position: "absolute",
-    },
-    themeIconHidden: {
-      opacity: 0,
     },
 
     // Primary Button
