@@ -163,7 +163,7 @@ const GifPickerModal = ({
       if (searchQuery.trim().length > 0) {
         getGifsByQuery(searchQuery)
           .then((data) => {
-            setGifs(data.results || []);
+            setGifs(data || []);
           })
           .catch((e) => {
             console.error("Error fetching gifs:", e);
@@ -189,8 +189,8 @@ const GifPickerModal = ({
         }
         const data = await getGifs();
         if (isMounted) {
-          setGifs(data.results || []);
-          currGifsRef.current = data.results || [];
+          setGifs(data || []);
+          currGifsRef.current = data || [];
         }
       } catch (e) {
         console.error("Error fetching gifs:", e);
@@ -248,7 +248,7 @@ const GifPickerModal = ({
                     fontSize: 16,
                     padding: 0,
                   }}
-                  placeholder="Search Tenor GIFs..."
+                  placeholder="Search Klipy GIFs..."
                   placeholderTextColor={colors.textSecondary}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
@@ -281,7 +281,7 @@ const GifPickerModal = ({
             ) : (
               <Animated.FlatList
                 data={gifs}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => String(item.id)}
                 numColumns={3}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{
@@ -301,8 +301,9 @@ const GifPickerModal = ({
                     }}
                     onPress={() => {
                       const gifUrl =
-                        item.media_formats?.gif?.url ??
-                        item.media?.[0]?.gif?.url;
+                        item.file?.hd?.gif?.url ??
+                        item.file?.md?.gif?.url ??
+                        item.file?.sm?.gif?.url;
 
                       if (gifUrl) {
                         onSelect(gifUrl);
@@ -314,8 +315,8 @@ const GifPickerModal = ({
                     <Image
                       source={{
                         uri:
-                          item.media_formats?.tinygif?.url ??
-                          item.media?.[0]?.tinygif?.url,
+                          item.file?.sm?.gif?.url ??
+                          item.file?.md?.gif?.url,
                         cache: "force-cache",
                       }}
                       style={{ width: "100%", height: "100%" }}

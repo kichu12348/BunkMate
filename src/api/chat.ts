@@ -15,19 +15,19 @@ export const getMessages = async (
 };
 
 export const getGifs = async () => {
-  const baseUrl = CHAT_CONFIG.TENOR_API_URL;
-  const apiKey = CHAT_CONFIG.TENOR_API_KEY;
+  const baseUrl = CHAT_CONFIG.KLIPY_API_URL;
+  const apiKey = CHAT_CONFIG.KLIPY_API_KEY;
 
-  const url = `${baseUrl}/featured?key=${apiKey}&limit=30`;
+  const url = `${baseUrl}/api/v1/${apiKey}/gifs/trending?page=1&per_page=30&customer_id=36177&locale=in`;
   const response = await axios.get(url);
-  return response.data;
+  return response.data?.data?.data ?? [];
 };
 
 export const getGifsByQuery = async (query: string) => {
-  const baseUrl = CHAT_CONFIG.TENOR_API_URL;
-  const apiKey = CHAT_CONFIG.TENOR_API_KEY;
+  const baseUrl = CHAT_CONFIG.KLIPY_API_URL;
+  const apiKey = CHAT_CONFIG.KLIPY_API_KEY;
 
-  const url = `${baseUrl}/search?q=${encodeURIComponent(query)}&key=${apiKey}&limit=30`;
+  const url = `${baseUrl}/api/v1/${apiKey}/gifs/search?q=${encodeURIComponent(query)}&page=1&per_page=30&customer_id=36177&locale=in`;
   const response = await axios.get(url);
-  return response.data;
+  return response.data?.data?.data ?? [];
 };

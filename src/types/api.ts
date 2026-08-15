@@ -305,14 +305,25 @@ export interface GifMedia {
   url: string;
 }
 
+export interface KlipyGifFormat {
+  gif?: GifMedia;
+  webp?: GifMedia;
+  jpg?: GifMedia;
+  mp4?: GifMedia;
+  webm?: GifMedia;
+}
+
 export interface GifData {
-  id: string;
-  media_formats?: {
-    gif?: GifMedia;
-    tinygif?: GifMedia;
+  id: number;
+  slug?: string;
+  title?: string;
+  type?: string;
+  blur_preview?: string;
+  tags?: string[];
+  file?: {
+    hd?: KlipyGifFormat;
+    md?: KlipyGifFormat;
+    sm?: KlipyGifFormat;
+    xs?: KlipyGifFormat;
   };
-  media?: Array<{
-    gif?: GifMedia;
-    tinygif?: GifMedia;
-  }>;
 }
