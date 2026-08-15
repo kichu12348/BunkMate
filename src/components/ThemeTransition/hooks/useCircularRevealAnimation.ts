@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback } from "react";
 import {
   useSharedValue,
   useDerivedValue,
@@ -6,42 +6,43 @@ import {
   Easing,
   runOnJS,
 } from "react-native-reanimated";
-import { Skia } from "@shopify/react-native-skia";
-import { TransitionOrigin } from "../types";
-import { calculateMaxRadius, resolveOrigin } from "../utils/transitionMath";
 
 interface UseCircularRevealAnimationOptions {
-  active: boolean;
-  origin: TransitionOrigin | null;
-  width: number;
-  height: number;
   duration?: number;
   onAnimationEnd: () => void;
 }
 
 export const useCircularRevealAnimation = ({
-  active,
-  origin,
-  width,
-  height,
-  duration = 5000,
+  duration = 550,
   onAnimationEnd,
 }: UseCircularRevealAnimationOptions) => {
-  const radius = useSharedValue(0);
+  // 0 → 1 progress value that drives the radius
+  const transition = useSharedValue(0);
+
+  // Circle centre and target radius — set before starting the animation
   const circleX = useSharedValue(0);
   const circleY = useSharedValue(0);
+  const maxRadius = useSharedValue(0);
 
-  useEffect(() => {
-    if (active && width > 0 && height > 0) {
-      const resolved = resolveOrigin(origin, width, height);
-      circleX.value = resolved.x;
-      circleY.value = resolved.y;
-      radius.value = 0;
+  // Derived animated radius: linearly interpolates 0 → maxRadius
+  // mix(t, 0, max) === t * max — avoids the removed `mix` export in Reanimated v4
+  const animatedRadius = useDerivedValue(
+    () => transition.value * maxRadius.value
+  );
 
-      const maxRadius = calculateMaxRadius(resolved, width, height);
+  /**
+   * Call this once both overlay1 and overlay2 are ready.
+   * Sets the circle origin / max radius, resets progress, then animates.
+   */
+  const startTransition = useCallback(
+    (cx: number, cy: number, radius: number) => {
+      circleX.value = cx;
+      circleY.value = cy;
+      maxRadius.value = radius;
+      transition.value = 0;
 
-      radius.value = withTiming(
-        maxRadius,
+      transition.value = withTiming(
+        1,
         {
           duration,
           easing: Easing.out(Easing.cubic),
@@ -50,18 +51,22 @@ export const useCircularRevealAnimation = ({
           if (finished) {
             runOnJS(onAnimationEnd)();
           }
-        },
+        }
       );
-    } else {
-      radius.value = 0;
-    }
-  }, [active, origin, width, height, duration, onAnimationEnd]);
+    },
+    [duration, onAnimationEnd]
+  );
 
-  const clipPath = useDerivedValue(() => {
-    const path = Skia.Path.Make();
-    path.addCircle(circleX.value, circleY.value, radius.value);
-    return path;
-  });
+  /** Immediately reset the animation (e.g. on unmount) */
+  const resetTransition = useCallback(() => {
+    transition.value = 0;
+  }, []);
 
-  return { clipPath, radius, circleX, circleY };
+  return {
+    animatedRadius,
+    circleX,
+    circleY,
+    startTransition,
+    resetTransition,
+  };
 };

@@ -7,11 +7,21 @@ export interface TransitionOrigin {
 }
 
 export interface ThemeTransitionStoreState {
-  isTransitioning: boolean;
-  snapshot: SkImage | null;
-  origin: TransitionOrigin | null;
+  // Animation state
+  active: boolean;
+  overlay1: SkImage | null;
+  overlay2: SkImage | null;
+  circleX: number;
+  circleY: number;
+  circleRadius: number;
+  statusBarStyle: "light-content" | "dark-content";
+
+  // Root view ref for makeImageFromView
   rootViewRef: React.RefObject<View | null> | null;
   setRootViewRef: (ref: React.RefObject<View | null> | null) => void;
+
+  // Public API
+  isTransitioning: boolean;
   toggleModeWithTransition: (origin?: TransitionOrigin) => Promise<void>;
   endTransition: () => void;
 }

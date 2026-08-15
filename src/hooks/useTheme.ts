@@ -10,6 +10,9 @@ export const useTheme = () => {
   const isTransitioning = useThemeTransitionStore(
     (state) => state.isTransitioning
   );
+  const statusBarStyle = useThemeTransitionStore(
+    (state) => state.statusBarStyle
+  );
 
   return {
     mode,
@@ -19,6 +22,7 @@ export const useTheme = () => {
     toggleModeWithTransition,
     initializeTheme,
     isTransitioning,
+    statusBarStyle,
     isDark: mode === 'dark',
     isLight: mode === 'light',
   };
@@ -30,4 +34,3 @@ export const useThemedStyles = <T extends Record<string, any>>(
   const { colors } = useTheme();
   return styleFactory(colors);
 };
-
