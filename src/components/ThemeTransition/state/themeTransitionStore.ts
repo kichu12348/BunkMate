@@ -12,13 +12,15 @@ function calcMaxRadius(
   x: number,
   y: number,
   width: number,
-  height: number
+  height: number,
 ): number {
+  const safeX = typeof x === "number" && !isNaN(x) ? x : width / 2;
+  const safeY = typeof y === "number" && !isNaN(y) ? y : height / 2;
   return Math.max(
-    Math.hypot(x, y),
-    Math.hypot(width - x, y),
-    Math.hypot(x, height - y),
-    Math.hypot(width - x, height - y)
+    Math.hypot(safeX, safeY),
+    Math.hypot(width - safeX, safeY),
+    Math.hypot(safeX, height - safeY),
+    Math.hypot(width - safeX, height - safeY),
   );
 }
 
@@ -45,14 +47,20 @@ export const useThemeTransitionStore = create<ThemeTransitionStoreState>(
     // ── Core transition trigger ────────────────────────────────────────
     toggleModeWithTransition: async (origin?: TransitionOrigin) => {
       // 1. Concurrency guard
-      if (get().active) return;
+      if (get().active || get().isTransitioning) return;
       set({ active: true, isTransitioning: true });
 
       const { width, height } = Dimensions.get("window");
 
-      // Resolve origin — default to screen centre
-      const cx = origin?.x ?? width / 2;
-      const cy = origin?.y ?? height / 2;
+      // Resolve origin safely — default to screen centre
+      const cx =
+        typeof origin?.x === "number" && !isNaN(origin.x)
+          ? origin.x
+          : width / 2;
+      const cy =
+        typeof origin?.y === "number" && !isNaN(origin.y)
+          ? origin.y
+          : height / 2;
       const radius = calcMaxRadius(cx, cy, width, height);
 
       set({ circleX: cx, circleY: cy, circleRadius: radius });
@@ -80,30 +88,12 @@ export const useThemeTransitionStore = create<ThemeTransitionStoreState>(
         return;
       }
 
+      // 3. Mount overlay with old snapshot
       set({ overlay1: snapshot1 });
 
-      // 3. Toggle the theme in the Zustand store
+      // 4. Toggle the theme in the Zustand store immediately
+      // The real app tree re-renders to the new theme underneath the canvas
       useThemeStore.getState().toggleMode();
-
-      // 4. Yield the event loop so React Native can commit the new UI tree
-      await new Promise<void>((resolve) => setTimeout(resolve, 10));
-
-      // 5. Capture snapshot of the NEW theme → overlay2
-      let snapshot2 = null;
-      try {
-        snapshot2 = await makeImageFromView(ref as React.RefObject<View>);
-      } catch (err) {
-        console.warn("[ThemeTransition] overlay2 capture failed:", err);
-      }
-
-      if (!snapshot2) {
-        // Animation cannot proceed — clean up silently
-        set({ overlay1: null, active: false, isTransitioning: false });
-        return;
-      }
-
-      // 6. Both snapshots ready → overlay will react and start the animation
-      set({ overlay2: snapshot2 });
     },
 
     // ── Called by ThemeTransitionOverlay when the animation completes ──
@@ -120,5 +110,6 @@ export const useThemeTransitionStore = create<ThemeTransitionStoreState>(
           currentMode === "dark" ? "light-content" : "dark-content",
       });
     },
-  })
+  }),
 );
+

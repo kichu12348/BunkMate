@@ -6,6 +6,7 @@ import {
   Easing,
   runOnJS,
 } from "react-native-reanimated";
+import { Skia } from "@shopify/react-native-skia";
 
 interface UseCircularRevealAnimationOptions {
   duration?: number;
@@ -16,36 +17,37 @@ export const useCircularRevealAnimation = ({
   duration = 550,
   onAnimationEnd,
 }: UseCircularRevealAnimationOptions) => {
-  // 0 → 1 progress value that drives the radius
+  // 0 → 1 progress value that drives the expanding circle
   const transition = useSharedValue(0);
 
-  // Circle centre and target radius — set before starting the animation
+  // Circle centre and target radius (UI-thread shared values)
   const circleX = useSharedValue(0);
   const circleY = useSharedValue(0);
   const maxRadius = useSharedValue(0);
 
-  // Derived animated radius: linearly interpolates 0 → maxRadius
-  // mix(t, 0, max) === t * max — avoids the removed `mix` export in Reanimated v4
-  const animatedRadius = useDerivedValue(
-    () => transition.value * maxRadius.value
-  );
+  // Derived Skia Path for circular cutout clipping
+  const clipPath = useDerivedValue(() => {
+    const path = Skia.Path.Make();
+    const r = Math.max(0, transition.value * maxRadius.value);
+    path.addCircle(circleX.value, circleY.value, r);
+    return path;
+  });
 
   /**
-   * Call this once both overlay1 and overlay2 are ready.
-   * Sets the circle origin / max radius, resets progress, then animates.
+   * Start the circular reveal animation.
    */
   const startTransition = useCallback(
     (cx: number, cy: number, radius: number) => {
-      circleX.value = cx;
-      circleY.value = cy;
-      maxRadius.value = radius;
+      circleX.value = typeof cx === "number" && !isNaN(cx) ? cx : 0;
+      circleY.value = typeof cy === "number" && !isNaN(cy) ? cy : 0;
+      maxRadius.value = typeof radius === "number" && !isNaN(radius) ? radius : 0;
       transition.value = 0;
 
       transition.value = withTiming(
         1,
         {
           duration,
-          easing: Easing.out(Easing.cubic),
+          easing: Easing.bezier(0.2, 0, 0, 1),
         },
         (finished) => {
           if (finished) {
@@ -57,16 +59,15 @@ export const useCircularRevealAnimation = ({
     [duration, onAnimationEnd]
   );
 
-  /** Immediately reset the animation (e.g. on unmount) */
+  /** Immediately reset the animation */
   const resetTransition = useCallback(() => {
     transition.value = 0;
   }, []);
 
   return {
-    animatedRadius,
-    circleX,
-    circleY,
+    clipPath,
     startTransition,
     resetTransition,
   };
 };
+

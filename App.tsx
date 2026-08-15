@@ -14,7 +14,10 @@ import { useFonts } from "expo-font";
 import Toast from "./src/components/UI/toast";
 import { useThemeStore } from "./src/state/themeStore";
 import useAccountStore from "./src/state/accounts";
-import { ThemeTransitionWrapper, useThemeTransitionStore } from "./src/components/ThemeTransition";
+import {
+  ThemeTransitionWrapper,
+  useThemeTransitionStore,
+} from "./src/components/ThemeTransition";
 //import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
 
 enableScreens();
@@ -78,18 +81,18 @@ export default function App() {
     initialize();
   }, [error, fontsLoaded]);
 
-  useEffect(() => {
-    if (colors.background) {
-      const setNavigationBarColor = async () => {
-        try {
-          SystemUI.setBackgroundColorAsync(colors.background);
-        } catch (error) {
-          console.error("Error setting navigation bar color:", error);
-        }
-      };
-      setNavigationBarColor();
-    }
-  }, [colors.background]);
+  // useEffect(() => {
+  //   if (colors.background) {
+  //     const setNavigationBarColor = async () => {
+  //       try {
+  //         SystemUI.setBackgroundColorAsync(colors.background);
+  //       } catch (error) {
+  //         console.error("Error setting navigation bar color:", error);
+  //       }
+  //     };
+  //     setNavigationBarColor();
+  //   }
+  // }, [colors.background]);
 
   return (
     <GestureHandlerRootView

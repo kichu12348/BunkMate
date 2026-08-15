@@ -191,14 +191,29 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     if (isTransitioning) return;
     if (switchRef.current) {
       switchRef.current.measureInWindow((x, y, width, height) => {
-        const cx = x + width / 2;
-        const cy = y + height / 2;
-        toggleModeWithTransition({ x: cx, y: cy });
+        const hasCoords =
+          typeof x === "number" &&
+          !isNaN(x) &&
+          typeof y === "number" &&
+          !isNaN(y) &&
+          typeof width === "number" &&
+          !isNaN(width) &&
+          typeof height === "number" &&
+          !isNaN(height);
+
+        if (hasCoords) {
+          const cx = x + width / 2;
+          const cy = y + height / 2;
+          toggleModeWithTransition({ x: cx, y: cy });
+        } else {
+          toggleModeWithTransition();
+        }
       });
     } else {
       toggleModeWithTransition();
     }
   };
+
 
   const handleCoffee = () => {
     const coffeeUrl = process.env.EXPO_PUBLIC_COFFEE_URL;
