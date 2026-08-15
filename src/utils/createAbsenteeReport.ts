@@ -1,5 +1,5 @@
 import * as Print from "expo-print";
-import { shareAsync } from "expo-sharing";
+import { shareAsync, isAvailableAsync } from "expo-sharing";
 import { File } from "expo-file-system";
 import { format } from "date-fns";
 import type { DateReport } from "./absentee";
@@ -287,36 +287,38 @@ function buildHtml(data: AbsenteePdfData): string {
 export async function createAndShareAbsenteePdf(
   data: AbsenteePdfData,
 ): Promise<void> {
-  const { reportData } = data;
+  if (await isAvailableAsync()) {
+    const { reportData } = data;
 
-  let fileName = "Absentee-Report.pdf";
-  if (reportData.length === 1) {
-    fileName = `Absentee-Report-${format(reportData[0].date, "dd-MMM-yyyy")}.pdf`;
-  } else if (reportData.length > 1) {
-    const startStr = format(reportData[0].date, "dd-MMM");
-    const endStr = format(
-      reportData[reportData.length - 1].date,
-      "dd-MMM-yyyy",
-    );
-    fileName = `Absentee-Report-${startStr}-to-${endStr}.pdf`;
+    let fileName = "Absentee-Report.pdf";
+    if (reportData.length === 1) {
+      fileName = `Absentee-Report-${format(reportData[0].date, "dd-MMM-yyyy")}.pdf`;
+    } else if (reportData.length > 1) {
+      const startStr = format(reportData[0].date, "dd-MMM");
+      const endStr = format(
+        reportData[reportData.length - 1].date,
+        "dd-MMM-yyyy",
+      );
+      fileName = `Absentee-Report-${startStr}-to-${endStr}.pdf`;
+    }
+
+    const html = buildHtml(data);
+
+    const { uri } = await Print.printToFileAsync({
+      html,
+      width: 595, // A4 width in points
+      height: 842, // A4 height in points
+    });
+
+    const file = new File(uri);
+    file.rename(fileName);
+
+    await shareAsync(file.uri, {
+      mimeType: "application/pdf",
+      dialogTitle: `Share ${fileName}`,
+      UTI: ".pdf",
+    });
+
+    file.delete();
   }
-
-  const html = buildHtml(data);
-
-  const { uri } = await Print.printToFileAsync({
-    html,
-    width: 595, // A4 width in points
-    height: 842, // A4 height in points
-  });
-
-  const file = new File(uri);
-  file.rename(fileName);
-
-  await shareAsync(file.uri, {
-    mimeType: "application/pdf",
-    dialogTitle: `Share ${fileName}`,
-    UTI: ".pdf",
-  });
-
-  file.delete();
 }

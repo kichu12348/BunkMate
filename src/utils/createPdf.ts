@@ -1,5 +1,5 @@
 import * as Print from "expo-print";
-import { shareAsync } from "expo-sharing";
+import { shareAsync, isAvailableAsync } from "expo-sharing";
 import { parseHtmlContent } from "./htmlParser";
 import type { QA } from "../types/assignments";
 import { Directory, File, Paths } from "expo-file-system";
@@ -212,29 +212,32 @@ function buildHtml(
 export async function createAndShareAssignmentPdf(
   data: AssignmentPdfData,
 ): Promise<void> {
-  const imageMap = await resolveImages(data.list);
+  if (await isAvailableAsync()) {
+    const imageMap = await resolveImages(data.list);
 
-  const cleanCourse = (data.courseCode || "").trim();
-  const cleanName = data.assignmentName.replace(/[/\\?%*:|"<>]/g, "_").trim();
-  const fileName = cleanCourse ? `${cleanCourse}-${cleanName}.pdf` : `${cleanName}.pdf`;
+    const cleanCourse = (data.courseCode || "").trim();
+    const cleanName = data.assignmentName.replace(/[/\\?%*:|"<>]/g, "_").trim();
+    const fileName = cleanCourse
+      ? `${cleanCourse}-${cleanName}.pdf`
+      : `${cleanName}.pdf`;
 
-  const html = buildHtml(data, imageMap);
+    const html = buildHtml(data, imageMap);
 
-  const { uri } = await Print.printToFileAsync({
-    html,
-    width: 595, // A4 width in points
-    height: 842, // A4 height in points
-  });
+    const { uri } = await Print.printToFileAsync({
+      html,
+      width: 595, // A4 width in points
+      height: 842, // A4 height in points
+    });
 
-  const file = new File(uri);
-  file.rename(fileName);
+    const file = new File(uri);
+    file.rename(fileName);
 
-  await shareAsync(file.uri, {
-    mimeType: "application/pdf",
-    dialogTitle: `Share ${fileName}`,
-    UTI: ".pdf",
-  });
+    await shareAsync(file.uri, {
+      mimeType: "application/pdf",
+      dialogTitle: `Share ${fileName}`,
+      UTI: ".pdf",
+    });
 
-  file.delete();
+    file.delete();
+  }
 }
-
