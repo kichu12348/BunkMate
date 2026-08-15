@@ -215,8 +215,15 @@ export async function createAndShareAssignmentPdf(
   if (await isAvailableAsync()) {
     const imageMap = await resolveImages(data.list);
 
-    const cleanCourse = (data.courseCode || "").trim();
-    const cleanName = data.assignmentName.replace(/[/\\?%*:|"<>]/g, "_").trim();
+    const cleanCourse = (data.courseCode || "").trim().replace(/[^\w.-]/g, "_");
+
+    const cleanName = data.assignmentName
+      .trim()
+      .replace(/[^\w.-]/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/-+/g, "-")
+      .replace(/^[.-]+|[.-]+$/g, "");
+
     const fileName = cleanCourse
       ? `${cleanCourse}-${cleanName}.pdf`
       : `${cleanName}.pdf`;
