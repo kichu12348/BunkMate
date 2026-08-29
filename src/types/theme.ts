@@ -22,9 +22,13 @@ export interface ThemeColors {
 export interface ThemeState {
   mode: ThemeMode;
   colors: ThemeColors;
+  isTransitioning: boolean;
+  previousBackground: string | null;
+  statusBarStyle: "light-content" | "dark-content";
   setMode: (mode: ThemeMode) => void;
   toggleMode: () => void;
   initializeTheme: (appearance: "light" | "dark") => Promise<void>;
+  endTransition: () => void;
 }
 
 export interface StatCardData {

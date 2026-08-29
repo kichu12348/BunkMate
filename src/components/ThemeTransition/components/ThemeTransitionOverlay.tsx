@@ -1,70 +1,60 @@
-import React, { useCallback, useEffect } from "react";
-import { StyleSheet, useWindowDimensions } from "react-native";
-import { Canvas, Image, Group } from "@shopify/react-native-skia";
-import { useThemeTransitionStore } from "../state/themeTransitionStore";
-import { useCircularRevealAnimation } from "../hooks/useCircularRevealAnimation";
+import React, { useEffect } from "react";
+import { StyleSheet } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+  runOnJS,
+} from "react-native-reanimated";
+import { useThemeStore } from "../../../state/themeStore";
 import { ThemeTransitionOverlayProps } from "../types";
 
 export const ThemeTransitionOverlay: React.FC<ThemeTransitionOverlayProps> = ({
-  width: customWidth,
-  height: customHeight,
+  duration = 250,
 }) => {
-  const windowDimensions = useWindowDimensions();
-  const width = customWidth ?? windowDimensions.width;
-  const height = customHeight ?? windowDimensions.height;
+  const isTransitioning = useThemeStore((s) => s.isTransitioning);
+  const previousBackground = useThemeStore((s) => s.previousBackground);
+  const endTransition = useThemeStore((s) => s.endTransition);
 
-  const overlay1 = useThemeTransitionStore((s) => s.overlay1);
-  const circleX = useThemeTransitionStore((s) => s.circleX);
-  const circleY = useThemeTransitionStore((s) => s.circleY);
-  const circleRadius = useThemeTransitionStore((s) => s.circleRadius);
-  const endTransition = useThemeTransitionStore((s) => s.endTransition);
+  const opacity = useSharedValue(1);
 
-  const handleAnimationEnd = useCallback(() => {
-    endTransition();
-  }, [endTransition]);
-
-  const { clipPath, startTransition, resetTransition } =
-    useCircularRevealAnimation({
-      duration: 750,
-      onAnimationEnd: handleAnimationEnd,
-    });
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
 
   useEffect(() => {
-    if (overlay1) {
-      startTransition(circleX, circleY, circleRadius);
-    } else {
-      resetTransition();
+    if (isTransitioning && previousBackground) {
+      opacity.value = 1;
+      opacity.value = withTiming(
+        0,
+        {
+          duration,
+          easing: Easing.out(Easing.cubic),
+        },
+        (finished) => {
+          if (finished) {
+            runOnJS(endTransition)();
+          }
+        }
+      );
     }
-  }, [
-    overlay1,
-    circleX,
-    circleY,
-    circleRadius,
-    startTransition,
-    resetTransition,
-  ]);
+  }, [isTransitioning, previousBackground, duration, endTransition, opacity]);
 
-  // Keep overlay mounted only while transition snapshot is active
-  if (!overlay1) {
+  if (!isTransitioning || !previousBackground) {
     return null;
   }
 
   return (
-    <Canvas
-      style={[StyleSheet.absoluteFill, styles.overlay, { width, height }]}
+    <Animated.View
+      style={[
+        StyleSheet.absoluteFill,
+        styles.overlay,
+        { backgroundColor: previousBackground },
+        animatedStyle,
+      ]}
       pointerEvents="none"
-    >
-      <Group clip={clipPath} invertClip={true}>
-        <Image
-          image={overlay1}
-          x={0}
-          y={0}
-          width={width}
-          height={height}
-          fit="cover"
-        />
-      </Group>
-    </Canvas>
+    />
   );
 };
 

@@ -1,25 +1,21 @@
 import { useThemeStore } from '../state/themeStore';
-import { useThemeTransitionStore } from '../components/ThemeTransition/state/themeTransitionStore';
 import { ThemeColors } from '../types/theme';
 
 export const useTheme = () => {
-  const { mode, colors, setMode, toggleMode, initializeTheme } = useThemeStore();
-  const toggleModeWithTransition = useThemeTransitionStore(
-    (state) => state.toggleModeWithTransition
-  );
-  const isTransitioning = useThemeTransitionStore(
-    (state) => state.isTransitioning
-  );
-  const statusBarStyle = useThemeTransitionStore(
-    (state) => state.statusBarStyle
-  );
+  const mode = useThemeStore((state) => state.mode);
+  const colors = useThemeStore((state) => state.colors);
+  const setMode = useThemeStore((state) => state.setMode);
+  const toggleMode = useThemeStore((state) => state.toggleMode);
+  const initializeTheme = useThemeStore((state) => state.initializeTheme);
+  const isTransitioning = useThemeStore((state) => state.isTransitioning);
+  const statusBarStyle = useThemeStore((state) => state.statusBarStyle);
 
   return {
     mode,
     colors,
     setMode,
     toggleMode,
-    toggleModeWithTransition,
+    toggleModeWithTransition: toggleMode,
     initializeTheme,
     isTransitioning,
     statusBarStyle,

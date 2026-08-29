@@ -1,23 +1,19 @@
-import { useThemeTransitionStore } from "../state/themeTransitionStore";
+import { useThemeStore } from "../../../state/themeStore";
 
 /**
  * Hook providing access to the theme transition trigger, active transition
  * status, and the deferred status bar style (flips only after animation ends).
  */
 export const useThemeTransition = () => {
-  const isTransitioning = useThemeTransitionStore(
-    (state) => state.isTransitioning
-  );
-  const toggleModeWithTransition = useThemeTransitionStore(
-    (state) => state.toggleModeWithTransition
-  );
-  const statusBarStyle = useThemeTransitionStore(
-    (state) => state.statusBarStyle
-  );
+  const isTransitioning = useThemeStore((state) => state.isTransitioning);
+  const toggleMode = useThemeStore((state) => state.toggleMode);
+  const statusBarStyle = useThemeStore((state) => state.statusBarStyle);
 
   return {
     isTransitioning,
-    toggleModeWithTransition,
+    toggleModeWithTransition: toggleMode,
+    toggleMode,
     statusBarStyle,
   };
 };
+

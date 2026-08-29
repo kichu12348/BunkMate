@@ -14,10 +14,7 @@ import { useFonts } from "expo-font";
 import Toast from "./src/components/UI/toast";
 import { useThemeStore } from "./src/state/themeStore";
 import useAccountStore from "./src/state/accounts";
-import {
-  ThemeTransitionWrapper,
-  useThemeTransitionStore,
-} from "./src/components/ThemeTransition";
+import { ThemeTransitionWrapper } from "./src/components/ThemeTransition";
 //import NewUpdateAlertModal from "./src/components/Modals/NewUpdateAlert";
 
 enableScreens();
@@ -35,8 +32,8 @@ const hideSplashScreen = () => {
 
 export default function App() {
   const { colors, initializeTheme } = useThemeStore();
-  const statusBarStyle = useThemeTransitionStore((s) => s.statusBarStyle);
-  const isTransitioning = useThemeTransitionStore((s) => s.isTransitioning);
+  const statusBarStyle = useThemeStore((s) => s.statusBarStyle);
+  const isTransitioning = useThemeStore((s) => s.isTransitioning);
   const { isAuthenticated, checkAuthStatus } = useAuthStore();
   const backwardCompact = useAccountStore((s) => s.backwardCompact);
   const initAccounts = useAccountStore((s) => s.initAccounts);

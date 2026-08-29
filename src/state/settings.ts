@@ -20,6 +20,10 @@ interface SettingsState {
   // Actions
   setAcademicYear: (year: string) => Promise<void>;
   setSemester: (semester: string) => Promise<void>;
+  setAcademicYearAndSemester: (
+    year: string,
+    semester: string,
+  ) => Promise<void>;
   clearError: () => void;
 }
 
@@ -38,13 +42,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     try {
       const currentState = get();
       let nextSemester = currentState.selectedSemester;
+
       if (year === "0") {
         nextSemester = "0";
       } else if (currentState.selectedSemester === "0") {
         nextSemester = getDefaultSemester();
       }
-      authService.setDefaultYear(year);
-      authService.setDefaultSemester(nextSemester);
+
+      // Strictly sequential: first set year, then set semester
+      await authService.setDefaultYear(year);
+      await authService.setDefaultSemester(nextSemester);
+
       set({
         selectedYear: year,
         selectedSemester: nextSemester,
@@ -71,8 +79,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       } else if (currentState.selectedYear === "0") {
         nextYear = getDefaultAcademicYear();
       }
-      authService.setDefaultSemester(semester);
-      authService.setDefaultYear(nextYear);
+
+      // Strictly sequential: first set year, then set semester
+      await authService.setDefaultYear(nextYear);
+      await authService.setDefaultSemester(semester);
 
       set({
         selectedSemester: semester,
@@ -83,6 +93,28 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       set({
         isLoading: false,
         error: error.message || "Failed to set semester",
+      });
+      throw error;
+    }
+  },
+
+  setAcademicYearAndSemester: async (year: string, semester: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      // Strictly sequential: first set year, then set semester
+      await authService.setDefaultYear(year);
+      await authService.setDefaultSemester(semester);
+
+      set({
+        selectedYear: year,
+        selectedSemester: semester,
+        isLoading: false,
+      });
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.message || "Failed to set academic year and semester",
       });
       throw error;
     }

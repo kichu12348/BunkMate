@@ -11,7 +11,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Linking,
   Image,
   StyleProp,
@@ -25,6 +24,14 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing,
+  cancelAnimation,
+} from "react-native-reanimated";
 import { useSettingsStore } from "../../state/settings";
 import { useAttendanceStore } from "../../state/attendance";
 import { useThemedStyles, useTheme } from "../../hooks/useTheme";
@@ -80,9 +87,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   navigation: tabNavigation,
 }) => {
   const styles = useThemedStyles(createStyles);
-  const { isDark, toggleModeWithTransition, isTransitioning } = useTheme();
+  const { isDark, toggleMode, isTransitioning } = useTheme();
   const colors = useThemeStore((state) => state.colors);
-  const switchRef = useRef<View>(null);
   const {
     selectedYear,
     selectedSemester,
@@ -95,7 +101,32 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     clearError,
   } = useSettingsStore();
 
+  const isAttendanceLoading = useAttendanceStore((s) => s.isLoading);
   const fetchAttendance = useAttendanceStore((s) => s.fetchAttendance);
+  const isRefreshing = isLoading || isAttendanceLoading;
+
+  const refreshRotation = useSharedValue(0);
+
+  const refreshIconAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${refreshRotation.value}deg` }],
+  }));
+
+  useEffect(() => {
+    if (isRefreshing) {
+      refreshRotation.value = withRepeat(
+        withTiming(360, {
+          duration: 900,
+          easing: Easing.linear,
+        }),
+        -1,
+        false,
+      );
+    } else {
+      cancelAnimation(refreshRotation);
+      refreshRotation.value = withTiming(0, { duration: 200 });
+    }
+  }, [isRefreshing]);
+
   const { logout, user } = useAuthStore();
   const userRef = useRef(user);
   const showToast = useToastStore((state) => state.showToast);
@@ -134,7 +165,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const handleYearChange = async (year: string) => {
     try {
-      await setAcademicYear(year).then(fetchAttendanceDebounced);
+      await setAcademicYear(year);
+      fetchAttendanceDebounced();
     } catch {
       showToast({
         title: "Error",
@@ -146,7 +178,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const handleSemesterChange = async (semester: string) => {
     try {
-      await setSemester(semester).then(fetchAttendanceDebounced);
+      await setSemester(semester);
+      fetchAttendanceDebounced();
     } catch {
       showToast({
         title: "Error",
@@ -158,7 +191,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const handleApplySettings = async () => {
     try {
-      fetchAttendanceDebounced();
+      await fetchAttendance(true);
     } catch {
       showToast({
         title: "Error",
@@ -189,29 +222,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const handleToggleTheme = () => {
     if (isTransitioning) return;
-    if (switchRef.current) {
-      switchRef.current.measureInWindow((x, y, width, height) => {
-        const hasCoords =
-          typeof x === "number" &&
-          !isNaN(x) &&
-          typeof y === "number" &&
-          !isNaN(y) &&
-          typeof width === "number" &&
-          !isNaN(width) &&
-          typeof height === "number" &&
-          !isNaN(height);
-
-        if (hasCoords) {
-          const cx = x + width / 2;
-          const cy = y + height / 2;
-          toggleModeWithTransition({ x: cx, y: cy });
-        } else {
-          toggleModeWithTransition();
-        }
-      });
-    } else {
-      toggleModeWithTransition();
-    }
+    toggleMode();
   };
 
 
@@ -391,21 +402,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <TouchableOpacity
                 style={[
                   styles.primaryButton,
-                  isLoading && styles.primaryButtonDisabled,
+                  isRefreshing && styles.primaryButtonDisabled,
                 ]}
                 onPress={handleApplySettings}
-                disabled={isLoading}
+                disabled={isRefreshing}
+                activeOpacity={0.8}
               >
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <View style={styles.primaryButtonContent}>
+                <View style={styles.primaryButtonContent}>
+                  <Animated.View style={refreshIconAnimatedStyle}>
                     <Ionicons name="refresh-outline" size={20} color="white" />
-                    <Text style={styles.primaryButtonText}>
-                      Refresh Attendance
-                    </Text>
-                  </View>
-                )}
+                  </Animated.View>
+                  <Text style={styles.primaryButtonText}>
+                    {isRefreshing ? "Refreshing..." : "Refresh Attendance"}
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
           </Card>
@@ -433,7 +443,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               title="Dark Mode"
               subtitle={isDark ? "Dark theme enabled" : "Light theme enabled"}
               rightElement={
-                <View ref={switchRef} collapsable={false}>
+                <View>
                   <Switch
                     value={isDark}
                     onValueChange={handleToggleTheme}
