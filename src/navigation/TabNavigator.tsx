@@ -1,14 +1,40 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
-
-// screens
-import { Dashboard } from "../screens/Dashboard";
-import { NotificationsScreen } from "../screens/Notifications";
-import { SettingsScreen } from "../screens/Settings";
-import { SurveysScreen } from "../screens/Surveys";
-import { AbsenteeReportScreen } from "../screens/AbsenteeReport";
+import { lazyScreen } from "./lazyScreen";
 import CustomTabNavigator from "../components/UI/CustomTabNavigator";
+
+// Dashboard is the initial tab screen (eagerly loaded for instant first render)
+import { Dashboard } from "../screens/Dashboard";
+
+import {
+  NotificationsSkeleton,
+  SurveysSkeleton,
+  AbsenteeReportSkeleton,
+  SettingsSkeleton,
+} from "../components/Skeletons/ScreenSkeletons";
+
+// Lazy loaded secondary tab screens with custom skeletons
+const NotificationsScreen = lazyScreen(
+  () => import("../screens/Notifications"),
+  "NotificationsScreen",
+  NotificationsSkeleton,
+);
+const SurveysScreen = lazyScreen(
+  () => import("../screens/Surveys"),
+  "SurveysScreen",
+  SurveysSkeleton,
+);
+const AbsenteeReportScreen = lazyScreen(
+  () => import("../screens/AbsenteeReport"),
+  "AbsenteeReportScreen",
+  AbsenteeReportSkeleton,
+);
+const SettingsScreen = lazyScreen(
+  () => import("../screens/Settings"),
+  "SettingsScreen",
+  SettingsSkeleton,
+);
 
 export type TabParamList = {
   Dashboard: undefined;
@@ -68,6 +94,7 @@ export const TabNavigator: React.FC = () => {
       screenOptions={{
         headerShown: false,
         tabBarHideOnKeyboard: true,
+        lazy: true,
       }}
     >
       <Tab.Screen name="Dashboard" component={Dashboard} />
@@ -78,3 +105,4 @@ export const TabNavigator: React.FC = () => {
     </Tab.Navigator>
   );
 };
+

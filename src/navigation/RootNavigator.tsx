@@ -1,21 +1,70 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { TabNavigator } from "./TabNavigator";
-import { SubjectDetailsScreen } from "../screens/SubjectDetails";
-import { SurveyAttemptScreen } from "../screens/Surveys/SurveyAttempt";
-import { PublicForum } from "../screens/PublicForum";
+import { lazyScreen } from "./lazyScreen";
 import { SubscriptionModal } from "../components/SubscriptionModal";
-import { AssignmentsScreen } from "../screens/Assignments";
-import { DutyLeaveScreen } from "../screens/DutyLeave";
-import { AssignmentsDetailsScreen } from "../screens/Assignments/AssignmentsDetails";
-import { SwitchAccountsScreen } from "../screens/SwitchAccounts";
-import { KtuGradeCardScreen } from "../screens/KtuGradeCard";
 import { kvHelper } from "../kv/kvStore";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../state/auth";
-import { LoginNewAccount } from "../screens/SwitchAccounts/LoginNewAccount";
 import NewUpdateAlertModal from "../components/Modals/NewUpdateAlert";
-//import Abinsk from "../components/Abinsk";
+
+import {
+  SubjectDetailsSkeleton,
+  SurveyAttemptSkeleton,
+  PublicForumSkeleton,
+  DutyLeaveSkeleton,
+  AssignmentsSkeleton,
+  AssignmentsDetailsSkeleton,
+  SwitchAccountsSkeleton,
+  KtuGradeCardSkeleton,
+} from "../components/Skeletons/ScreenSkeletons";
+
+// Lazy loaded stack screens with custom skeletons
+const SubjectDetailsScreen = lazyScreen(
+  () => import("../screens/SubjectDetails"),
+  "SubjectDetailsScreen",
+  SubjectDetailsSkeleton,
+);
+const SurveyAttemptScreen = lazyScreen(
+  () => import("../screens/Surveys/SurveyAttempt"),
+  "SurveyAttemptScreen",
+  SurveyAttemptSkeleton,
+);
+const PublicForum = lazyScreen(
+  () => import("../screens/PublicForum"),
+  "PublicForum",
+  PublicForumSkeleton,
+);
+const DutyLeaveScreen = lazyScreen(
+  () => import("../screens/DutyLeave"),
+  "DutyLeaveScreen",
+  DutyLeaveSkeleton,
+);
+const AssignmentsScreen = lazyScreen(
+  () => import("../screens/Assignments"),
+  "AssignmentsScreen",
+  AssignmentsSkeleton,
+);
+const AssignmentsDetailsScreen = lazyScreen(
+  () => import("../screens/Assignments/AssignmentsDetails"),
+  "AssignmentsDetailsScreen",
+  AssignmentsDetailsSkeleton,
+);
+const SwitchAccountsScreen = lazyScreen(
+  () => import("../screens/SwitchAccounts"),
+  "SwitchAccountsScreen",
+  SwitchAccountsSkeleton,
+);
+const LoginNewAccount = lazyScreen(
+  () => import("../screens/SwitchAccounts/LoginNewAccount"),
+  "LoginNewAccount",
+  SwitchAccountsSkeleton,
+);
+const KtuGradeCardScreen = lazyScreen(
+  () => import("../screens/KtuGradeCard"),
+  "KtuGradeCardScreen",
+  KtuGradeCardSkeleton,
+);
 
 // 1/12/2025 11:59:59 PM ASIA/KOLKATA
 //const EXPIRY_DATE = "2025-12-01T23:59:59";
