@@ -661,7 +661,7 @@ export const SubjectDetailsScreen: React.FC = () => {
           </View>
 
           {/*Assignments Screen Button */}
-          <View style={styles.section}>
+          {/* <View style={styles.section}>
             <TouchableOpacity
               style={[
                 styles.viewAssignmentsButton,
@@ -696,7 +696,7 @@ export const SubjectDetailsScreen: React.FC = () => {
                 style={styles.marginLeftAuto}
               />
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           {/* Attendance History Section */}
           <View style={styles.section}>

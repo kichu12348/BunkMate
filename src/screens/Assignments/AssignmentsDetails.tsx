@@ -29,6 +29,7 @@ import { parseHtmlContent } from "../../utils/htmlParser";
 import { createAndShareAssignmentPdf } from "../../utils/createPdf";
 
 export const AssignmentsDetailsScreen: React.FC = () => {
+  return null;
   const route = useRoute<RouteProp<RootStackParamList, "AssignmentsDetails">>();
   const navigation = useNavigation();
   const { assignmentId, assignmentName, courseCode } = route.params;
