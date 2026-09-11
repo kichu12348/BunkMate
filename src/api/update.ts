@@ -6,6 +6,9 @@ export async function getAppVersion(): Promise<AppVersion | AppVersionError> {
   try {
     const response = await axios.get<AppVersion | AppVersionError>(
       UPDATE_API_CONFIG.VERSION,
+      {
+        adapter: "fetch",
+      }
     );
     return response.data;
   } catch (error) {

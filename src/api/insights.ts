@@ -8,13 +8,14 @@ export async function logInsight(title: string) {
   try {
     const insightsLogged = kvHelper.getInsightsLogged();
     if (insightsLogged && insightsLogged.startsWith(INSIGHTS_LOGGED_CODE)) return;
-    const formated_title=title.split(" ").join("_");
+    const formated_title = title.split(" ").join("_");
     const code = `${INSIGHTS_LOGGED_CODE}${formated_title}`;
     await axios.post(`${API_URL}${API_CONFIG.ENDPOINTS.INSIGHTS.LOG}`, {
       title,
       code,
-    },{
+    }, {
       timeout: 3000,
+      adapter: "fetch",
     });
     kvHelper.setInsightsLogged(code);
   } catch (error) {

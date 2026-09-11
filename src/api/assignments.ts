@@ -9,6 +9,7 @@ class AssignmentsAPI {
 
   constructor() {
     this.api = axios.create({
+      adapter: "fetch",
       baseURL: API_CONFIG.BASE_URL,
       timeout: API_CONFIG.TIMEOUT,
     });

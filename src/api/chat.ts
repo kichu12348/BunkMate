@@ -10,6 +10,9 @@ export const getMessages = async (
 ): Promise<{ messages: Message[] }> => {
   const response = await axios.get<{ messages: Message[] }>(
     CHAT_CONFIG.GET_MESSAGES(offset, limit, API_BASE_URL),
+    {
+      adapter: "fetch",
+    }
   );
   return response.data;
 };
@@ -19,7 +22,7 @@ export const getGifs = async () => {
   const apiKey = CHAT_CONFIG.KLIPY_API_KEY;
 
   const url = `${baseUrl}/api/v1/${apiKey}/gifs/trending?page=1&per_page=30&customer_id=36177&locale=in`;
-  const response = await axios.get(url);
+  const response = await axios.get(url, { adapter: "fetch" });
   return response.data?.data?.data ?? [];
 };
 
@@ -28,6 +31,6 @@ export const getGifsByQuery = async (query: string) => {
   const apiKey = CHAT_CONFIG.KLIPY_API_KEY;
 
   const url = `${baseUrl}/api/v1/${apiKey}/gifs/search?q=${encodeURIComponent(query)}&page=1&per_page=30&customer_id=36177&locale=in`;
-  const response = await axios.get(url);
+  const response = await axios.get(url, { adapter: "fetch" });
   return response.data?.data?.data ?? [];
 };

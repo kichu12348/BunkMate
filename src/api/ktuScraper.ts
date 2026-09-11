@@ -9,6 +9,7 @@ import type {
 
 const client = axios.create({
   baseURL: KTU_SCRAPER_CONFIG.BASE_URL,
+  adapter: "fetch",
 });
 
 export async function loginToKtuScraper(

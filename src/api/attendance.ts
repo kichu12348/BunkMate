@@ -18,6 +18,7 @@ class AttendanceService {
 
   constructor() {
     this.api = axios.create({
+      adapter: "fetch",
       baseURL: API_CONFIG.BASE_URL,
       timeout: API_CONFIG.TIMEOUT,
       headers: {
@@ -75,7 +76,7 @@ class AttendanceService {
 
       const courseSchedule = daysAttended(response.data);
       const transformedData = this.transformAttendanceResponse(response.data);
-      
+
       return { transformedData, courseSchedule };
 
     } catch (error) {
