@@ -1,5 +1,5 @@
 import axios from "axios";
-import { KTU_SCRAPER_CONFIG } from "../constants/config";
+import { KTU_SCRAPER_CONFIG, ADAPTER } from "../constants/config";
 import type {
   GradeCardResponse,
   GradeCardLoginResponse,
@@ -9,7 +9,7 @@ import type {
 
 const client = axios.create({
   baseURL: KTU_SCRAPER_CONFIG.BASE_URL,
-  adapter: "fetch",
+  adapter: ADAPTER,
 });
 
 export async function loginToKtuScraper(

@@ -13,6 +13,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Text from "../../components/UI/Text";
 
 export const AssignmentsScreen = () => {
+  return null;
   const route = useRoute<RouteProp<RootStackParamList, "Assignments">>();
   const styles = useThemedStyles(createStyles);
 

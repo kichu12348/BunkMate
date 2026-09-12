@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { UPDATE_API_CONFIG } from "../constants/config";
+import { UPDATE_API_CONFIG, ADAPTER } from "../constants/config";
 import type { AppVersion, AppVersionError } from "../types/update";
 
 export async function getAppVersion(): Promise<AppVersion | AppVersionError> {
@@ -7,8 +7,8 @@ export async function getAppVersion(): Promise<AppVersion | AppVersionError> {
     const response = await axios.get<AppVersion | AppVersionError>(
       UPDATE_API_CONFIG.VERSION,
       {
-        adapter: "fetch",
-      }
+        adapter: ADAPTER,
+      },
     );
     return response.data;
   } catch (error) {

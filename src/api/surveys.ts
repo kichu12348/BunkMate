@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { API_CONFIG } from "../constants/config";
+import { API_CONFIG, ADAPTER } from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
 
 interface SurveyPivot {
@@ -127,7 +127,7 @@ class SurveysService {
     this.api = axios.create({
       baseURL: API_CONFIG.BASE_URL,
       timeout: API_CONFIG.TIMEOUT,
-      adapter: "fetch",
+      adapter: ADAPTER,
       headers: {
         "Content-Type": "application/json",
       },

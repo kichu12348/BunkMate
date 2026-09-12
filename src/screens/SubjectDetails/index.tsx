@@ -878,7 +878,7 @@ const styles = StyleSheet.create({
   },
   cellGradient: {
     zIndex: -1,
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   cellContent: {
     alignItems: "center",

@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { API_CONFIG } from "../constants/config";
+import { API_CONFIG, ADAPTER } from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
 import {
   LoginRequest,
@@ -14,7 +14,7 @@ class AuthService {
 
   constructor() {
     this.api = axios.create({
-      adapter: "fetch",
+      adapter: ADAPTER,
       baseURL: API_CONFIG.BASE_URL,
       timeout: API_CONFIG.TIMEOUT,
       headers: {
@@ -30,7 +30,7 @@ class AuthService {
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     // Add response interceptor for error handling
@@ -41,7 +41,7 @@ class AuthService {
           kvHelper.clearAuthToken();
         }
         return Promise.reject(this.handleApiError(error));
-      }
+      },
     );
   }
 
@@ -65,7 +65,7 @@ class AuthService {
     try {
       const response: AxiosResponse<{ users: string[] }> = await this.api.post(
         API_CONFIG.ENDPOINTS.AUTH.LOOKUP,
-        { username }
+        { username },
       );
 
       return response.data;
@@ -82,7 +82,7 @@ class AuthService {
           username: credentials.username,
           password: credentials.password,
           stay_logged_in: credentials.stay_logged_in ?? true,
-        }
+        },
       );
 
       // Store the token
@@ -97,7 +97,7 @@ class AuthService {
   async getCurrentUser(): Promise<UserProfile> {
     try {
       const response: AxiosResponse<UserProfile> = await this.api.get(
-        API_CONFIG.ENDPOINTS.MY_PROFILE
+        API_CONFIG.ENDPOINTS.MY_PROFILE,
       );
 
       return response.data;
@@ -148,7 +148,7 @@ class AuthService {
   }
 
   async GetResetPasswordOptions(
-    username: string
+    username: string,
   ): Promise<ResetOptionsResponse> {
     try {
       const res = await this.api.post(API_CONFIG.ENDPOINTS.AUTH.RESET.OPTIONS, {
@@ -162,7 +162,7 @@ class AuthService {
 
   async RequestPasswordReset(
     username: string,
-    option: "mail" | "sms"
+    option: "mail" | "sms",
   ): Promise<void> {
     try {
       await this.api.post(API_CONFIG.ENDPOINTS.AUTH.RESET.REQUEST, {
@@ -177,7 +177,7 @@ class AuthService {
   async VerifyPasswordReset(
     username: string,
     otp: string,
-    password: string
+    password: string,
   ): Promise<void> {
     try {
       await this.api.post(API_CONFIG.ENDPOINTS.AUTH.RESET.VERIFY, {

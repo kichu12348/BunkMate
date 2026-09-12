@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { API_CONFIG } from "../constants/config";
+import { API_CONFIG, ADAPTER } from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
 
 export interface Notification {
@@ -20,7 +20,7 @@ class NotificationsService {
     this.api = axios.create({
       baseURL: API_CONFIG.BASE_URL,
       timeout: API_CONFIG.TIMEOUT,
-      adapter: "fetch",
+      adapter: ADAPTER,
       headers: {
         "Content-Type": "application/json",
       },
@@ -34,7 +34,7 @@ class NotificationsService {
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
   }
 

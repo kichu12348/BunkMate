@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   blurContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     position: "absolute",
     top: 0,
     left: 0,

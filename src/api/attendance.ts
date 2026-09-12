@@ -1,5 +1,9 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { API_CONFIG, ATTENDANCE_THRESHOLDS } from "../constants/config";
+import {
+  API_CONFIG,
+  ATTENDANCE_THRESHOLDS,
+  ADAPTER,
+} from "../constants/config";
 import { kvHelper } from "../kv/kvStore";
 import {
   AttendanceDetailedResponse,
@@ -9,7 +13,7 @@ import {
   AttendanceType,
   DailyAttendance,
   ApiError,
-  CourseSchedule
+  CourseSchedule,
 } from "../types/api";
 import { daysAttended } from "../utils/daysAttended";
 
@@ -18,7 +22,7 @@ class AttendanceService {
 
   constructor() {
     this.api = axios.create({
-      adapter: "fetch",
+      adapter: ADAPTER,
       baseURL: API_CONFIG.BASE_URL,
       timeout: API_CONFIG.TIMEOUT,
       headers: {
@@ -35,7 +39,7 @@ class AttendanceService {
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     // Add response interceptor for error handling
@@ -46,7 +50,7 @@ class AttendanceService {
           kvHelper.clearAuthToken();
         }
         return Promise.reject(this.handleApiError(error));
-      }
+      },
     );
   }
 
@@ -78,7 +82,6 @@ class AttendanceService {
       const transformedData = this.transformAttendanceResponse(response.data);
 
       return { transformedData, courseSchedule };
-
     } catch (error) {
       // If the API fails, there's no cache to fall back on.
       // The store will handle the error.
@@ -87,7 +90,7 @@ class AttendanceService {
   }
 
   private transformAttendanceResponse(
-    apiData: AttendanceApiResponse
+    apiData: AttendanceApiResponse,
   ): AttendanceDetailedResponse {
     const subjects: SubjectAttendance[] = [];
 
@@ -96,7 +99,7 @@ class AttendanceService {
       const courseAttendance = this.calculateCourseAttendance(
         course,
         apiData.studentAttendanceData,
-        apiData.attendanceTypes
+        apiData.attendanceTypes,
       );
 
       if (courseAttendance) {
@@ -107,11 +110,11 @@ class AttendanceService {
     // Calculate overall percentage
     const totalClasses = subjects.reduce(
       (sum, subject) => sum + subject.total_classes,
-      0
+      0,
     );
     const totalAttended = subjects.reduce(
       (sum, subject) => sum + subject.attended_classes,
-      0
+      0,
     );
     const overallPercentage =
       totalClasses > 0 ? (totalAttended / totalClasses) * 100 : 0;
@@ -126,7 +129,7 @@ class AttendanceService {
   private calculateCourseAttendance(
     course: Course,
     studentData: Record<string, DailyAttendance>,
-    attendanceTypes: Record<string, AttendanceType>
+    attendanceTypes: Record<string, AttendanceType>,
   ): SubjectAttendance | null {
     let totalClasses = 0;
     let attendedClasses = 0;
@@ -176,7 +179,7 @@ class AttendanceService {
   }
 
   private getAttendanceStatus(
-    percentage: number
+    percentage: number,
   ): "safe" | "warning" | "danger" {
     if (percentage < ATTENDANCE_THRESHOLDS.DANGER) return "danger";
     if (percentage < ATTENDANCE_THRESHOLDS.WARNING) return "warning";
@@ -190,7 +193,7 @@ class AttendanceService {
     try {
       const response: AxiosResponse<any> = await this.api.post(
         API_CONFIG.ENDPOINTS.ATTENDANCE.SUMMARY,
-        {}
+        {},
       );
 
       return {

@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   card: {
     width: Math.min(width * 0.9, 420),

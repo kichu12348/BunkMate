@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { Message } from "../types/api";
-import { CHAT_CONFIG } from "../constants/config";
+import { CHAT_CONFIG, ADAPTER } from "../constants/config";
 
 export const API_BASE_URL = process.env.EXPO_PUBLIC_INSIGHTS_URL!;
 
@@ -11,8 +11,8 @@ export const getMessages = async (
   const response = await axios.get<{ messages: Message[] }>(
     CHAT_CONFIG.GET_MESSAGES(offset, limit, API_BASE_URL),
     {
-      adapter: "fetch",
-    }
+      adapter: ADAPTER,
+    },
   );
   return response.data;
 };
@@ -22,7 +22,7 @@ export const getGifs = async () => {
   const apiKey = CHAT_CONFIG.KLIPY_API_KEY;
 
   const url = `${baseUrl}/api/v1/${apiKey}/gifs/trending?page=1&per_page=30&customer_id=36177&locale=in`;
-  const response = await axios.get(url, { adapter: "fetch" });
+  const response = await axios.get(url, { adapter: ADAPTER });
   return response.data?.data?.data ?? [];
 };
 
@@ -31,6 +31,6 @@ export const getGifsByQuery = async (query: string) => {
   const apiKey = CHAT_CONFIG.KLIPY_API_KEY;
 
   const url = `${baseUrl}/api/v1/${apiKey}/gifs/search?q=${encodeURIComponent(query)}&page=1&per_page=30&customer_id=36177&locale=in`;
-  const response = await axios.get(url, { adapter: "fetch" });
+  const response = await axios.get(url, { adapter: ADAPTER });
   return response.data?.data?.data ?? [];
 };

@@ -1,15 +1,20 @@
-import { API_CONFIG } from "../constants/config";
+import { API_CONFIG, ADAPTER } from "../constants/config";
 import axios, { AxiosInstance } from "axios";
 import { kvHelper } from "../kv/kvStore";
 import { ApiError } from "../types/api";
-import { Answer, Question, QuestionGroup, SubjectAssignments } from "../types/assignments";
+import {
+  Answer,
+  Question,
+  QuestionGroup,
+  SubjectAssignments,
+} from "../types/assignments";
 
 class AssignmentsAPI {
   private api: AxiosInstance;
 
   constructor() {
     this.api = axios.create({
-      adapter: "fetch",
+      adapter: ADAPTER,
       baseURL: API_CONFIG.BASE_URL,
       timeout: API_CONFIG.TIMEOUT,
     });
@@ -22,7 +27,7 @@ class AssignmentsAPI {
         }
         return config;
       },
-      (error) => Promise.reject(this.handleApiError(error))
+      (error) => Promise.reject(this.handleApiError(error)),
     );
   }
 
@@ -45,7 +50,7 @@ class AssignmentsAPI {
   async getAssignments(): Promise<SubjectAssignments[]> {
     try {
       const response = await this.api.get(
-        API_CONFIG.ENDPOINTS.EXAMS_AND_ASSIGNMENTS.GET
+        API_CONFIG.ENDPOINTS.EXAMS_AND_ASSIGNMENTS.GET,
       );
       return response.data;
     } catch (error) {
@@ -61,13 +66,13 @@ class AssignmentsAPI {
     try {
       const [qResponse, aResponse, qGroupResponse] = await Promise.all([
         this.api.get(
-          API_CONFIG.ENDPOINTS.EXAMS_AND_ASSIGNMENTS.GET_QUESTIONS(id)
+          API_CONFIG.ENDPOINTS.EXAMS_AND_ASSIGNMENTS.GET_QUESTIONS(id),
         ),
         this.api.get(
-          API_CONFIG.ENDPOINTS.EXAMS_AND_ASSIGNMENTS.GET_ANSWERS(id)
+          API_CONFIG.ENDPOINTS.EXAMS_AND_ASSIGNMENTS.GET_ANSWERS(id),
         ),
         this.api.get(
-          API_CONFIG.ENDPOINTS.EXAMS_AND_ASSIGNMENTS.GET_Q_GROUPS(id)
+          API_CONFIG.ENDPOINTS.EXAMS_AND_ASSIGNMENTS.GET_Q_GROUPS(id),
         ),
       ]);
       return {
