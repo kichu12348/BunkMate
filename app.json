@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -15,7 +14,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f1117"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.kichu12348.BunkMate"
     },
     "web": {
