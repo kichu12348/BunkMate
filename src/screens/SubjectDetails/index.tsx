@@ -30,6 +30,8 @@ import AttendanceDayView from "../../components/Modals/AttendanceDayView";
 import { LinearGradient } from "expo-linear-gradient";
 import { normalizeAttendance } from "../../utils/helpers";
 import Text from "../../components/UI/Text";
+import { isUserApproved } from "../../utils/getUserCode";
+import { useAuthStore } from "../../state/auth";
 
 type SubjectDetailsScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -175,6 +177,8 @@ export const SubjectDetailsScreen: React.FC = () => {
     courseSchedule,
     refreshAttendance,
   } = useAttendanceStore();
+
+  const name = useAuthStore((s) => s.name);
 
   const subjectSchedule = useMemo(
     () => courseSchedule?.get(subjectId.toString()) || [],
@@ -661,42 +665,44 @@ export const SubjectDetailsScreen: React.FC = () => {
           </View>
 
           {/*Assignments Screen Button */}
-          {/* <View style={styles.section}>
-            <TouchableOpacity
-              style={[
-                styles.viewAssignmentsButton,
-                { borderColor: colors.primary },
-              ]}
-              onPress={() =>
-                navigation.navigate("Assignments", {
-                  subjectId: subjectId,
-                  subjectName: subjectName,
-                  subjectCode: subjectCode,
-                })
-              }
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="document-text-outline"
-                size={20}
-                color={colors.primary}
-              />
-              <Text
+          {name && isUserApproved(name) ? (
+            <View style={styles.section}>
+              <TouchableOpacity
                 style={[
-                  styles.viewAssignmentsButtonText,
-                  { color: colors.primary },
+                  styles.viewAssignmentsButton,
+                  { borderColor: colors.primary },
                 ]}
+                onPress={() =>
+                  navigation.navigate("Assignments", {
+                    subjectId: subjectId,
+                    subjectName: subjectName,
+                    subjectCode: subjectCode,
+                  })
+                }
+                activeOpacity={0.7}
               >
-                View Assignments
-              </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={colors.primary}
-                style={styles.marginLeftAuto}
-              />
-            </TouchableOpacity>
-          </View> */}
+                <Ionicons
+                  name="document-text-outline"
+                  size={20}
+                  color={colors.primary}
+                />
+                <Text
+                  style={[
+                    styles.viewAssignmentsButtonText,
+                    { color: colors.primary },
+                  ]}
+                >
+                  View Assignments
+                </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={colors.primary}
+                  style={styles.marginLeftAuto}
+                />
+              </TouchableOpacity>
+            </View>
+          ) : null}
 
           {/* Attendance History Section */}
           <View style={styles.section}>
