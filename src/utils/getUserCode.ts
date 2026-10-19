@@ -6,6 +6,7 @@ export function isUserApproved(name: string) {
     "ABCD_12348_Aiswarya_P_A",
     "ABCD_12348_JACKSON_TOM_JOSEPH",
     "ABCD_12348_Aleetta_Mariya_Sebastian",
+    "ABCD_12348_Sarin_M_S"
   ];
   const code = INSIGHTS_LOGGED_CODE + name.split(" ").join("_");
   return approved_list.includes(code);
