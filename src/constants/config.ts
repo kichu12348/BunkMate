@@ -53,7 +53,7 @@ export const ADAPTER = "fetch";
 
 export const APP_CONFIG = {
   NAME: "BunkMate",
-  VERSION: "4.0.0",
+  VERSION: "5.0.0",
   DESCRIPTION: "Track your attendance and stay above 75%",
 };
 
